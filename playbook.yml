@@ -1,0 +1,143 @@
+---
+- name: Certificate Authority
+  hosts: localhost
+  become: false
+  gather_facts: false
+  tasks:
+      - name: Get BWS Projects
+        ansible.builtin.command:
+            argv:
+                - bws
+                - list
+                - projects
+        register: certificate_authority_bws_projects
+        changed_when: false
+
+      - name: Set BWS Projects Fact
+        ansible.builtin.set_fact:
+            certificate_authority_bws_project_list: "{{ certificate_authority_bws_projects.stdout | from_json
+                | json_query(projects_query) }}"
+        vars:
+            projects_query: "[?name=='Certificate Authority']"
+
+      - name: Fail if BWS project list is empty or more than one
+        ansible.builtin.assert:
+            that:
+                - certificate_authority_bws_project_list | length == 1
+            fail_msg: "More than one project found or no project found"
+            success_msg: "Only one project found"
+
+      - name: Set BWS Project Fact
+        ansible.builtin.set_fact:
+            certificate_authority_bws_project: "{{ certificate_authority_bws_project_list | first }}"
+
+      - name: Get BWS Secrets
+        ansible.builtin.command:
+            argv:
+                - bws
+                - list
+                - secrets
+                - "{{ certificate_authority_bws_project.id }}"
+        register: certificate_authority_existing_bws_secrets
+        changed_when: false
+        failed_when: |
+            certificate_authority_existing_bws_secrets.rc != 0
+            and
+            certificate_authority_existing_bws_secrets.stderr.find("404 Not Found") == -1
+
+      - name: Set BWS Secrets Fact
+        when: certificate_authority_existing_bws_secrets.rc == 0
+        ansible.builtin.set_fact:
+            certificate_authority_bws_existing_secret_list: "{{ certificate_authority_existing_bws_secrets.stdout
+                | from_json | json_query(secrets_query) }}"
+        vars:
+            secrets_query: "[*].id"
+
+      - name: Delete BWS Secrets
+        ansible.builtin.command:
+            argv: "{{ ['bws', 'delete', 'secret'] + certificate_authority_bws_existing_secret_list }}"
+        changed_when: true
+        when: certificate_authority_bws_existing_secret_list is defined
+            and certificate_authority_bws_existing_secret_list | length > 0
+
+      - name: Create password for certificate
+        ansible.builtin.set_fact:
+            certificate_authority_password: "{{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}"
+
+      - name: Generate CA private key
+        community.crypto.openssl_privatekey_pipe:
+            size: 8192
+            type: RSA
+            cipher: auto
+            return_current_key: true
+            passphrase: "{{ certificate_authority_password }}"
+        register: certificate_authority_private_key
+
+      - name: Generate CSR
+        community.crypto.openssl_csr_pipe:
+            privatekey_content: "{{ certificate_authority_private_key.privatekey }}"
+            privatekey_passphrase: "{{ certificate_authority_password }}"
+            country_name: IN
+            state_or_province_name: Karnataka
+            locality_name: Bangalore
+            organization_name: arpanrec
+            organizational_unit_name: Certification Authority
+            common_name: Certification Authority Root CA 2024
+            basic_constraints:
+                - CA:TRUE
+            basic_constraints_critical: true
+            key_usage:
+                - digitalSignature
+                - nonRepudiation
+                - keyEncipherment
+                - dataEncipherment
+                - keyCertSign
+                - cRLSign
+            key_usage_critical: true
+            extended_key_usage:
+                - serverAuth
+                - clientAuth
+                - codeSigning
+                - emailProtection
+                - timeStamping
+                - OCSPSigning
+                - msCTLSign
+                - msEFS
+            extended_key_usage_critical: false
+            create_subject_key_identifier: true
+        register: certificate_authority_csr
+
+      - name: Generate self-signed certificate
+        community.crypto.x509_certificate_pipe:
+            privatekey_content: "{{ certificate_authority_private_key.privatekey }}"
+            privatekey_passphrase: "{{ certificate_authority_password }}"
+            provider: selfsigned
+            csr_content: "{{ certificate_authority_csr.csr }}"
+            selfsigned_not_before: "+0s"
+            selfsigned_not_after: "+{{ 365 * 40 }}d"
+        register: certificate_authority_certificate
+
+      - name: Create BWS Secret
+        ansible.builtin.command:
+            argv:
+                - bws
+                - secret
+                - create
+                - "{{ item.key }}_base64"
+                - "{{ item.value | b64encode }}"
+                - "{{ certificate_authority_bws_project.id }}"
+                - "--note"
+                - "{{ item.note }}"
+        register: certificate_authority_secret
+        failed_when: certificate_authority_secret.rc != 0
+        changed_when: certificate_authority_secret.rc == 0
+        loop:
+            - key: certificate_authority_certificate
+              value: "{{ certificate_authority_certificate.certificate }}"
+              note: Certificate Authority Root CA 2024
+            - key: certificate_authority_private_key
+              value: "{{ certificate_authority_private_key.privatekey }}"
+              note: Certificate Authority Root CA 2024
+            - key: certificate_authority_password
+              value: "{{ certificate_authority_password }}"
+              note: Certificate Authority Root CA 2024
