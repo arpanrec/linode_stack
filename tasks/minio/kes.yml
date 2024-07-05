@@ -5,6 +5,7 @@
       name: "{{ minio_kes_group_name }}"
       state: present
       system: true
+  register: minio_kes_group_name_create
 
 - name: Mini0 | KES | Create User
   become: true
@@ -53,7 +54,7 @@
   community.docker.docker_container:
       name: "{{ minio_kes_container_name }}"
       image: "{{ minio_kes_image }}:{{ minio_kes_version }}"
-      user: "{{ minio_kes_user_name.uid }}:{{ minio_kes_user_name.gid }}"
+      user: "{{ minio_kes_user_name_create.uid }}:{{ minio_kes_group_name_create.gid }}"
       auto_remove: true
       volumes:
           - "{{ minio_kes_cert_file }}:{{ minio_kes_cert_file }}"
