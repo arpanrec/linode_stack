@@ -13,6 +13,7 @@
 
 - name: Mini0 | Reboot Mini0 Instance
   delegate_to: sdic-minio-linode-host
+  become: true
   ansible.builtin.reboot:
       reboot_timeout: 300
 
