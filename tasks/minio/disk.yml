@@ -3,6 +3,8 @@
   become: true
   ansible.builtin.setup:
   delegate_to: sdic-minio-linode-host
+  retries: 3 # Because wait for the instance to boot
+  delay: 5
 
 - name: Mini0 | Disk | Get Volume Info
   delegate_to: localhost
