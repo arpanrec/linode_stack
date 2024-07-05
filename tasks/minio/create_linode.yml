@@ -1,4 +1,11 @@
 ---
+- name: Mini0 | Linode | add id_ed25519 to user account
+  linode.cloud.ssh_key:
+      label: "{{ sdic_linode_id_ed25519_key_label }}"
+      state: present
+      ssh_key: "{{ sdic_linode_id_ed25519_pub }}"
+      api_token: "{{ linode_api_token }}"
+
 - name: Mini0 | Linode | Create Volume
   linode.cloud.volume:
       label: "{{ minio_sdic_linode_volume_label }}"
@@ -48,9 +55,19 @@
                     volume_id: "{{ sdic_minio_volume_create.volume.id }}"
   register: sdic_minio_instance_create
 
-- name: Mini0 | Linode | Debug | Show the instance info
-  ansible.builtin.debug:
-      var: sdic_minio_instance_create
+- name: Mini0 | Linode | Add sdic subdomain to Linode Cloud DNS
+  # This must be after the instance is created,
+  # as it's mandatory in linode to use linode Domain we must have a linode instance
+  linode.cloud.domain:
+      domain: "{{ sdic_linode_manage_domain }}"
+      type: master
+      state: present
+      api_token: "{{ linode_api_token }}"
+      status: active
+      soa_email: "{{ linode_email_id }}"
+      refresh_sec: 300
+      retry_sec: 300
+      ttl_sec: 300
 
 - name: Mini0 | Linode | Set Public IPv4 and IPv6
   ansible.builtin.set_fact:
@@ -63,7 +80,7 @@
       type: "A"
       target: "{{ sdic_minio_instance_public_ipv4 }}"
       state: present
-      ttl_sec: 300
+      ttl_sec: 60
       api_token: "{{ linode_api_token }}"
 
 - name: Mini0 | Linode | Update reverse DNS
@@ -73,3 +90,18 @@
       address: "{{ sdic_minio_instance_public_ipv4 }}"
       rdns: "{{ minio_server_domain }}"
       api_token: "{{ linode_api_token }}"
+
+# - name: Mini0 | Linode | Make Godaddy NS Record for Linode Domain
+#   ansible.builtin.uri:
+#       url: "https://api.godaddy.com/v1/domains/{{ sdic_godaddy_master_domain }}/records/NS/\
+#           {{ sdic_linode_manage_sub_domain_name }}"
+#       method: PUT
+#       headers:
+#           Authorization: "sso-key {{ sdic_godaddy_api_key }}:{{ sdic_godaddy_api_secret }}"
+#       body_format: json
+#       body:
+#           - { "data": "ns1.linode.com", "name": "sdic", "ttl": 600, "type": "NS" }
+#           - { "data": "ns2.linode.com", "name": "sdic", "ttl": 600, "type": "NS" }
+#           - { "data": "ns3.linode.com", "name": "sdic", "ttl": 600, "type": "NS" }
+#           - { "data": "ns4.linode.com", "name": "sdic", "ttl": 600, "type": "NS" }
+#           - { "data": "ns5.linode.com", "name": "sdic", "ttl": 600, "type": "NS" }
