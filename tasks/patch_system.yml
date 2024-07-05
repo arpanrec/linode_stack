@@ -19,7 +19,8 @@
       name: arpanrec.nebula.user_add
   vars:
       user_add_rv_username: "{{ sdic_vm_login_user }}"
-      user_add_rv_ssh_access_public_key_content_list: "{{ sdic_linode_access_keys }}"
+      user_add_rv_ssh_access_public_key_content_list:
+          - "{{ sdic_linode_id_ed25519_pub }}"
       user_add_rv_user_default_shell: "/bin/zsh"
       user_add_rv_user_nopasswd_commands: ["ALL"]
       user_add_rv_user_extra_groups: ["wheel"]
