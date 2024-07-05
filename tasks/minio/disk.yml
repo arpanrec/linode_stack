@@ -33,7 +33,8 @@
   community.general.filesystem:
       fstype: ext4
       dev: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
-      force: true
+      force: false
+      resizefs: true
 
 # /dev/disk/by-id/<Volume By ID> <Working Directory> ext4 defaults,noatime,nofail 0 2
 - name: Mini0 | Disk | Mount Volume
