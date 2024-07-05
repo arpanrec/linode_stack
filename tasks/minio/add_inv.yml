@@ -13,6 +13,17 @@
       timeout: 300
       state: started
 
+- name: Mini0 | Add to inv | Define a temp file for ssh key
+  ansible.builtin.tempfile:
+      state: file
+  register: ssh_key_file_temp
+
+- name: Mini0 | Add to inv | Write the ssh key to the temp file
+  ansible.builtin.copy:
+      content: "{{ sdic_linode_id_ed25519_base64 | ansible.builtin.b64decode }}"
+      dest: "{{ ssh_key_file_temp.path }}"
+      mode: "0600"
+
 - name: Mini0 | Add to inv | Add the instance to the inventory group with root user
   ansible.builtin.add_host:
       hostname: sdic-minio-linode-host
@@ -20,6 +31,7 @@
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
       ansible_user: root
       ansible_connection: ssh
+      ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"
 
 - name: Mini0 | Add to inv | Try to connect to the instance with root user
   delegate_to: sdic-minio-linode-host
@@ -37,6 +49,7 @@
       ansible_user: "{{ sdic_vm_login_user }}"
       ansible_connection: ssh
       ansible_become_method: sudo
+      ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"
   when: wait_for_connection_with_root.failed
 
 - name: Mini0 | Add to inv | Try to connect to the instance with service user

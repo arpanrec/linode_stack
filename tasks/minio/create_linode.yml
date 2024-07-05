@@ -67,6 +67,7 @@
       api_token: "{{ linode_api_token }}"
 
 - name: Mini0 | Linode | Update reverse DNS
+  when: false
   linode.cloud.ip_rdns:
       state: present
       address: "{{ sdic_minio_instance_public_ipv4 }}"
