@@ -1,0 +1,38 @@
+---
+- name: Patch Cloud System | Linux Patching
+  become: true
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.linux_patching
+  vars:
+      linux_patching_rv_install_devel_packages: true
+
+- name: Patch Cloud System | Make sure zsh is installed
+  become: true
+  ansible.builtin.apt:
+      name: zsh
+      state: present
+      update_cache: true
+
+- name: Patch Cloud System | Add application user
+  become: true
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.user_add
+  vars:
+      user_add_rv_username: "{{ sdic_vm_login_user }}"
+      user_add_rv_ssh_access_public_key_content_list: "{{ sdic_linode_access_keys }}"
+      user_add_rv_user_default_shell: "/bin/zsh"
+      user_add_rv_user_nopasswd_commands: ["ALL"]
+      user_add_rv_user_extra_groups: ["wheel"]
+
+- name: Patch Cloud System | SSH Hardening
+  become: true
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.ssh_hardening
+
+- name: Patch Cloud System | Install Docker
+  become: true
+  ansible.builtin.import_role:
+      name: geerlingguy.docker
+  vars:
+      docker_users:
+          - "{{ sdic_vm_login_user }}"

@@ -1,0 +1,27 @@
+---
+- name: Mini0 | Linode
+  when: false
+  ansible.builtin.import_tasks:
+      file: tasks/minio/create_linode.yml
+
+- name: Mini0 | Add to inv
+  ansible.builtin.import_tasks:
+      file: tasks/minio/add_inv.yml
+
+- name: Mini0 | Patch Cloud System
+  delegate_to: sdic-minio-linode-host
+  when: false
+  ansible.builtin.import_tasks: tasks/patch_system.yml
+
+- name: Mini0 | Reboot Mini0 Instance
+  when: false
+  linode.cloud.instance:
+      api_token: "{{ linode_api_token }}"
+      label: "{{ minio_sdic_linode_instance_label }}"
+      rebooted: true
+      state: present
+
+- name: Mini0 | Disk
+  delegate_to: sdic-minio-linode-host
+  ansible.builtin.import_tasks:
+      file: tasks/minio/disk.yml

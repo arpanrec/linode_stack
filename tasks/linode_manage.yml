@@ -1,0 +1,50 @@
+---
+# - name: Linode | add id_ed25519 to user account
+#   linode.cloud.ssh_key:
+#       label: "{{ sdic_linode_id_ed25519_key_label }}"
+#       state: present
+#       ssh_key: "{{ sdic_linode_id_ed25519_pub }}"
+#       api_token: "{{ linode_api_token }}"
+
+# - name: Linode | Add SDIC to Linode Cloud DNS
+#   linode.cloud.domain:
+#       domain: "{{ sdic_linode_manage_domain }}"
+#       type: master
+#       state: present
+#       api_token: "{{ linode_api_token }}"
+#       status: active
+#       soa_email: "{{ linode_email_id }}"
+#       refresh_sec: 300
+#       retry_sec: 300
+#       ttl_sec: 300
+
+# - name: Linode | Get the Linode Domain Info
+#   linode.cloud.domain_info:
+#       domain: "{{ sdic_linode_manage_domain }}"
+#       api_token: "{{ linode_api_token }}"
+#   register: linode_domain_info
+
+# - name: Linode | Make Godaddy NS Record for Linode Domain
+#   arpanrec.nebula.godaddy_record:
+#       api_key: "{{ sdic_godaddy_api_key }}"
+#       api_secret: "{{ sdic_godaddy_api_secret }}"
+#       domain: "{{ sdic_godaddy_master_domain }}"
+#       name: "{{ sdic_linode_manage_sub_domain_name }}"
+#       state: present
+#       data: "ns{{ linode_ns_seq }}.linode.com"
+#       type: NS
+#       ttl: 600
+#   with_sequence: start=1 end=5
+#   loop_control:
+#       loop_var: linode_ns_seq
+
+- name: Linode | Make Godaddy NS Record for Linode Domain
+  arpanrec.nebula.godaddy_record:
+      api_key: "{{ sdic_godaddy_api_key }}"
+      api_secret: "{{ sdic_godaddy_api_secret }}"
+      domain: "{{ sdic_godaddy_master_domain }}"
+      name: "{{ sdic_linode_manage_sub_domain_name }}"
+      state: present
+      data: "ns4.linode.com;ns2.linode.com"
+      type: "NS"
+      ttl: 600

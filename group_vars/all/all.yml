@@ -1,0 +1,43 @@
+---
+pv_global_config_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
+pv_global_config_no_log: "{{ not pv_global_config_env_debug }}"
+
+sdic_linode_id_ed25519_key_label: sdic-id-ed25519
+
+minio_sdic_linode_volume_label: sdic-minio
+minio_sdic_linode_instance_label: "{{ minio_sdic_linode_volume_label }}"
+minio_sdic_install_path: /app/sdic/minio
+
+minio_docker_network_name: sdic-minio
+
+minio_kes_working_dir: "{{ minio_sdic_install_path }}/kes"
+minio_kes_version: 2024-06-17T15-47-05Z
+minio_kes_cert_file: "{{ minio_kes_working_dir }}/cert.pem"
+minio_kes_cert_key_file: "{{ minio_kes_working_dir }}/key.pem"
+minio_kes_cert_id_file: "{{ minio_kes_working_dir }}/cert.pem.id.txt"
+minio_kes_keystore_dir: "{{ minio_kes_working_dir }}/keystore"
+minio_kes_config_file: "{{ minio_kes_working_dir }}/config.yml"
+minio_kes_group_name: sdic-minio-kes
+minio_kes_user_name: "{{ minio_kes_group_name }}"
+minio_kes_container_name: "{{ minio_kes_group_name }}"
+minio_kes_port: 7373
+
+minio_server_domain: minio.sdic.arpanrec.com
+minio_server_email: "{{ linode_email_id }}" # From secrets
+minio_server_working_dir: "{{ minio_sdic_install_path }}/minio"
+minio_server_version: RELEASE.2024-06-29T01-20-47Z
+minio_server_container_name: sdic-minio-minio
+minio_server_group_name: sdic-minio-minio
+minio_server_user_name: "{{ minio_server_group_name }}"
+minio_server_kes_admin_cert: "{{ minio_server_working_dir }}/kesadmin.crt"
+minio_server_kes_admin_key: "{{ minio_server_working_dir }}/kesadmin.key"
+minio_server_kes_ca_cert: "{{ minio_server_working_dir }}/kesadmin.ca"
+minio_server_kes_endpoint: https://{{ minio_kes_container_name }}:{{ minio_kes_port }}
+minio_server_volumes: "{{ minio_server_working_dir }}/data"
+minio_server_certs_dir: "{{ minio_server_working_dir }}/certs"
+# minio_server_root_user: # From Secret
+# minio_server_root_password: # From Secret
+minio_server_port: 9000
+minio_server_console_port: 9001
+minio_server_default_kms_key_id: sdic-minio-default
+# minio_server_domain: # From Secret

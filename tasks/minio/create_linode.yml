@@ -1,0 +1,47 @@
+---
+- name: Mini0 | Linode | Create Volume
+  linode.cloud.volume:
+      label: "{{ minio_sdic_linode_volume_label }}"
+      region: "{{ sdic_linode_region }}"
+      size: 10
+      api_token: "{{ linode_api_token }}"
+      state: present
+  register: sdic_minio_volume_create
+
+- name: Mini0 | Linode | Create Mini0 Instance
+  linode.cloud.instance:
+      api_token: "{{ linode_api_token }}"
+      label: "{{ minio_sdic_linode_instance_label }}"
+      region: "{{ sdic_linode_region }}"
+      type: g6-nanode-1
+      booted: true
+      boot_config_label: sdic-minio-boot-config
+      state: present
+      rebooted: false
+      private_ip: false
+      wait: true
+      wait_timeout: 1500
+      tags:
+          - sdic
+          - minio
+          - sdic-minio
+          - env=production
+      disks:
+          - label: boot
+            size: 25088
+            image: linode/debian12
+            authorized_keys: "{{ sdic_linode_access_keys }}"
+          - label: swap
+            filesystem: swap
+            size: 512
+      configs:
+          - label: sdic-minio-boot-config
+            root_device: /dev/sda
+            kernel: "linode/grub2"
+            devices:
+                sda:
+                    disk_label: boot
+                sdb:
+                    disk_label: swap
+                sdc:
+                    volume_id: "{{ sdic_minio_volume_create.volume.id }}"
