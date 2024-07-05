@@ -65,3 +65,10 @@
       state: present
       ttl_sec: 300
       api_token: "{{ linode_api_token }}"
+
+- name: Mini0 | Linode | Update reverse DNS
+  linode.cloud.ip_rdns:
+      state: present
+      address: "{{ sdic_minio_instance_public_ipv4 }}"
+      rdns: "{{ minio_server_domain }}"
+      api_token: "{{ linode_api_token }}"
