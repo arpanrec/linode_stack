@@ -36,7 +36,7 @@
 - name: Mini0 | Add to inv | Try to connect to the instance with root user
   delegate_to: sdic-minio-linode-host
   ansible.builtin.wait_for_connection:
-      delay: 5
+      delay: 1
       timeout: 3
   register: wait_for_connection_with_root
   ignore_errors: true
@@ -55,6 +55,6 @@
 - name: Mini0 | Add to inv | Try to connect to the instance with service user
   delegate_to: sdic-minio-linode-host
   ansible.builtin.wait_for_connection:
-      delay: 5
+      delay: 1
       timeout: 3
   when: wait_for_connection_with_root.failed

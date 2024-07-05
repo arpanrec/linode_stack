@@ -32,6 +32,7 @@
       - "{{ minio_kes_keystore_dir }}"
 
 - name: Mini0 | KES | Docker Network
+  become: false
   community.docker.docker_network:
       name: "{{ minio_docker_network_name }}"
       state: present

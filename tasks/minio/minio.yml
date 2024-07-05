@@ -1,0 +1,98 @@
+---
+- name: Mini0 | Mini0 | Create group
+  become: true
+  ansible.builtin.group:
+      name: "{{ minio_server_group_name }}"
+      state: present
+      system: true
+  register: minio_server_group_name_create
+
+- name: Mini0 | Mini0 | Create User
+  become: true
+  ansible.builtin.user:
+      name: "{{ minio_server_user_name }}"
+      group: "{{ minio_server_group_name }}"
+      groups:
+          - docker
+      shell: /bin/false
+      system: true
+      state: present
+  register: minio_server_user_name_create
+
+- name: Mini0 | Mini0 | Create Directory
+  become: true
+  ansible.builtin.file:
+      name: "{{ item }}"
+      owner: "{{ minio_server_user_name }}"
+      group: "{{ minio_server_group_name }}"
+      mode: "0755"
+      state: directory
+  with_items:
+      - "{{ minio_server_working_dir }}"
+      - "{{ minio_server_volume_dir }}"
+      - "{{ minio_server_certs_dir }}"
+
+- name: Mini0 | Mini0 | Docker Network
+  become: false
+  community.docker.docker_network:
+      name: "{{ minio_docker_network_name }}"
+      state: present
+
+- name: Mini0 | Mini0 | Remove old Container
+  become: true
+  community.docker.docker_container:
+      name: "{{ minio_server_container_name }}"
+      state: absent
+      force_kill: true
+
+- name: Mini0 | Mini0 | Copy Kes Certs
+  become: true
+  ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      owner: "{{ minio_server_user_name }}"
+      group: "{{ minio_server_group_name }}"
+      mode: "0644"
+      remote_src: true
+  with_items:
+      - { src: "{{ minio_kes_cert_file }}", dest: "{{ minio_server_kes_admin_cert }}" }
+      - { src: "{{ minio_kes_cert_key_file }}", dest: "{{ minio_server_kes_admin_key }}" }
+      - { src: "{{ minio_kes_cert_file }}", dest: "{{ minio_server_kes_ca_cert }}" }
+
+- name: Mini0 | Mini0 | Start Container
+  become: false
+  community.docker.docker_container:
+      name: "{{ minio_server_container_name }}"
+      image: "{{ minio_server_image }}:{{ minio_server_version }}"
+      restart_policy: unless-stopped
+      hostname: "{{ minio_server_container_name }}"
+      ports:
+          - "{{ minio_server_port }}:{{ minio_server_port }}"
+          - "{{ minio_server_console_port }}:{{ minio_server_console_port }}"
+      volumes:
+          - "{{ minio_server_working_dir }}:{{ minio_server_working_dir }}"
+      networks:
+          - name: "{{ minio_docker_network_name }}"
+      env:
+          MINIO_KMS_KES_ENDPOINT: "{{ minio_server_kes_endpoint }}"
+          MINIO_KMS_KES_KEY_FILE: "{{ minio_server_kes_admin_key }}"
+          MINIO_KMS_KES_CERT_FILE: "{{ minio_server_kes_admin_cert }}"
+          MINIO_KMS_KES_CAPATH: "{{ minio_server_kes_ca_cert }}"
+          MINIO_KMS_KES_KEY_NAME: "{{ minio_server_default_kms_key_id }}"
+          MINIO_ROOT_USER: "{{ minio_server_root_user }}"
+          MINIO_ROOT_PASSWORD: "{{ minio_server_root_password }}"
+          MINIO_REGION: "{{ minio_server_region }}"
+      command: "server {{ minio_server_volume_dir }} --address :{{ minio_server_port }} --console-address
+          :{{ minio_server_console_port }} --certs-dir {{ minio_server_certs_dir }}"
+
+- name: Mini0 | Mini0 | Enable UFW
+  become: true
+  community.general.ufw:
+      rule: allow
+      port: "{{ item }}"
+      proto: tcp
+      comment: "Allow Minio Server"
+      state: enabled
+  with_items:
+      - "{{ minio_server_port }}"
+      - "{{ minio_server_console_port }}"

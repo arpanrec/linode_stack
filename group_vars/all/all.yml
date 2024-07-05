@@ -9,7 +9,6 @@ pv_global_config_no_log: "{{ not pv_global_config_env_debug }}"
 sdic_linode_id_ed25519_key_label: sdic-id-ed25519
 # linode_api_token: # From secrets
 # sdic_linode_manage_sub_domain_name: # From secrets
-# sdic_godaddy_master_domain: # From secrets
 # linode_email_id: # From secrets
 # sdic_linode_region: # From secrets
 # sdic_linode_id_ed25519_base64: # From secrets
@@ -38,7 +37,8 @@ minio_kes_port: 7373
 
 minio_server_email: "{{ linode_email_id }}"
 minio_server_working_dir: "{{ minio_sdic_install_path }}/minio"
-minio_server_version: RELEASE.2024-06-29T01-20-47Z
+minio_server_image: docker.io/minio/minio
+minio_server_version: RELEASE.2024-07-04T14-25-45Z
 minio_server_container_name: sdic-minio-minio
 minio_server_group_name: sdic-minio-minio
 minio_server_user_name: "{{ minio_server_group_name }}"
@@ -46,12 +46,13 @@ minio_server_kes_admin_cert: "{{ minio_server_working_dir }}/kesadmin.crt"
 minio_server_kes_admin_key: "{{ minio_server_working_dir }}/kesadmin.key"
 minio_server_kes_ca_cert: "{{ minio_server_working_dir }}/kesadmin.ca"
 minio_server_kes_endpoint: https://{{ minio_kes_container_name }}:{{ minio_kes_port }}
-minio_server_volumes: "{{ minio_server_working_dir }}/data"
+minio_server_volume_dir: "{{ minio_server_working_dir }}/data"
 minio_server_certs_dir: "{{ minio_server_working_dir }}/certs"
 # minio_server_root_user: # From secrets
 # minio_server_root_password: # From secrets
 minio_server_port: 9000
 minio_server_console_port: 9001
 minio_server_default_kms_key_id: sdic-minio-default
-# minio_server_sub_domain_name: # FFrom secrets
+minio_server_region: "ap-south-1"
+# minio_server_sub_domain_name: # From secrets
 minio_server_domain: "{{ minio_server_sub_domain_name }}.{{ sdic_linode_manage_domain }}"
