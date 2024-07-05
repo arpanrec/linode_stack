@@ -38,7 +38,15 @@
       docker_users:
           - "{{ sdic_vm_login_user }}"
 
-- name: Patch Cloud System | BeautifyTerminal
+- name: Patch Cloud System | Flush Handlers after root tasks
+  become: true
+  ansible.builtin.meta: flush_handlers
+
+- name: Patch Cloud System | Beautify Terminal
   become: false
   ansible.builtin.import_role:
       name: arpanrec.nebula.terminal
+
+- name: Patch Cloud System | Flush Handlers after user tasks
+  become: false
+  ansible.builtin.meta: flush_handlers
