@@ -163,58 +163,6 @@ files = [
 rply = "*"
 
 [[package]]
-name = "bitwarden-sdk"
-version = "0.1.0"
-description = "A Bitwarden Client for python"
-optional = false
-python-versions = ">=3.0"
-files = [
-    {file = "bitwarden_sdk-0.1.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:f12130e1e5d7cd1909b914c973f1e1a4e4d59deca62df51e2b94face25824c84"},
-    {file = "bitwarden_sdk-0.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:baca9885fc4a82c67e384b432f59c021a8a5febf130e5b8e4148b1b6f745e684"},
-    {file = "bitwarden_sdk-0.1.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:b29d66466530c3477e47e12b1a58253314dbe287d1c6c34ca240115bf2ad506e"},
-    {file = "bitwarden_sdk-0.1.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:e7f73b930de7eca64704dfcb59b36727ae4850136adc34bccf3bd571c9cb19b4"},
-    {file = "bitwarden_sdk-0.1.0-cp310-none-win_amd64.whl", hash = "sha256:6fe093edec16d78b49ebdcd8a6a494fc18ee7818981e01f7e95b92d5f5da7134"},
-    {file = "bitwarden_sdk-0.1.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:8a1ebb9df98e481f0819145ba21571f9b0733746d89da227ee38866f925d38d0"},
-    {file = "bitwarden_sdk-0.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:492fe2d82cea068a11ad67249508fdac2e13a4471a54b7ac7febcebceb7eaecc"},
-    {file = "bitwarden_sdk-0.1.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:fd7a492874f474070b85cee81e55bf7d13d76dc05102fc6a39afbb8aa5c94e82"},
-    {file = "bitwarden_sdk-0.1.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:8654b6aaf73fc395845980740547c7e32dc364a67c21a2f4f120e457a8fc0439"},
-    {file = "bitwarden_sdk-0.1.0-cp311-none-win_amd64.whl", hash = "sha256:7a727b1185d5d0637bbfe8469ba4e3ddcfb24c4bce36373a9f752bd878a24366"},
-    {file = "bitwarden_sdk-0.1.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:c01e0355bd85e13248e7fc2d0552ed8837eb9e483866093e9a1ad1c18d392593"},
-    {file = "bitwarden_sdk-0.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d9d5a621436c6b2893873cd1f5b4ca0840092a659ae2b5067ac9a6fd4a77998e"},
-    {file = "bitwarden_sdk-0.1.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:051af0c771f7e9db3ceadd9c509097311019f28f42846fab9faa303b178d233b"},
-    {file = "bitwarden_sdk-0.1.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:d1b42a3e72f9ad3fb0327e878d8afa1f07b8972c112c9d02b4fe80e17d9f3025"},
-    {file = "bitwarden_sdk-0.1.0-cp312-none-win_amd64.whl", hash = "sha256:543a4b24a4213c84eea36b6572908f905adf1fbe5285ca08c9682c2c9fe30f31"},
-    {file = "bitwarden_sdk-0.1.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:f0c739f8ad0ca6f3c9b23eea07526e9dd74a8d21f9cd74b499719709588ad92a"},
-    {file = "bitwarden_sdk-0.1.0-cp37-cp37m-macosx_10_12_x86_64.whl", hash = "sha256:ff852aa30d1befab3d2b06c3e7c2d450f057880a38080c80a1c7dc8b71b14d32"},
-    {file = "bitwarden_sdk-0.1.0-cp37-cp37m-macosx_11_0_arm64.whl", hash = "sha256:20d844432e22a80c6f0910e707eb845e809384456a91ad93c16f3ebf55a42c60"},
-    {file = "bitwarden_sdk-0.1.0-cp37-cp37m-manylinux_2_28_aarch64.whl", hash = "sha256:10909bb850a8215225765d5e7c2fd2e586315ad307de59db00b66fc47be68e36"},
-    {file = "bitwarden_sdk-0.1.0-cp37-cp37m-manylinux_2_28_x86_64.whl", hash = "sha256:425970112e67f667152ecca8d44228a7164105a734bd76d8782d7a281259ea2a"},
-    {file = "bitwarden_sdk-0.1.0-cp37-none-win_amd64.whl", hash = "sha256:ad4ae469605de704e071322867ded397552af5d490e43ec0a4f8c5952b19f4ea"},
-    {file = "bitwarden_sdk-0.1.0-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:0049ac3836dcba73ff10959b04bc6be1aeac2573d624216e3d114ac2de12818c"},
-    {file = "bitwarden_sdk-0.1.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:8918b421720ac92f8eb6c2853c812f4dd11d269b8a6c5360a23b55025778a9d4"},
-    {file = "bitwarden_sdk-0.1.0-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:a4b178b5cf57afd9b826c2aa947a752a5a91ce43a7736848cf3f9679b500f026"},
-    {file = "bitwarden_sdk-0.1.0-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:b769768ab3f0c561a1e58eefb7bdd5e79f8dabc69b0fda2a2e2fb06e97e80e0d"},
-    {file = "bitwarden_sdk-0.1.0-cp38-none-win_amd64.whl", hash = "sha256:e3c286974d782fd176eacd1afbcb379580db960b7e32578a096fca8a4e6fba77"},
-    {file = "bitwarden_sdk-0.1.0-cp39-cp39-macosx_10_12_x86_64.whl", hash = "sha256:2e87b1c77182fd757e5cf2ffbe21a6f8501d344e6cfa0e3d00e25a7684a606a7"},
-    {file = "bitwarden_sdk-0.1.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:49a3fd56edc6566fec9db040840ad39a26f8be3118b41ebc2c1d994fa2b1539f"},
-    {file = "bitwarden_sdk-0.1.0-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:cd8c4e5607dbea013b1a1a9a348455659f833fe782c9c02dfef420f25884ff22"},
-    {file = "bitwarden_sdk-0.1.0-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:b2279d6af874a70d6e086f6781d1ba84a011f5de7d1dcf6a2ec22cad6302b75c"},
-    {file = "bitwarden_sdk-0.1.0-cp39-none-win_amd64.whl", hash = "sha256:abf7614356073c48620fafa8074268ea015e246e8a08c047b96c4fdc1855f34f"},
-    {file = "bitwarden_sdk-0.1.0-pp310-pypy310_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:6f4eddc7d9ed29ac9087e56e5d1a0b225297a6d6f5e03796c23f27cddc7a0281"},
-    {file = "bitwarden_sdk-0.1.0-pp310-pypy310_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:e651a9b1bc8310e9d878c33eb124f3cc50d5db2bb9da09875b7d3a51d4b296aa"},
-    {file = "bitwarden_sdk-0.1.0-pp37-pypy37_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:381f8043fd13536bcc7e4cdfa5ee1adc426eca0cde6ee2918ac5b5740b7eb4ea"},
-    {file = "bitwarden_sdk-0.1.0-pp37-pypy37_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:55de15474923138e30cbeaa60493f9f85260aaf8f0aa434100bdbfe8cb5f75ca"},
-    {file = "bitwarden_sdk-0.1.0-pp38-pypy38_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:31344e981a091fe6550b93d547ebdc555b86b6cf47821546c5687d0f918375e5"},
-    {file = "bitwarden_sdk-0.1.0-pp38-pypy38_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:30d6451af9c70f4e9e531ce6e49fdb001a23df60f9073e56c1866a3514dd04f4"},
-    {file = "bitwarden_sdk-0.1.0-pp39-pypy39_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:18b61ac251db4b85825d94d6930a62815ba0e74e8e7498db9fa4504ff8f11ec6"},
-    {file = "bitwarden_sdk-0.1.0-pp39-pypy39_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:8a8628aef35a51e17e55682a22db95cc849b403ae1e8aba9b8c305d794c71db2"},
-    {file = "bitwarden_sdk-0.1.0.tar.gz", hash = "sha256:81bb2ab9ce7f19df7fe5b71edf4756cc8b30cb57e197a1ed2f3d4f2f93dd469c"},
-]
-
-[package.dependencies]
-dateutils = ">=0.6.6"
-
-[[package]]
 name = "black"
 version = "24.4.2"
 description = "The uncompromising code formatter."
@@ -628,21 +576,6 @@ sdist = ["build"]
 ssh = ["bcrypt (>=3.1.5)"]
 test = ["certifi", "pretend", "pytest (>=6.2.0)", "pytest-benchmark", "pytest-cov", "pytest-xdist"]
 test-randomorder = ["pytest-randomly"]
-
-[[package]]
-name = "dateutils"
-version = "0.6.12"
-description = "Various utilities for working with date and datetime objects"
-optional = false
-python-versions = "*"
-files = [
-    {file = "dateutils-0.6.12-py2.py3-none-any.whl", hash = "sha256:f33b6ab430fa4166e7e9cb8b21ee9f6c9843c48df1a964466f52c79b2a8d53b3"},
-    {file = "dateutils-0.6.12.tar.gz", hash = "sha256:03dd90bcb21541bd4eb4b013637e4f1b5f944881c46cc6e4b67a6059e370e3f1"},
-]
-
-[package.dependencies]
-python-dateutil = "*"
-pytz = "*"
 
 [[package]]
 name = "dill"
@@ -1582,31 +1515,6 @@ all = ["twine (>=3.4.1)"]
 dev = ["twine (>=3.4.1)"]
 
 [[package]]
-name = "python-dateutil"
-version = "2.9.0.post0"
-description = "Extensions to the standard Python datetime module"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-files = [
-    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
-    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
-]
-
-[package.dependencies]
-six = ">=1.5"
-
-[[package]]
-name = "pytz"
-version = "2024.1"
-description = "World timezone definitions, modern and historical"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
-    {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
-]
-
-[[package]]
 name = "pywin32"
 version = "306"
 description = "Python for Window Extensions"
@@ -2133,17 +2041,6 @@ files = [
 ]
 
 [[package]]
-name = "six"
-version = "1.16.0"
-description = "Python 2 and 3 compatibility utilities"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
-files = [
-    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
-    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
-]
-
-[[package]]
 name = "subprocess-tee"
 version = "0.4.2"
 description = "subprocess-tee"
@@ -2387,4 +2284,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ad2560adf88641108c1ee400bd63e04e2ec575a4336c6fcf2a0a13bc96b12e8e"
+content-hash = "3d41c49dddfdcdde70f6bf1cc27a8928628943187af52f0b5541be4e079ad7ae"

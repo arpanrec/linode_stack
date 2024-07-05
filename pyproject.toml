@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "sdic"
+name = "certificate-authority"
 version = "0.1.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
@@ -10,7 +10,6 @@ package-mode = false
 python = "^3.10"
 ansible = "10.1.0"
 linode-api4 = "5.17.0"
-bitwarden-sdk = "^0.1.0"
 ansible-specdoc = "^0.0.14"
 godaddypy = "^2.5.1"
 configloader = "^1.0.1"
