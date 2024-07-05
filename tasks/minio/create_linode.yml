@@ -45,3 +45,8 @@
                     disk_label: swap
                 sdc:
                     volume_id: "{{ sdic_minio_volume_create.volume.id }}"
+  register: sdic_minio_instance_create
+
+- name: Mini0 | Linode | Debug | Show the instance info
+  ansible.builtin.debug:
+      var: sdic_minio_instance_create

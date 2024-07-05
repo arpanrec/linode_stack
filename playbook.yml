@@ -1,18 +1,18 @@
 ---
-- name: Linode
-  hosts: localhost
-  become: false
-  gather_facts: false
-  no_log: "{{ pv_global_config_no_log }}"
-  tasks:
-      - name: Linode
-        ansible.builtin.import_tasks:
-            file: tasks/linode_manage.yml
-# - name: Mini0
+# - name: Linode
 #   hosts: localhost
 #   become: false
 #   gather_facts: false
+#   no_log: "{{ pv_global_config_no_log }}"
 #   tasks:
-#       - name: Mini0
+#       - name: Linode
 #         ansible.builtin.import_tasks:
-#             file: tasks/minio/main.yml
+#             file: tasks/linode_manage.yml
+- name: Mini0
+  hosts: localhost
+  become: false
+  gather_facts: false
+  tasks:
+      - name: Mini0
+        ansible.builtin.import_tasks:
+            file: tasks/minio/main.yml
