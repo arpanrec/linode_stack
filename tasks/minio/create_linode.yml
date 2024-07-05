@@ -3,7 +3,7 @@
   linode.cloud.volume:
       label: "{{ minio_sdic_linode_volume_label }}"
       region: "{{ sdic_linode_region }}"
-      size: 10
+      size: 11
       api_token: "{{ linode_api_token }}"
       state: present
   register: sdic_minio_volume_create

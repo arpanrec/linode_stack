@@ -4,7 +4,7 @@
   ansible.builtin.import_role:
       name: arpanrec.nebula.linux_patching
   vars:
-      linux_patching_rv_install_devel_packages: true
+      linux_patching_rv_install_devel_packages: false
 
 - name: Patch Cloud System | Make sure zsh is installed
   become: true
@@ -37,3 +37,8 @@
   vars:
       docker_users:
           - "{{ sdic_vm_login_user }}"
+
+- name: Patch Cloud System | BeautifyTerminal
+  become: false
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.terminal
