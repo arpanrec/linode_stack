@@ -22,3 +22,8 @@
   delegate_to: sdic-minio-linode-host
   ansible.builtin.import_tasks:
       file: tasks/minio/disk.yml
+
+- name: Mini0 | KES
+  delegate_to: sdic-minio-linode-host
+  ansible.builtin.import_tasks:
+      file: tasks/minio/kes.yml

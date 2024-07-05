@@ -11,6 +11,7 @@ minio_sdic_install_path: /app/sdic/minio
 minio_docker_network_name: sdic-minio
 
 minio_kes_working_dir: "{{ minio_sdic_install_path }}/kes"
+minio_kes_image: docker.io/minio/kes
 minio_kes_version: 2024-06-17T15-47-05Z
 minio_kes_cert_file: "{{ minio_kes_working_dir }}/cert.pem"
 minio_kes_cert_key_file: "{{ minio_kes_working_dir }}/key.pem"

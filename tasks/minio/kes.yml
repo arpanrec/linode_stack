@@ -1,0 +1,66 @@
+---
+- name: Mini0 | KES | Create Group
+  become: true
+  ansible.builtin.group:
+      name: "{{ minio_kes_group_name }}"
+      state: present
+      system: true
+
+- name: Mini0 | KES | Create User
+  become: true
+  ansible.builtin.user:
+      name: "{{ minio_kes_user_name }}"
+      group: "{{ minio_kes_group_name }}"
+      groups:
+          - docker
+      shell: /bin/false
+      system: true
+      state: present
+  register: minio_kes_user_name_create
+
+- name: Mini0 | KES | Create Directory
+  become: true
+  ansible.builtin.file:
+      name: "{{ item }}"
+      owner: "{{ minio_kes_user_name }}"
+      group: "{{ minio_kes_group_name }}"
+      mode: "0755"
+      state: directory
+  with_items:
+      - "{{ minio_kes_working_dir }}"
+      - "{{ minio_kes_keystore_dir }}"
+
+- name: Mini0 | KES | Docker Network
+  community.docker.docker_network:
+      name: "{{ minio_docker_network_name }}"
+      state: present
+
+- name: Mini0 | KES | Touch Cert Files
+  become: true
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: touch
+      mode: "0644"
+      owner: "{{ minio_kes_user_name }}"
+      group: "{{ minio_kes_group_name }}"
+  with_items:
+      - "{{ minio_kes_cert_file }}"
+      - "{{ minio_kes_cert_key_file }}"
+      - "{{ minio_kes_cert_id_file }}"
+
+- name: Mini0 | KES | Create Certificates
+  become: false
+  community.docker.docker_container:
+      name: "{{ minio_kes_container_name }}"
+      image: "{{ minio_kes_image }}:{{ minio_kes_version }}"
+      user: "{{ minio_kes_user_name.uid }}:{{ minio_kes_user_name.gid }}"
+      auto_remove: true
+      volumes:
+          - "{{ minio_kes_cert_file }}:{{ minio_kes_cert_file }}"
+          - "{{ minio_kes_cert_key_file }}:{{ minio_kes_cert_key_file }}"
+          - "{{ minio_kes_cert_id_file }}:{{ minio_kes_cert_id_file }}"
+      command:
+          - "/bin/bash"
+          - "-c"
+          - "/kes identity new --key '{{ minio_kes_cert_key_file }}' --cert '{{ minio_kes_cert_file }}' \
+            kesadmin --force --dns '{{ minio_kes_container_name }}'"
