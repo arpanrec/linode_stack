@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "certificate-authority"
+name = "sdic"
 version = "0.1.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
