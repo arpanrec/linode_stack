@@ -20,6 +20,16 @@
             state: present
             rebooted: true
 
+      - name: Mini0 | Reset inventory host host entry
+        ansible.builtin.add_host:
+            hostname: sdic-minio-linode-host
+            ansible_ssh_host: "{{ sdic_minio_instance_info.networking.ipv4.public[0].address }}"
+            ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+            ansible_user: "{{ sdic_linode_vm_login_user }}"
+            ansible_connection: ssh
+            ansible_become_method: sudo
+            ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"
+
       - name: Mini0 | Reboot Mini0 Instance | Wait
         delegate_to: sdic-minio-linode-host
         ansible.builtin.wait_for_connection:
@@ -42,8 +52,3 @@
   delegate_to: sdic-minio-linode-host
   ansible.builtin.import_tasks:
       file: tasks/minio.yml
-
-- name: Mini0 | ACME
-  delegate_to: sdic-minio-linode-host
-  ansible.builtin.import_tasks:
-      file: tasks/acme.yml

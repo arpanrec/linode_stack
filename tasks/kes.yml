@@ -32,7 +32,8 @@
       - "{{ minio_kes_keystore_dir }}"
 
 - name: Mini0 | KES | Docker Network
-  become: false
+  become: true
+  become_user: root
   community.docker.docker_network:
       name: "{{ minio_docker_network_name }}"
       state: present
@@ -52,13 +53,15 @@
 
 - name: Mini0 | KES | Remove old Container
   become: true
+  become_user: root
   community.docker.docker_container:
       name: "{{ minio_kes_container_name }}"
       state: absent
       force_kill: true
 
 - name: Mini0 | KES | Create Certificates
-  become: false
+  become: true
+  become_user: "{{ minio_kes_user_name }}"
   community.docker.docker_container:
       name: "{{ minio_kes_container_name }}"
       image: "{{ minio_kes_image }}:{{ minio_kes_version }}"
@@ -125,7 +128,8 @@
       mode: "0644"
 
 - name: Mini0 | KES | Start Container
-  become: false
+  become: true
+  become_user: "{{ minio_kes_user_name }}"
   community.docker.docker_container:
       name: "{{ minio_kes_container_name }}"
       image: "{{ minio_kes_image }}:{{ minio_kes_version }}"
