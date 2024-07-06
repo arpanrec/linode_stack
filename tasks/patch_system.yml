@@ -49,4 +49,5 @@
 
 - name: Patch Cloud System | Flush Handlers after user tasks
   become: false
+  become_user: "{{ sdic_linode_vm_login_user }}"
   ansible.builtin.meta: flush_handlers
