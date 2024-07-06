@@ -43,11 +43,12 @@
   ansible.builtin.meta: flush_handlers
 
 - name: Patch Cloud System | Beautify Terminal
-  become: false
+  become: true
+  become_user: "{{ sdic_linode_vm_login_user }}"
   ansible.builtin.import_role:
       name: arpanrec.nebula.terminal
 
 - name: Patch Cloud System | Flush Handlers after user tasks
-  become: false
+  become: true
   become_user: "{{ sdic_linode_vm_login_user }}"
   ansible.builtin.meta: flush_handlers
