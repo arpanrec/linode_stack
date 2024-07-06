@@ -6,11 +6,10 @@ ignore:
     - env
     - .env
     - node_modules
-    - /roles/geerlingguy.docker/*
 yaml-files:
     - "*.yaml"
     - "*.yml"
-    - ".yamllint"
+    - .yamllint
 rules:
     anchors: enable
     braces:
