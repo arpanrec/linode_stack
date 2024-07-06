@@ -114,7 +114,6 @@
         register: minio_acme_domain_challange
 
       - name: Mini0 | Mini0 | ACME | Set TXT Record Value # noqa: no-handler
-        when: minio_acme_domain_challange.changed
         ansible.builtin.set_fact:
             # dns_txt_record_value: "{{ minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01']\
             #  .resource_value
@@ -122,9 +121,15 @@
 
             dns_txt_record_value: "{{ minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01']\
                 .resource_value }}"
+        when: >
+            minio_acme_domain_challange['challenge_data'] is defined
+            and
+            minio_acme_domain_challange['challenge_data'] | length > 0
+            and
+            minio_acme_domain_challange.changed
 
       - name: Mini0 | Mini0 | ACME | Create an A record for ACME challenge in Linode # noqa: no-handler
-        when: minio_acme_domain_challange.changed
+        when: dns_txt_record_value is defined
         delegate_to: localhost
         linode.cloud.domain_record:
             domain: "{{ linode_managed_domain }}"
@@ -149,7 +154,12 @@
       #             mode: equals
 
       - name: Mini0 | Mini0 | ACME | Wait for DNS to propagate # noqa: no-handler
-        when: minio_acme_domain_challange.changed
+        when: >
+            minio_acme_domain_challange.changed
+            and
+            (linode_acme_challenge_record_create.skipped is not defined
+            or
+            not linode_acme_challenge_record_create.skipped)
         delegate_to: localhost
         ansible.builtin.set_fact:
             dns_record_value_propagated: "{{ lookup('community.general.dig',
@@ -207,6 +217,7 @@
       image: "{{ minio_server_image }}:{{ minio_server_version }}"
       restart_policy: unless-stopped
       hostname: "{{ minio_server_container_name }}"
+      user: "{{ minio_server_user_name_create.uid }}:{{ minio_server_group_name_create.gid }}"
       ports:
           - "{{ minio_server_port }}:{{ minio_server_port }}"
           - "{{ minio_server_console_port }}:{{ minio_server_console_port }}"
