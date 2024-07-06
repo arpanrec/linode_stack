@@ -4,20 +4,20 @@
       label: "{{ sdic_linode_id_ed25519_key_label }}"
       state: present
       ssh_key: "{{ sdic_linode_id_ed25519_pub }}"
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
 
 - name: Mini0 | Linode | Create Volume
   linode.cloud.volume:
       label: "{{ minio_sdic_linode_volume_label }}"
       region: "{{ sdic_linode_region }}"
       size: 10
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
       state: present
   register: sdic_minio_volume_create
 
 - name: Mini0 | Linode | Create Mini0 Instance
   linode.cloud.instance:
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
       label: "{{ minio_sdic_linode_instance_label }}"
       region: "{{ sdic_linode_region }}"
       type: g6-nanode-1
@@ -62,9 +62,9 @@
       domain: "{{ sdic_linode_manage_domain }}"
       type: master
       state: present
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
       status: active
-      soa_email: "{{ linode_email_id }}"
+      soa_email: "{{ sdic_linode_email_id }}"
       refresh_sec: 300
       retry_sec: 300
       ttl_sec: 300
@@ -81,7 +81,7 @@
       target: "{{ sdic_minio_instance_public_ipv4 }}"
       state: present
       ttl_sec: 30
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
 
 - name: Mini0 | Linode | Update reverse DNS
   when: false
@@ -89,7 +89,7 @@
       state: present
       address: "{{ sdic_minio_instance_public_ipv4 }}"
       rdns: "{{ minio_server_domain }}"
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
 # - name: Mini0 | Linode | Make Godaddy NS Record for Linode Domain
 #   ansible.builtin.uri:
 #       url: "https://api.godaddy.com/v1/domains/{{ sdic_godaddy_master_domain }}/records/NS/\

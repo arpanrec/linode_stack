@@ -11,7 +11,7 @@
   become: false
   linode.cloud.volume_info:
       label: "{{ minio_sdic_linode_volume_label }}"
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
   register: sdic_minio_volume_info
 
 - name: Mini0 | Disk | Remove mount

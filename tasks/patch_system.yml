@@ -18,7 +18,7 @@
   ansible.builtin.import_role:
       name: arpanrec.nebula.user_add
   vars:
-      user_add_rv_username: "{{ sdic_vm_login_user }}"
+      user_add_rv_username: "{{ sdic_linode_vm_login_user }}"
       user_add_rv_ssh_access_public_key_content_list:
           - "{{ sdic_linode_id_ed25519_pub }}"
       user_add_rv_user_default_shell: "/bin/zsh"
@@ -36,7 +36,7 @@
       name: geerlingguy.docker
   vars:
       docker_users:
-          - "{{ sdic_vm_login_user }}"
+          - "{{ sdic_linode_vm_login_user }}"
 
 - name: Patch Cloud System | Flush Handlers after root tasks
   become: true

@@ -7,13 +7,13 @@ pv_global_config_no_log: "{{ not pv_global_config_env_debug }}"
 # sdic_godaddy_master_domain: # From secrets
 
 sdic_linode_id_ed25519_key_label: sdic-id-ed25519
-# linode_api_token: # From secrets
+# sdic_linode_api_token: # From secrets
 # sdic_linode_manage_sub_domain_name: # From secrets
-# linode_email_id: # From secrets
+# sdic_linode_email_id: # From secrets
 # sdic_linode_region: # From secrets
 # sdic_linode_id_ed25519_base64: # From secrets
 # sdic_linode_id_ed25519_pub: # From secrets
-# sdic_vm_login_user: # From secrets
+# sdic_linode_vm_login_user: # From secrets
 sdic_linode_manage_domain: "{{ sdic_linode_manage_sub_domain_name }}.{{ sdic_godaddy_master_domain }}"
 
 minio_sdic_linode_volume_label: sdic-minio
@@ -35,7 +35,7 @@ minio_kes_user_name: "{{ minio_kes_group_name }}"
 minio_kes_container_name: "{{ minio_kes_group_name }}"
 minio_kes_port: 7373
 
-minio_server_email: "{{ linode_email_id }}"
+minio_server_email: "{{ sdic_linode_email_id }}"
 minio_server_working_dir: "{{ minio_sdic_install_path }}/minio"
 minio_server_image: docker.io/minio/minio
 minio_server_version: RELEASE.2024-07-04T14-25-45Z

@@ -2,7 +2,7 @@
 - name: Mini0 | Add to inv | Get Instance Info
   linode.cloud.instance_info:
       label: "{{ minio_sdic_linode_instance_label }}"
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ sdic_linode_api_token }}"
   register: sdic_minio_instance_info
 
 - name: Mini0 | Add to inv | Wait for the instance to be ready
@@ -46,7 +46,7 @@
       hostname: sdic-minio-linode-host
       ansible_ssh_host: "{{ sdic_minio_instance_info.networking.ipv4.public[0].address }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-      ansible_user: "{{ sdic_vm_login_user }}"
+      ansible_user: "{{ sdic_linode_vm_login_user }}"
       ansible_connection: ssh
       ansible_become_method: sudo
       ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"
