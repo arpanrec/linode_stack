@@ -90,6 +90,7 @@
       address: "{{ sdic_minio_instance_public_ipv4 }}"
       rdns: "{{ minio_server_domain }}"
       api_token: "{{ sdic_linode_api_token }}"
+
 # - name: Mini0 | Linode | Make Godaddy NS Record for Linode Domain
 #   ansible.builtin.uri:
 #       url: "https://api.godaddy.com/v1/domains/{{ sdic_godaddy_master_domain }}/records/NS/\
