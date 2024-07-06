@@ -1,4 +1,28 @@
 ---
+- name: Mini0 | Linode | Current id_ed25519
+  linode.cloud.ssh_key_info:
+      label: "{{ sdic_linode_id_ed25519_key_label }}"
+      api_token: "{{ sdic_linode_api_token }}"
+  register: sdic_linode_id_ed25519_key_info
+  failed_when: >
+      sdic_linode_id_ed25519_key_info.failed
+      and
+      'ssh key does not exist' not in sdic_linode_id_ed25519_key_info.msg
+
+- name: Debug | Mini0 | Linode | Current id_ed25519
+  ansible.builtin.debug:
+      var: sdic_linode_id_ed25519_key_info
+
+- name: Mini0 | Linode | Delete id_ed25519 key if public key is different
+  when: >
+      sdic_linode_id_ed25519_key_info.ssh_key is defined
+      and
+      sdic_linode_id_ed25519_key_info.ssh_key.ssh_key != sdic_linode_id_ed25519_pub
+  linode.cloud.ssh_key:
+      label: "{{ sdic_linode_id_ed25519_key_label }}"
+      api_token: "{{ sdic_linode_api_token }}"
+      state: absent
+
 - name: Mini0 | Linode | add id_ed25519 to user account
   linode.cloud.ssh_key:
       label: "{{ sdic_linode_id_ed25519_key_label }}"
