@@ -5,10 +5,6 @@
   gather_facts: false
   no_log: "{{ pv_global_config_no_log }}"
   tasks:
-      - name: Load Secrets
-        ansible.builtin.import_tasks:
-            file: tasks/load-secrets.yml
-
       - name: Mini0
         ansible.builtin.import_tasks:
             file: tasks/minio/main.yml
