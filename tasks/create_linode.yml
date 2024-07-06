@@ -68,6 +68,7 @@
       refresh_sec: 300
       retry_sec: 300
       ttl_sec: 300
+  register: sdic_minio_domain_create
 
 - name: Mini0 | Linode | Set Public IPv4 and IPv6
   ansible.builtin.set_fact:
@@ -82,6 +83,23 @@
       state: present
       ttl_sec: 30
       api_token: "{{ sdic_linode_api_token }}"
+  register: sdic_minio_domain_record_create
+
+- name: Mini0 | Linode | Remove old A Record for Mini0
+  linode.cloud.domain_record:
+      domain: "{{ sdic_linode_manage_domain }}"
+      record_id: "{{ domain_record_to_be_deleted.id }}"
+      state: absent
+      api_token: "{{ sdic_linode_api_token }}"
+  with_items: "{{ sdic_minio_domain_create.records }}"
+  loop_control:
+      loop_var: domain_record_to_be_deleted
+  when: >
+      domain_record_to_be_deleted.type == "A"
+      and
+      domain_record_to_be_deleted.name == minio_server_sub_domain_name
+      and
+      domain_record_to_be_deleted.id != sdic_minio_domain_record_create.record.id
 
 - name: Mini0 | Linode | Update reverse DNS
   when: false
