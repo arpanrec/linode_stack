@@ -80,7 +80,7 @@
       type: "A"
       target: "{{ sdic_minio_instance_public_ipv4 }}"
       state: present
-      ttl_sec: 60
+      ttl_sec: 30
       api_token: "{{ linode_api_token }}"
 
 - name: Mini0 | Linode | Update reverse DNS
