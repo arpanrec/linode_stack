@@ -8,7 +8,6 @@
       terms_agreed: true
       contact:
           - "mailto:{{ sdic_linode_email_id }}"
-  register: acme_account
 
 - name: Mini0 | ACME | Mini0 Server Private Key
   become: true
