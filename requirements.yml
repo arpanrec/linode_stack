@@ -13,10 +13,10 @@ collections:
     - name: linode.cloud
       version: 0.27.0
     - name: arpanrec.nebula
-      type: dir
-      source: /home/arpan/workspace/arpanrec.nebula
-      # source: https://github.com/arpanrec/arpanrec.nebula.git
-      # type: git
+      # type: dir
+      # source: /home/arpan/workspace/arpanrec.nebula
+      source: https://github.com/arpanrec/arpanrec.nebula.git
+      type: git
 roles:
     - name: geerlingguy.docker
       version: 7.1.0
