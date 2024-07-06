@@ -7,4 +7,4 @@
   tasks:
       - name: Mini0
         ansible.builtin.import_tasks:
-            file: tasks/main.yml
+            file: tasks/minio.yml

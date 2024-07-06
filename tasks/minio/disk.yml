@@ -2,7 +2,7 @@
 - name: Mini0 | Disk | Gather facts
   become: true
   ansible.builtin.setup:
-  delegate_to: sdic-minio-linode-host
+  delegate_to: cs-minio-linode-host
   retries: 3 # Because wait for the instance to boot
   delay: 5
 
@@ -10,29 +10,29 @@
   delegate_to: localhost
   become: false
   linode.cloud.volume_info:
-      label: "{{ minio_sdic_linode_volume_label }}"
-      api_token: "{{ sdic_linode_api_token }}"
-  register: sdic_minio_volume_info
+      label: "{{ minio_linode_volume_label }}"
+      api_token: "{{ linode_api_token }}"
+  register: minio_existing_linode_volume_info
 
 - name: Mini0 | Disk | Remove mount
   become: true
   ansible.posix.mount:
-      path: "{{ minio_sdic_install_path }}"
-      src: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      path: "{{ minio_linode_volume_mount_path }}"
+      src: "{{ minio_existing_linode_volume_info.volume.filesystem_path }}"
       state: absent
 
 - name: Mini0 | Disk | Remove all fstab entries
   become: true
   ansible.builtin.lineinfile:
       path: /etc/fstab
-      regexp: "^{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      regexp: "^{{ minio_existing_linode_volume_info.volume.filesystem_path }}"
       state: absent
 
 - name: Mini0 | Disk | Format Volume
   become: true
   community.general.filesystem:
       fstype: ext4
-      dev: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      dev: "{{ minio_existing_linode_volume_info.volume.filesystem_path }}"
       force: false
       resizefs: true
 
@@ -40,8 +40,8 @@
 - name: Mini0 | Disk | Mount Volume
   become: true
   ansible.posix.mount:
-      path: "{{ minio_sdic_install_path }}"
-      src: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      path: "{{ minio_linode_volume_mount_path }}"
+      src: "{{ minio_existing_linode_volume_info.volume.filesystem_path }}"
       fstype: ext4
       state: mounted
       boot: true
