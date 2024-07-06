@@ -33,13 +33,15 @@
       - "{{ minio_server_certs_dir }}"
 
 - name: Mini0 | Mini0 | Docker Network
-  become: false
+  become: true
+  become_user: root
   community.docker.docker_network:
       name: "{{ minio_docker_network_name }}"
       state: present
 
 - name: Mini0 | Mini0 | Remove old Container
   become: true
+  become_user: root
   community.docker.docker_container:
       name: "{{ minio_server_container_name }}"
       state: absent
@@ -59,8 +61,147 @@
       - { src: "{{ minio_kes_cert_key_file }}", dest: "{{ minio_server_kes_admin_key }}" }
       - { src: "{{ minio_kes_cert_file }}", dest: "{{ minio_server_kes_ca_cert }}" }
 
+- name: Mini0 | Mini0 | ACME
+  block:
+      - name: Mini0 | Mini0 | ACME | Register ACME Account
+        community.crypto.acme_account:
+            account_key_content: "{{ sdic_acme_private_key_base64 | ansible.builtin.b64decode }}"
+            acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
+            acme_version: 2
+            state: present
+            terms_agreed: true
+            contact:
+                - "mailto:{{ sdic_linode_email_id }}"
+
+      - name: Mini0 | Mini0 | ACME | Mini0 Server Private Key
+        become: true
+        community.crypto.openssl_privatekey:
+            path: "{{ minio_server_certs_dir }}/private.key"
+            type: RSA
+            mode: "0600"
+            owner: "{{ minio_server_user_name }}"
+            group: "{{ minio_server_group_name }}"
+
+      - name: Mini0 | Mini0 | ACME | Mini0 CSR for ACME Challenge
+        become: true
+        become_user: "{{ minio_server_user_name }}"
+        community.crypto.openssl_csr:
+            path: "{{ minio_server_certs_dir }}/acme.csr"
+            privatekey_path: "{{ minio_server_certs_dir }}/private.key"
+            common_name: "{{ minio_server_domain }}"
+            subject_alt_name:
+                - "DNS:{{ minio_server_domain }}"
+            mode: "0600"
+            owner: "{{ minio_server_user_name }}"
+            group: "{{ minio_server_group_name }}"
+
+      - name: Mini0 | Mini0 | ACME | Create a challenge for Mini0 Domain
+        become: true
+        community.crypto.acme_certificate:
+            modify_account: false
+            validate_certs: true
+            deactivate_authzs: true
+            acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
+            acme_version: 2
+            csr: "{{ minio_server_certs_dir }}/acme.csr"
+            account_email: "{{ sdic_linode_email_id }}"
+            account_key_content: "{{ sdic_acme_private_key_base64 | ansible.builtin.b64decode }}"
+            fullchain_dest: "{{ minio_server_certs_dir }}/fullchain.pem"
+            terms_agreed: true
+            remaining_days: 10
+            challenge: dns-01
+            force: false
+        register: minio_acme_domain_challange
+
+      - name: Mini0 | Mini0 | ACME | Set TXT Record Value # noqa: no-handler
+        when: minio_acme_domain_challange.changed
+        ansible.builtin.set_fact:
+            # dns_txt_record_value: "{{ minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01']\
+            #  .resource_value
+            #     | community.dns.quote_txt(always_quote=true) }}" # This is the original line for amazon route 53
+
+            dns_txt_record_value: "{{ minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01']\
+                .resource_value }}"
+
+      - name: Mini0 | Mini0 | ACME | Create an A record for ACME challenge in Linode # noqa: no-handler
+        when: minio_acme_domain_challange.changed
+        delegate_to: localhost
+        linode.cloud.domain_record:
+            domain: "{{ sdic_linode_manage_domain }}"
+            name: "{{ minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01'].record }}"
+            type: "TXT"
+            ttl_sec: 30
+            target: "{{ dns_txt_record_value }}"
+            state: present
+            api_token: "{{ sdic_linode_api_token }}"
+        register: linode_acme_challenge_record_create
+
+      # - name: Mini0 | Mini0 | ACME | Wait for DNS to propagate
+      #   delegate_to: localhost
+      #   community.dns.wait_for_txt:
+      #       timeout: 300
+      #       query_retry: 5
+      #       query_timeout: 5
+      #       max_sleep: 5
+      #       records:
+      #           - name: "{{ minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01'].record }}"
+      #             values: "{{ dns_txt_record_value }}"
+      #             mode: equals
+
+      - name: Mini0 | Mini0 | ACME | Wait for DNS to propagate # noqa: no-handler
+        when: minio_acme_domain_challange.changed
+        delegate_to: localhost
+        ansible.builtin.set_fact:
+            dns_record_value_propagated: "{{ lookup('community.general.dig',
+                minio_acme_domain_challange.challenge_data[minio_server_domain]['dns-01'].record, qtype='TXT') }}"
+        register: wait_for_dns_propagation
+        until: dns_txt_record_value in wait_for_dns_propagation.ansible_facts.dns_record_value_propagated
+        retries: 10
+        delay: 5
+        ignore_errors: true
+
+      - name: Mini0 | Mini0 | ACME | Let the challenge be validated and retrieve the cert and intermediate certificate
+        when: minio_acme_domain_challange.changed # noqa: no-handler
+        become: true
+        become_user: "{{ minio_server_user_name }}"
+        community.crypto.acme_certificate:
+            acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
+            acme_version: 2
+            csr: "{{ minio_server_certs_dir }}/acme.csr"
+            account_email: "{{ sdic_linode_email_id }}"
+            account_key_content: "{{ sdic_acme_private_key_base64 | ansible.builtin.b64decode }}"
+            fullchain_dest: "{{ minio_server_certs_dir }}/fullchain.pem"
+            terms_agreed: true
+            remaining_days: 10
+            challenge: dns-01
+            data: "{{ minio_acme_domain_challange }}"
+
+      - name: Mini0 | Mini0 | ACME | Remove the challenge record from Linode # noqa: no-handler
+        # when: >
+        #   linode_acme_challenge_record_create.skipped is not defined
+        #   or
+        #   not linode_acme_challenge_record_create.skipped
+        when: false # This record is useful in case i need to force the certificate regeneration
+        delegate_to: localhost
+        linode.cloud.domain_record:
+            domain: "{{ sdic_linode_manage_domain }}"
+            record_id: "{{ linode_acme_challenge_record_create.record.id }}"
+            state: absent
+            api_token: "{{ sdic_linode_api_token }}"
+
+- name: Mini0 | Mini0 | Copy fullchain to public.crt
+  become: true
+  ansible.builtin.copy:
+      src: "{{ minio_server_certs_dir }}/fullchain.pem"
+      dest: "{{ minio_server_certs_dir }}/public.crt"
+      owner: "{{ minio_server_user_name }}"
+      group: "{{ minio_server_group_name }}"
+      remote_src: true
+      mode: "0644"
+
 - name: Mini0 | Mini0 | Start Container
-  become: false
+  become: true
+  become_user: "{{ minio_server_user_name }}"
   community.docker.docker_container:
       name: "{{ minio_server_container_name }}"
       image: "{{ minio_server_image }}:{{ minio_server_version }}"
