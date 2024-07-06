@@ -1,0 +1,50 @@
+---
+- name: Mini0 | Disk | Gather facts
+  become: true
+  ansible.builtin.setup:
+  delegate_to: sdic-minio-linode-host
+  retries: 3 # Because wait for the instance to boot
+  delay: 5
+
+- name: Mini0 | Disk | Get Volume Info
+  delegate_to: localhost
+  become: false
+  linode.cloud.volume_info:
+      label: "{{ minio_sdic_linode_volume_label }}"
+      api_token: "{{ sdic_linode_api_token }}"
+  register: sdic_minio_volume_info
+
+- name: Mini0 | Disk | Remove mount
+  become: true
+  ansible.posix.mount:
+      path: "{{ minio_sdic_install_path }}"
+      src: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      state: absent
+
+- name: Mini0 | Disk | Remove all fstab entries
+  become: true
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      state: absent
+
+- name: Mini0 | Disk | Format Volume
+  become: true
+  community.general.filesystem:
+      fstype: ext4
+      dev: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      force: false
+      resizefs: true
+
+# /dev/disk/by-id/<Volume By ID> <Working Directory> ext4 defaults,noatime,nofail 0 2
+- name: Mini0 | Disk | Mount Volume
+  become: true
+  ansible.posix.mount:
+      path: "{{ minio_sdic_install_path }}"
+      src: "{{ sdic_minio_volume_info.volume.filesystem_path }}"
+      fstype: ext4
+      state: mounted
+      boot: true
+      opts: defaults,noatime,nofail
+      dump: 0
+      passno: 2

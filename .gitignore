@@ -14,8 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -290,6 +288,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-arpanrec-nebula-*.tar.gz
-.vscode/*
-/roles/geerlingguy.docker/*
+.vscode/settings.json
+/vault_config/*
+/tmp/*
