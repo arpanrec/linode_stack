@@ -1,13 +1,13 @@
 ---
 - name: Mini0 | Add to inv | Get Instance Info
   linode.cloud.instance_info:
-      label: "{{ minio_sdic_linode_instance_label }}"
-      api_token: "{{ sdic_linode_api_token }}"
-  register: sdic_minio_instance_info
+      label: "{{ minio_linode_instance_label }}"
+      api_token: "{{ linode_api_token }}"
+  register: minio_linode_instance_info
 
 - name: Mini0 | Add to inv | Wait for the instance to be ready
   ansible.builtin.wait_for:
-      host: "{{ sdic_minio_instance_info.networking.ipv4.public[0].rdns }}"
+      host: "{{ minio_linode_instance_info.networking.ipv4.public[0].rdns }}"
       port: 22
       delay: 10
       timeout: 300
@@ -20,21 +20,21 @@
 
 - name: Mini0 | Add to inv | Write the ssh key to the temp file
   ansible.builtin.copy:
-      content: "{{ sdic_linode_id_ed25519_base64 | ansible.builtin.b64decode }}"
+      content: "{{ linode_ssh_key_priv_base64 | ansible.builtin.b64decode }}"
       dest: "{{ ssh_key_file_temp.path }}"
       mode: "0600"
 
 - name: Mini0 | Add to inv | Add the instance to the inventory group with root user
   ansible.builtin.add_host:
-      hostname: sdic-minio-linode-host
-      ansible_ssh_host: "{{ sdic_minio_instance_info.networking.ipv4.public[0].address }}"
+      hostname: cs-minio-linode-host
+      ansible_ssh_host: "{{ minio_linode_instance_info.networking.ipv4.public[0].address }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
       ansible_user: root
       ansible_connection: ssh
       ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"
 
 - name: Mini0 | Add to inv | Try to connect to the instance with root user
-  delegate_to: sdic-minio-linode-host
+  delegate_to: cs-minio-linode-host
   ansible.builtin.wait_for_connection:
       delay: 1
       timeout: 3
@@ -43,17 +43,17 @@
 
 - name: Mini0 | Add to inv | Add the instance to the inventory group with service user
   ansible.builtin.add_host:
-      hostname: sdic-minio-linode-host
-      ansible_ssh_host: "{{ sdic_minio_instance_info.networking.ipv4.public[0].address }}"
+      hostname: cs-minio-linode-host
+      ansible_ssh_host: "{{ minio_linode_instance_info.networking.ipv4.public[0].address }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-      ansible_user: "{{ sdic_linode_vm_login_user }}"
+      ansible_user: "{{ linode_vm_ssh_service_user }}"
       ansible_connection: ssh
       ansible_become_method: sudo
       ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"
   when: wait_for_connection_with_root.failed
 
 - name: Mini0 | Add to inv | Try to connect to the instance with service user
-  delegate_to: sdic-minio-linode-host
+  delegate_to: cs-minio-linode-host
   ansible.builtin.wait_for_connection:
       delay: 1
       timeout: 3

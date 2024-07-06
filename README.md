@@ -1,6 +1,8 @@
-# Linode Stack
+# Core Services
 
-Deploy my stack to Linode.
+Deploy public facing core services on Linode.
+
+Service: Mini0
 
 ## Requirements
 
