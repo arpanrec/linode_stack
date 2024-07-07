@@ -5,6 +5,9 @@
   gather_facts: false
   no_log: "{{ pv_global_config_no_log }}"
   tasks:
+      - name: Get BWS Secret
+        ansible.builtin.import_tasks:
+            file: tasks/secrets.yml
       - name: Mini0
         ansible.builtin.import_tasks:
             file: tasks/minio.yml
