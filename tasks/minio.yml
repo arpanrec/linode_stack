@@ -52,3 +52,10 @@
   delegate_to: cs-minio-linode-host
   ansible.builtin.import_tasks:
       file: tasks/minio/server.yml
+
+- name: Mini0 | Health Check
+  ansible.builtin.uri:
+      url: "https://{{ minio_server_domain }}:{{ minio_server_port }}/minio/health/live"
+      method: GET
+      status_code: [200]
+      return_content: true
