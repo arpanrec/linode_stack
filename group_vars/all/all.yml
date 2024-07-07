@@ -57,6 +57,6 @@ minio_server_certs_dir: "{{ minio_server_working_dir }}/certs"
 minio_server_port: 9000
 minio_server_console_port: 9001
 minio_server_default_kms_key_id: cs-minio-default
-minio_server_region: "ap-south-1"
+minio_server_region: "{{ linode_ops_region }}"
 # minio_server_sub_domain_name: # From secrets
 minio_server_domain: "{{ minio_server_sub_domain_name }}.{{ linode_managed_domain }}"
