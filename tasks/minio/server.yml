@@ -94,6 +94,15 @@
             mode: "0600"
             owner: "{{ minio_server_user_name }}"
             group: "{{ minio_server_group_name }}"
+        register: minio_acme_csr_create
+
+      - name: Mini0 | Mini0 | ACME | Delete old fullchain # noqa: no-handler
+        become: true
+        become_user: root
+        when: minio_acme_csr_create.changed
+        ansible.builtin.file:
+            path: "{{ minio_server_certs_dir }}/fullchain.pem"
+            state: absent
 
       - name: Mini0 | Mini0 | ACME | Create a challenge for Mini0 Domain
         become: true
@@ -216,7 +225,7 @@
       name: "{{ minio_server_container_name }}"
       image: "{{ minio_server_image }}:{{ minio_server_version }}"
       restart_policy: unless-stopped
-      hostname: "{{ minio_server_container_name }}"
+      hostname: "{{ minio_server_domain }}"
       user: "{{ minio_server_user_name_create.uid }}:{{ minio_server_group_name_create.gid }}"
       ports:
           - "{{ minio_server_port }}:{{ minio_server_port }}"
@@ -234,8 +243,15 @@
           MINIO_ROOT_USER: "{{ minio_server_root_user }}"
           MINIO_ROOT_PASSWORD: "{{ minio_server_root_password }}"
           MINIO_REGION: "{{ minio_server_region }}"
-      command: "server {{ minio_server_volume_dir }} --address :{{ minio_server_port }} --console-address
-          :{{ minio_server_console_port }} --certs-dir {{ minio_server_certs_dir }}"
+      command:
+          - server
+          - "{{ minio_server_volume_dir }}"
+          - --address
+          - "{{ minio_server_domain }}:{{ minio_server_port }}"
+          - --console-address
+          - "{{ minio_server_domain }}:{{ minio_server_console_port }}"
+          - --certs-dir
+          - "{{ minio_server_certs_dir }}"
 
 - name: Mini0 | Mini0 | Enable UFW
   become: true
