@@ -1,6 +1,7 @@
 ---
 - name: Mini0 | KES | Create Group
   become: true
+  become_user: root
   ansible.builtin.group:
       name: "{{ pv_cs_minio_kes_group_name }}"
       state: present
@@ -9,6 +10,7 @@
 
 - name: Mini0 | KES | Create User
   become: true
+  become_user: root
   ansible.builtin.user:
       name: "{{ pv_cs_minio_kes_user_name }}"
       group: "{{ pv_cs_minio_kes_group_name }}"
@@ -21,6 +23,7 @@
 
 - name: Mini0 | KES | Create Directory
   become: true
+  become_user: root
   ansible.builtin.file:
       name: "{{ item }}"
       owner: "{{ pv_cs_minio_kes_user_name }}"
@@ -40,6 +43,7 @@
 
 - name: Mini0 | KES | Touch Cert Files
   become: true
+  become_user: root
   ansible.builtin.file:
       path: "{{ item }}"
       state: touch
@@ -82,6 +86,7 @@
 
 - name: Mini0 | KES | Read Certificate ID
   become: true
+  become_user: root
   ansible.builtin.slurp:
       src: "{{ pv_cs_minio_kes_cert_id_file }}"
   register: minio_kes_cert_id_file_read
@@ -120,6 +125,7 @@
 
 - name: Mini0 | KES | Write Config
   become: true
+  become_user: root
   ansible.builtin.copy:
       content: "{{ minio_kes_config | to_nice_yaml }}"
       dest: "{{ pv_cs_minio_kes_config_file }}"

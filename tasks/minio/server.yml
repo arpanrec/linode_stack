@@ -1,6 +1,7 @@
 ---
 - name: Mini0 | Mini0 | Create group
   become: true
+  become_user: root
   ansible.builtin.group:
       name: "{{ pv_cs_minio_server_group_name }}"
       state: present
@@ -9,6 +10,7 @@
 
 - name: Mini0 | Mini0 | Create User
   become: true
+  become_user: root
   ansible.builtin.user:
       name: "{{ pv_cs_minio_server_user_name }}"
       group: "{{ pv_cs_minio_server_group_name }}"
@@ -21,6 +23,7 @@
 
 - name: Mini0 | Mini0 | Create Directory
   become: true
+  become_user: root
   ansible.builtin.file:
       name: "{{ item }}"
       owner: "{{ pv_cs_minio_server_user_name }}"
@@ -49,6 +52,7 @@
 
 - name: Mini0 | Mini0 | Copy Kes Certs
   become: true
+  become_user: root
   ansible.builtin.copy:
       src: "{{ item.src }}"
       dest: "{{ item.dest }}"
@@ -75,6 +79,7 @@
 
       - name: Mini0 | Mini0 | ACME | Mini0 Server Private Key
         become: true
+        become_user: root
         community.crypto.openssl_privatekey:
             path: "{{ pv_cs_minio_server_certs_dir }}/private.key"
             type: RSA
@@ -84,7 +89,7 @@
 
       - name: Mini0 | Mini0 | ACME | Mini0 CSR for ACME Challenge
         become: true
-        become_user: "{{ pv_cs_minio_server_user_name }}"
+        become_user: root
         community.crypto.openssl_csr:
             path: "{{ pv_cs_minio_server_certs_dir }}/acme.csr"
             privatekey_path: "{{ pv_cs_minio_server_certs_dir }}/private.key"
@@ -106,6 +111,7 @@
 
       - name: Mini0 | Mini0 | ACME | Create a challenge for Mini0 Domain
         become: true
+        become_user: "{{ pv_cs_minio_server_user_name }}"
         community.crypto.acme_certificate:
             modify_account: false
             validate_certs: true
@@ -140,6 +146,7 @@
       - name: Mini0 | Mini0 | ACME | Create an A record for ACME challenge in Linode # noqa: no-handler
         when: dns_txt_record_value is defined
         delegate_to: localhost
+        become: false
         linode.cloud.domain_record:
             domain: "{{ pv_cs_linode_managed_domain }}"
             name: "{{ minio_acme_domain_challange.challenge_data[pv_cs_minio_server_domain]['dns-01'].record }}"
@@ -170,6 +177,7 @@
             or
             not linode_acme_challenge_record_create.skipped)
         delegate_to: localhost
+        become: false
         ansible.builtin.set_fact:
             dns_record_value_propagated: "{{ lookup('community.general.dig',
                 minio_acme_domain_challange.challenge_data[pv_cs_minio_server_domain]['dns-01'].record, qtype='TXT') }}"
@@ -210,6 +218,7 @@
 
 - name: Mini0 | Mini0 | Copy fullchain to public.crt
   become: true
+  become_user: root
   ansible.builtin.copy:
       src: "{{ pv_cs_minio_server_certs_dir }}/fullchain.pem"
       dest: "{{ pv_cs_minio_server_certs_dir }}/public.crt"
@@ -255,6 +264,7 @@
 
 - name: Mini0 | Mini0 | Enable UFW
   become: true
+  become_user: root
   community.general.ufw:
       rule: allow
       port: "{{ item }}"

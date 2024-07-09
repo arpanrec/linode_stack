@@ -6,13 +6,13 @@ pv_global_config_no_log: "{{ not pv_global_config_env_debug }}"
 
 # pv_cs_godaddy_api_key: # From secrets
 # pv_cs_godaddy_api_secret: # From secrets
-# pv_cs_godaddy_master_domain: # From secrets
+pv_cs_godaddy_master_domain: arpanrec.com
 
 pv_cs_linode_ssh_key_label: cs-id-ed25519
 # pv_cs_linode_api_token: # From secrets
-# pv_cs_linode_manage_sub_domain_name: # From secrets
-# pv_cs_contact_email_id: # From secrets
-# pv_cs_linode_ops_region: # From secrets
+pv_cs_linode_manage_sub_domain_name: cs
+pv_cs_contact_email_id: arpan.rec@gmail.com
+pv_cs_linode_ops_region: ap-west
 # pv_cs_linode_ssh_key_priv_base64: # From secrets
 # pv_cs_linode_ssh_key_pub: # From secrets
 # pv_cs_linode_vm_ssh_service_user: # From secrets
@@ -58,5 +58,5 @@ pv_cs_minio_server_port: 9000
 pv_cs_minio_server_console_port: 9001
 pv_cs_minio_server_default_kms_key_id: cs-minio-default
 pv_cs_minio_server_region: "{{ pv_cs_linode_ops_region }}"
-# pv_cs_minio_server_sub_domain_name: # From secrets
+pv_cs_minio_server_sub_domain_name: s3
 pv_cs_minio_server_domain: "{{ pv_cs_minio_server_sub_domain_name }}.{{ pv_cs_linode_managed_domain }}"
