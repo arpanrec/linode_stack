@@ -10,14 +10,14 @@
   delegate_to: localhost
   become: false
   linode.cloud.volume_info:
-      label: "{{ minio_linode_volume_label }}"
-      api_token: "{{ linode_api_token }}"
+      label: "{{ pv_cs_minio_linode_volume_label }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
   register: minio_existing_linode_volume_info
 
 - name: Mini0 | Disk | Remove mount
   become: true
   ansible.posix.mount:
-      path: "{{ minio_linode_volume_mount_path }}"
+      path: "{{ pv_cs_minio_linode_volume_mount_path }}"
       src: "{{ minio_existing_linode_volume_info.volume.filesystem_path }}"
       state: absent
 
@@ -40,7 +40,7 @@
 - name: Mini0 | Disk | Mount Volume
   become: true
   ansible.posix.mount:
-      path: "{{ minio_linode_volume_mount_path }}"
+      path: "{{ pv_cs_minio_linode_volume_mount_path }}"
       src: "{{ minio_existing_linode_volume_info.volume.filesystem_path }}"
       fstype: ext4
       state: mounted

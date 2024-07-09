@@ -1,8 +1,8 @@
 ---
 - name: Mini0 | Add to inv | Get Instance Info
   linode.cloud.instance_info:
-      label: "{{ minio_linode_instance_label }}"
-      api_token: "{{ linode_api_token }}"
+      label: "{{ pv_cs_minio_linode_instance_label }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
   register: minio_linode_instance_info
 
 - name: Mini0 | Add to inv | Wait for the instance to be ready
@@ -20,7 +20,7 @@
 
 - name: Mini0 | Add to inv | Write the ssh key to the temp file
   ansible.builtin.copy:
-      content: "{{ linode_ssh_key_priv_base64 | ansible.builtin.b64decode }}"
+      content: "{{ pv_cs_linode_ssh_key_priv_base64 | ansible.builtin.b64decode }}"
       dest: "{{ ssh_key_file_temp.path }}"
       mode: "0600"
 
@@ -46,7 +46,7 @@
       hostname: cs-minio-linode-host
       ansible_ssh_host: "{{ minio_linode_instance_info.networking.ipv4.public[0].address }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-      ansible_user: "{{ linode_vm_ssh_service_user }}"
+      ansible_user: "{{ pv_cs_linode_vm_ssh_service_user }}"
       ansible_connection: ssh
       ansible_become_method: sudo
       ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"

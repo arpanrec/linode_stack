@@ -1,8 +1,8 @@
 ---
 - name: Mini0 | Linode | Current id_ed25519
   linode.cloud.ssh_key_info:
-      label: "{{ linode_ssh_key_label }}"
-      api_token: "{{ linode_api_token }}"
+      label: "{{ pv_cs_linode_ssh_key_label }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
   register: linode_existing_ssh_key_info
   failed_when: >
       linode_existing_ssh_key_info.failed
@@ -13,33 +13,33 @@
   when: >
       linode_existing_ssh_key_info.ssh_key is defined
       and
-      linode_existing_ssh_key_info.ssh_key.ssh_key != linode_ssh_key_pub
+      linode_existing_ssh_key_info.ssh_key.ssh_key != pv_cs_linode_ssh_key_pub
   linode.cloud.ssh_key:
-      label: "{{ linode_ssh_key_label }}"
-      api_token: "{{ linode_api_token }}"
+      label: "{{ pv_cs_linode_ssh_key_label }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
       state: absent
 
 - name: Mini0 | Linode | add id_ed25519 to user account
   linode.cloud.ssh_key:
-      label: "{{ linode_ssh_key_label }}"
+      label: "{{ pv_cs_linode_ssh_key_label }}"
       state: present
-      ssh_key: "{{ linode_ssh_key_pub }}"
-      api_token: "{{ linode_api_token }}"
+      ssh_key: "{{ pv_cs_linode_ssh_key_pub }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
 
 - name: Mini0 | Linode | Create Volume
   linode.cloud.volume:
-      label: "{{ minio_linode_volume_label }}"
-      region: "{{ linode_ops_region }}"
+      label: "{{ pv_cs_minio_linode_volume_label }}"
+      region: "{{ pv_cs_linode_ops_region }}"
       size: 10
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
       state: present
   register: minio_linode_volume_create
 
 - name: Mini0 | Linode | Create Mini0 Instance
   linode.cloud.instance:
-      api_token: "{{ linode_api_token }}"
-      label: "{{ minio_linode_instance_label }}"
-      region: "{{ linode_ops_region }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
+      label: "{{ pv_cs_minio_linode_instance_label }}"
+      region: "{{ pv_cs_linode_ops_region }}"
       type: g6-nanode-1
       booted: true
       boot_config_label: cs-minio-boot-config
@@ -56,7 +56,7 @@
             size: 25088
             image: linode/debian12
             authorized_keys:
-                - "{{ linode_ssh_key_pub }}"
+                - "{{ pv_cs_linode_ssh_key_pub }}"
           - label: swap
             filesystem: swap
             size: 512
@@ -77,12 +77,12 @@
   # This must be after the instance is created,
   # as it's mandatory in linode to use linode Domain we must have a linode instance
   linode.cloud.domain:
-      domain: "{{ linode_managed_domain }}"
+      domain: "{{ pv_cs_linode_managed_domain }}"
       type: master
       state: present
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
       status: active
-      soa_email: "{{ contact_email_id }}"
+      soa_email: "{{ pv_cs_contact_email_id }}"
       refresh_sec: 300
       retry_sec: 300
       ttl_sec: 300
@@ -94,28 +94,28 @@
 
 - name: Mini0 | Linode | Set A Record for Mini0
   linode.cloud.domain_record:
-      domain: "{{ linode_managed_domain }}"
-      name: "{{ minio_server_sub_domain_name }}"
+      domain: "{{ pv_cs_linode_managed_domain }}"
+      name: "{{ pv_cs_minio_server_sub_domain_name }}"
       type: "A"
       target: "{{ minio_linode_instance_public_ipv4 }}"
       state: present
       ttl_sec: 30
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
   register: minio_linode_domain_record_create
 
 - name: Mini0 | Linode | Remove old A Record for Mini0
   linode.cloud.domain_record:
-      domain: "{{ linode_managed_domain }}"
+      domain: "{{ pv_cs_linode_managed_domain }}"
       record_id: "{{ domain_record_to_be_deleted.id }}"
       state: absent
-      api_token: "{{ linode_api_token }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
   with_items: "{{ linode_domain_create.records }}"
   loop_control:
       loop_var: domain_record_to_be_deleted
   when: >
       domain_record_to_be_deleted.type == "A"
       and
-      domain_record_to_be_deleted.name == minio_server_sub_domain_name
+      domain_record_to_be_deleted.name == pv_cs_minio_server_sub_domain_name
       and
       domain_record_to_be_deleted.id != minio_linode_domain_record_create.record.id
 
@@ -124,8 +124,8 @@
   linode.cloud.ip_rdns:
       state: present
       address: "{{ minio_linode_instance_public_ipv4 }}"
-      rdns: "{{ minio_server_domain }}"
-      api_token: "{{ linode_api_token }}"
+      rdns: "{{ pv_cs_minio_server_domain }}"
+      api_token: "{{ pv_cs_linode_api_token }}"
 
 - name: Mini0 | Linode | Make Godaddy NS Record for Linode Domain
   ansible.builtin.debug:
@@ -133,30 +133,30 @@
           Once GoDaddy Rest Api Issue is resolved, this task will be uncommented
           - name: Mini0 | Linode | Make Godaddy NS Record for Linode Domain
             ansible.builtin.uri:
-                url: "https://api.godaddy.com/v1/domains/{{ godaddy_master_domain }}/records/NS/\
-                    {{ linode_manage_sub_domain_name }}"
+                url: "https://api.godaddy.com/v1/domains/{{ pv_cs_godaddy_master_domain }}/records/NS/\
+                    {{ pv_cs_linode_manage_sub_domain_name }}"
                 method: PUT
                 headers:
-                    Authorization: "sso-key {{ godaddy_api_key }}:{{ godaddy_api_secret }}"
+                    Authorization: "sso-key {{ pv_cs_godaddy_api_key }}:{{ pv_cs_godaddy_api_secret }}"
                 body_format: json
                 body:
                     - data: "ns1.linode.com"
-                      name: "{{ linode_manage_sub_domain_name }}"
+                      name: "{{ pv_cs_linode_manage_sub_domain_name }}"
                       ttl: 600
                       type: "NS"
                     - data: "ns2.linode.com"
-                      name: "{{ linode_manage_sub_domain_name }}"
+                      name: "{{ pv_cs_linode_manage_sub_domain_name }}"
                       ttl: 600
                       type: "NS"
                     - data: "ns3.linode.com"
-                      name: "{{ linode_manage_sub_domain_name }}"
+                      name: "{{ pv_cs_linode_manage_sub_domain_name }}"
                       ttl: 600
                       type: "NS"
                     - data: "ns4.linode.com"
-                      name: "{{ linode_manage_sub_domain_name }}"
+                      name: "{{ pv_cs_linode_manage_sub_domain_name }}"
                       ttl: 600
                       type: "NS"
                     - data: "ns5.linode.com"
-                      name: "{{ linode_manage_sub_domain_name }}"
+                      name: "{{ pv_cs_linode_manage_sub_domain_name }}"
                       ttl: 600
                       type: "NS"
