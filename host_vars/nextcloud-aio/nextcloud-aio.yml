@@ -8,6 +8,8 @@ ansible_ssh_private_key_file: "{{ cs_nc_vm_ssh_local_key_file }}"
 
 cs_nc_app_data_root_dir: "/app/nextcloud"
 
+cs_nc_admin_user: "admin"
+
 cs_nc_port: "8477"
 cs_nc_data_dir: "{{ cs_nc_app_data_root_dir }}/data"
 cs_nc_web_root_dir: "{{ cs_nc_app_data_root_dir }}/www"
