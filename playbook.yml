@@ -1,0 +1,37 @@
+---
+- name: Mini0
+  hosts: localhost
+  become: false
+  gather_facts: false
+  no_log: "{{ pv_global_config_no_log }}"
+  tags: never,mini0
+  tasks:
+      - name: Get BWS Secret
+        ansible.builtin.import_tasks:
+            file: tasks/secrets.yml
+      - name: Mini0
+        ansible.builtin.import_tasks:
+            file: tasks/minio.yml
+
+- name: Nextcloud
+  hosts: nextcloud-aio
+  become: false
+  become_user: root
+  gather_facts: false
+  no_log: "{{ pv_global_config_no_log }}"
+  tags: never,nextcloud
+  tasks:
+      - name: Nextcloud | Patch Cloud System | Write SSH Private Key
+        delegate_to: localhost
+        become: false
+        ansible.builtin.copy:
+            content: "{{ cs_nc_vm_ssh_priv_id_ecdsa_b64 | b64decode
+                | get_unencrypted_id_ecdsa(password=cs_nc_vm_ssh_priv_id_ecdsa_password) }}"
+            mode: "0600"
+            dest: "{{ cs_nc_vm_ssh_local_key_file }}"
+
+      - name: Nextcloud
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud.yml
