@@ -1,0 +1,119 @@
+---
+- name: Nextcloud | Dependencies | Stop old dependency containers
+  community.docker.docker_container:
+      name: "{{ item }}"
+      state: absent
+      force_kill: true
+  with_items:
+      - nextcloud-mysql
+      - nextcloud-redis
+      - nextcloud-postgres
+      - nextcloud-imaginary
+      - nextcloud-elasticsearch
+
+- name: Nextcloud | Dependencies | Create Elasticsearch Data Directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_elasticsearch_data_dir }}"
+      state: directory
+      mode: "0777"
+      owner: root
+      group: root
+      recurse: true
+
+- name: Nextcloud | Dependencies | Create Elasticsearch Container
+  community.docker.docker_container:
+      name: nextcloud-elasticsearch
+      image: "docker.io/nextcloud/aio-fulltextsearch:latest"
+      user: "1000:1000"
+      volumes:
+          - "{{ cs_nc_elasticsearch_data_dir }}:/usr/share/elasticsearch/data:rw"
+      ports:
+          - "9200:9200"
+          - "9300:9300"
+      state: started
+      restart_policy: always
+      env:
+          TZ: Asia/Kolkata
+          "discovery.type": "single-node"
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          "node.name": "es01"
+          "cluster.name": docker-cluster
+          "bootstrap.memory_lock": "true"
+          "http.port": "9200"
+          "xpack.license.self_generated.type": basic
+          "xpack.security.enabled": "false"
+          "logger.org.elasticsearch.discovery": WARN
+          ELASTIC_CONTAINER: "true"
+          FULLTEXTSEARCH_PASSWORD: "{{ cs_nc_elasticsearch_password }}"
+      ulimits:
+          - "memlock:-1:-1"
+
+- name: Nextcloud | Dependencies | Run Imaginary
+  community.docker.docker_container:
+      name: nextcloud-imaginary
+      image: "docker.io/nextcloud/aio-imaginary:latest"
+      state: started
+      restart_policy: always
+      ports:
+          - "9000:9000"
+      env:
+          TZ: "Asia/Kolkata"
+          IMAGINARY_SECRET: "{{ cs_nc_imaginary_key }}"
+          PORT: "9000"
+      command: -enable-url-source
+
+- name: Nextcloud | Dependencies | Run postgres docker
+  community.docker.docker_container:
+      name: nextcloud-postgres
+      image: docker.io/library/postgres:16.3
+      volumes:
+          - "{{ cs_nc_postgres_data_dir }}:/var/lib/postgresql/data"
+      state: started
+      ports:
+          - "5432:5432"
+      env:
+          POSTGRES_PASSWORD: "{{ cs_nc_postgres_root_password }}"
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+
+- name: Nextcloud | Dependencies | Wait for postgres to start
+  community.postgresql.postgresql_ping:
+      login_host: "127.0.0.1"
+      login_password: "{{ cs_nc_postgres_root_password }}"
+      login_user: "postgres"
+      login_port: "5432"
+  register: is_postgres_up
+  until: is_postgres_up.is_available
+  retries: 10
+  delay: 5
+
+- name: Nextcloud | Dependencies | Create postgres user
+  community.postgresql.postgresql_user:
+      name: "nextcloud"
+      password: "{{ cs_nc_postgres_password }}"
+      login_host: "127.0.0.1"
+      login_user: "postgres"
+      login_password: "{{ cs_nc_postgres_root_password }}"
+      login_port: "5432"
+
+- name: Nextcloud | Dependencies | Create postgres database
+  community.postgresql.postgresql_db:
+      name: "nextcloud"
+      state: "present"
+      owner: "nextcloud"
+      login_user: "postgres"
+      login_password: "{{ cs_nc_postgres_root_password }}"
+      login_host: "127.0.0.1"
+      login_port: "5432"
+
+- name: Nextcloud | Dependencies | Run Redis docker
+  community.docker.docker_container:
+      name: "nextcloud-redis"
+      image: "docker.io/library/redis:7.2.0"
+      state: "started"
+      restart_policy: "always"
+      volumes:
+          - "{{ cs_nc_redis_data_dir }}/redis:/data"
+      ports:
+          - "6379:6379"
+      command: redis-server --save 20 1

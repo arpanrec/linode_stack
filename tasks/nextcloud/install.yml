@@ -1,0 +1,427 @@
+---
+- name: Nextcloud | Install | Check if Nextcloud is installed
+  ansible.builtin.stat:
+      path: "{{ cs_nc_web_root_dir }}"
+  register: is_nc_installed
+
+- name: Nextcloud | Install | Download New
+  when: not is_nc_installed.stat.exists
+  block:
+      - name: Nextcloud | Install | Download New | Get Nextcloud
+        ansible.builtin.get_url:
+            url: "https://download.nextcloud.com/server/releases/nextcloud-{{ cs_nc_version }}.zip"
+            dest: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+            mode: "0644"
+
+      - name: Nextcloud | Install | Download New | Create unzip directory
+        ansible.builtin.file:
+            path: /tmp/nextcloud-{{ cs_nc_version }}
+            state: directory
+            mode: "0755"
+
+      - name: Nextcloud | Install | Download New | Unzip Nextcloud
+        ansible.builtin.unarchive:
+            src: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+            dest: "/tmp/nextcloud-{{ cs_nc_version }}"
+            remote_src: true
+            creates: "/tmp/nextcloud-{{ cs_nc_version }}/index.php"
+            mode: "0644"
+
+      - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_root_dir }}
+        ansible.builtin.copy:
+            src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"
+            dest: "{{ cs_nc_web_root_dir }}"
+            remote_src: true
+            owner: www-data
+            group: www-data
+            mode: "0755"
+
+- name: Nextcloud | Install | Remove AD
+  ansible.builtin.command:
+      cmd: truncate -s 0 {{ cs_nc_web_root_dir }}/apps/settings/templates/settings/personal/development.notice.php
+  changed_when: true
+
+- name: Nextcloud | Install | change ownership
+  ansible.builtin.file:
+      path: "{{ cs_nc_web_root_dir }}"
+      owner: www-data
+      group: www-data
+      mode: "0755"
+      recurse: true
+
+- name: Nextcloud | Install | Create data directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_data_dir }}"
+      state: directory
+      owner: www-data
+      group: www-data
+      mode: "0755"
+
+- name: Nextcloud | Install | Check if Nextcloud is installed
+  ansible.builtin.stat:
+      path: "{{ cs_nc_web_root_dir }}/config/CAN_INSTALL"
+  register: is_nc_occ_installed
+
+- name: Nextcloud | Install | Install Nextcloud for the first time
+  when: is_nc_occ_installed.stat.exists
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ maintenance:install --database 'pgsql' \
+          --database-name 'nextcloud' --database-user 'nextcloud' \
+          --database-pass '{{ cs_nc_postgres_password }}' --database-host '127.0.0.1:5432' \
+          --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}' \
+          --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Copy icons
+  ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: "0644"
+  with_items:
+      - src: files/nc-favicon.svg
+        dest: /tmp/nc-favicon.ico
+      - src: files/nc-logo.png
+        dest: /tmp/nc-logo.png
+      - src: files/nc-logoheader.png
+        dest: /tmp/nc-logoheader.png
+      - src: files/nc-background.jpg
+        dest: /tmp/nc-background.jpg
+
+- name: Nextcloud | Install | Set nextcloud config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "app:enable encryption admin_audit bruteforcesettings files_external suspicious_login twofactor_totp user_ldap"
+      - "encryption:enable"
+      - "encryption:enable-master-key"
+
+      - "config:system:set trusted_domains 0 --value={{ cs_nc_domain }}"
+      - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
+      - "config:system:set trusted_domains 2 --value=localhost"
+      - "config:system:set trusted_domains 3 --value=127.0.0.1"
+
+      - "config:system:set dbtype --value pgsql"
+      - "config:system:set dbname --value nextcloud"
+      - "config:system:set dbuser --value nextcloud"
+      - "config:system:set dbpassword --value {{ cs_nc_postgres_password }}"
+      - "config:system:set dbhost --value 127.0.0.1:5432"
+
+      - "config:system:set redis host --value 127.0.0.1"
+      - "config:system:set redis port --value 6379"
+
+      - "config:system:set memcache.local --value '\\OC\\Memcache\\APCu'"
+      - "config:system:set memcache.distributed --value '\\OC\\Memcache\\Redis'"
+      - "config:system:set memcache.locking --value '\\OC\\Memcache\\Redis'"
+
+      - "config:system:set log_type --value file"
+      - "config:system:set logfile --value '{{ cs_nc_log_file }}'"
+      - "config:system:set logfile_audit --value '{{ cs_nc_log_file }}'"
+      - "config:system:set log.condition apps 0 --value=admin_audit"
+      - "config:app:set admin_audit logfile --value={{ cs_nc_log_file }}"
+      - "config:system:set loglevel --value 2"
+      - "config:system:set logdateformat --value 'Y-m-d H:i:s'"
+      - "config:system:set logtimezone --value '{{ cs_nc_logtimezone }}'"
+      - "config:system:set default_phone_region --value '{{ cs_nc_default_phone_region }}'"
+
+      - "config:system:set maintenance_window_start --type=integer --value=1"
+
+      - "db:add-missing-indices"
+
+      - "config:system:set mail_smtpmode --value {{ cs_nc_mail_smtpmode }}"
+      - "config:system:set mail_sendmailmode --value {{ cs_nc_mail_sendmailmode }}"
+      - "config:system:set mail_smtpport --value {{ cs_nc_mail_smtpport }}"
+      - "config:system:set mail_from_address --value {{ cs_nc_mail_from_address }}"
+      - "config:system:set mail_domain --value {{ cs_nc_mail_domain }}"
+      - "config:system:set mail_smtpsecure --value {{ cs_nc_mail_smtpsecure }}"
+      - "config:system:set mail_smtpauth --value {{ cs_nc_mail_smtpauth }}"
+      - "config:system:set mail_smtphost --value {{ cs_nc_mail_smtphost }}"
+      - "config:system:set mail_smtpname --value {{ cs_nc_mail_smtpname }}"
+      - "config:system:set mail_smtppassword --value {{ cs_nc_mail_smtppassword }}"
+
+      - "config:system:set skeletondirectory --value ''"
+      - "config:system:set templatedirectory --value ''"
+
+      - "config:system:set overwriteprotocol --value https"
+      - "config:system:set overwrite.cli.url --value https://{{ cs_nc_domain }}:{{ cs_nc_port }}"
+
+      - "config:system:set default_language --value en"
+      - "config:system:set default_locale --value en_IN"
+
+      - "config:app:set theming AndroidClientUrl
+        --value 'https://play.google.com/store/apps/details?id=com.nextcloud.client'"
+      - "config:app:set theming iOSClientUrl --value 'https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8'"
+      - "config:app:set theming iTunesAppId --value '1125420102'"
+
+      - "theming:config name 'Home Server'"
+      - "theming:config slogan 'Where bytes go to retire and data parties in pajamas!'"
+      - "theming:config url 'https://{{ cs_nc_domain }}:{{ cs_nc_port }}'"
+      - "theming:config color '#2C2222'"
+      - "theming:config favicon '/tmp/nc-favicon.ico'"
+      - "theming:config logo '/tmp/nc-logo.png'"
+      - "theming:config logoheader '/tmp/nc-logoheader.png'"
+      - "theming:config background '/tmp/nc-background.jpg'"
+      - "theming:config disable-user-theming yes"
+
+      # - "twofactorauth:enforce --on --exclude=admin --exclude=daily"
+      - "twofactorauth:enforce --on --exclude=admin"
+
+      # - "config:system:set enabledPreviewProviders 1 --value='OC\\Preview\\BMP'"
+      # - "config:system:set enabledPreviewProviders 2 --value='OC\\Preview\\GIF'"
+      # - "config:system:set enabledPreviewProviders 3 --value='OC\\Preview\\JPEG'"
+      # - "config:system:set enabledPreviewProviders 4 --value='OC\\Preview\\PNG'"
+      # - "config:system:set enabledPreviewProviders 5 --value='OC\\Preview\\SVG'"
+      # - "config:system:set enabledPreviewProviders 6 --value='OC\\Preview\\HEIC'"
+      # - "config:system:set enabledPreviewProviders 7 --value='OC\\Preview\\MP3'"
+      # - "config:system:set enabledPreviewProviders 8 --value='OC\\Preview\\TXT'"
+      # - "config:system:set enabledPreviewProviders 9 --value='OC\\Preview\\MarkDown'"
+      # - "config:system:set enabledPreviewProviders 10 --value='OC\\Preview\\Movie'"
+      # - "config:system:set enabledPreviewProviders 11 --value='OC\\Preview\\PDF'"
+      # - "config:system:set enabledPreviewProviders 12 --value='OC\\Preview\\Photoshop'"
+      # - "config:system:set enabledPreviewProviders 13 --value='OC\\Preview\\Illustrator'"
+      # - "config:system:set enabledPreviewProviders 14 --value='OC\\Preview\\TIFF'"
+      # - "config:system:set enabledPreviewProviders 15 --value='OC\\Preview\\XBitmap'"
+      # - "config:system:set enabledPreviewProviders 16 --value='OC\\Preview\\XPM'"
+      # - "config:system:set enabledPreviewProviders 17 --value='OC\\Preview\\XCF'"
+      # - "config:system:set enabledPreviewProviders 18 --value='OC\\Preview\\MP4'"
+      # - "config:system:set enabledPreviewProviders 19 --value='OC\\Preview\\AVI'"
+      # - "config:system:set enabledPreviewProviders 20 --value='OC\\Preview\\MKV'"
+      # - "config:system:set enabledPreviewProviders 21 --value='OC\\Preview\\WMV'"
+      # - "config:system:set enabledPreviewProviders 22 --value='OC\\Preview\\FLV'"
+      # - "config:system:set enabledPreviewProviders 23 --value='OC\\Preview\\MOV'"
+      # - "config:system:set enabledPreviewProviders 24 --value='OC\\Preview\\WEBM'"
+      # - "config:system:set enabledPreviewProviders 25 --value='OC\\Preview\\AVIF'"
+      # - "config:system:set enabledPreviewProviders 26 --value='OC\\Preview\\WEBP'"
+      # - "config:system:set enabledPreviewProviders 27 --value='OC\\Preview\\AVIF'"
+      - "config:system:delete enabledPreviewProviders"
+      - "config:system:set preview_imaginary_url --value 'http://127.0.0.1:9000'"
+      - "config:system:set preview_imaginary_key --value '{{ cs_nc_imaginary_key }}'"
+
+- name: Nextcloud | Install | List all apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_app_list
+
+- name: Nextcloud | Install | Install app
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:install {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "files_external"
+      - "user_ldap"
+      - "admin_audit"
+      - "twofactor_totp"
+      - "encryption"
+      - "bruteforcesettings"
+      - "suspicious_login"
+      - "fulltextsearch"
+      - "files_fulltextsearch"
+      - "fulltextsearch_elasticsearch"
+  when: >
+      not
+      (
+        item in cs_nc_app_list.stdout | from_json | json_query('enabled')
+      or
+        item in cs_nc_app_list.stdout | from_json | json_query('disabled')
+      )
+
+- name: Nextcloud | Install | create nextcloud-fulltext-elasticsearch-worker
+  ansible.builtin.copy:
+      dest: /etc/systemd/system/nextcloud-fulltext-elasticsearch-worker.service
+      content: |+
+          [Unit]
+          Description=Elasticsearch Worker for Nextcloud Fulltext Search
+          After=network.target
+
+          [Service]
+          User=www-data
+          Group=www-data
+          WorkingDirectory={{ cs_nc_web_root_dir }}
+          ExecStart=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:live -q
+          ExecStop=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:stop
+          Nice=19
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+      mode: "0644"
+
+- name: Nextcloud | Install | Enable nextcloud-fulltext-elasticsearch-worker
+  ansible.builtin.systemd_service:
+      name: nextcloud-fulltext-elasticsearch-worker.service
+      enabled: true
+      state: restarted
+      daemon_reload: true
+
+- name: Nextcloud | Install | Set Apps Config
+  ansible.builtin.set_fact:
+      cs_nc_app_config:
+          apps:
+              fulltextsearch:
+                  "app_navigation": "1"
+                  enabled: "yes"
+                  search_platform: "OCA\\FullTextSearch_Elasticsearch\\Platform\\ElasticSearchPlatform"
+                  "types": ""
+              fulltextsearch_elasticsearch:
+                  enabled: "yes"
+                  elastic_host: "http://elastic:{{ cs_nc_elasticsearch_password }}@127.0.0.1:9200"
+                  elastic_index: "nextcloud"
+                  elastic_type: "file"
+                  analyzer_tokenizer: "standard"
+                  types: ""
+
+- name: Nextcloud | Install | Write Apps Config
+  ansible.builtin.copy:
+      content: "{{ cs_nc_app_config | to_nice_json }}"
+      dest: "/tmp/nc-apps-config.json"
+      mode: "0644"
+
+- name: Nextcloud | Install | Import Apps Config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ config:import /tmp/nc-apps-config.json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Create systemd unit files for nextcloud cron
+  ansible.builtin.copy:
+      dest: "{{ item.dest }}"
+      content: "{{ item.content }}"
+      mode: "0644"
+  with_items:
+      - dest: /etc/systemd/system/nextcloudcron.service
+        content: |+
+            [Unit]
+            Description=Nextcloud cron.php job
+
+            [Service]
+            User=www-data
+            ExecCondition=php -f {{ cs_nc_web_root_dir }}/occ status -e
+            ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/cron.php
+            KillMode=process
+
+      - dest: /etc/systemd/system/nextcloudcron.timer
+        content: |
+            [Unit]
+            Description=Run Nextcloud cron every 15 minutes
+
+            [Timer]
+            OnBootSec=1min
+            OnUnitActiveSec=15min
+            Unit=nextcloudcron.service
+
+            [Install]
+            WantedBy=multi-user.target
+
+- name: Nextcloud | Install | Enable systemd timmer for nextcloud cron
+  ansible.builtin.systemd_service:
+      name: nextcloudcron.timer
+      enabled: true
+      state: restarted
+      daemon_reload: true
+
+- name: Nextcloud | Install | Get all users
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  register: cs_nc_user_list
+  changed_when: false
+
+- name: Nextcloud | Install | Create Admin User if not exists
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:add --password-from-env --group='admin' --display-name='nc-admin-{{ cs_nc_admin_user }}'
+          --email='{{ cs_nc_mail_smtpname }}' '{{ cs_nc_admin_user }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  environment:
+      OC_PASS: "{{ cs_nc_admin_password }}"
+  changed_when: true
+  when: "cs_nc_admin_user not in cs_nc_user_list.stdout | from_json"
+
+- name: Nextcloud | Install | Get all users in admin group
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  register: cs_nc_group_list
+  changed_when: false
+
+- name: Nextcloud | Install | Disable all admin users
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:disable {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  with_items: "{{ cs_nc_group_list.stdout | from_json | json_query('admin') }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Set admin user properties
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  register: cs_nc_group_list
+  changed_when: true
+  with_items:
+      - "user:setting {{ cs_nc_admin_user }} settings email {{ cs_nc_mail_smtpname }}"
+      - "user:setting {{ cs_nc_admin_user }} core lang en"
+      - "twofactorauth:disable {{ cs_nc_admin_user }} totp"
+      - "user:enable {{ cs_nc_admin_user }}"
+
+- name: Nextcloud | Install | Reset admin user password
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "user:resetpassword {{ cs_nc_admin_user }} --password-from-env"
+  environment:
+      OC_PASS: "{{ cs_nc_admin_password }}"
+
+- name: Nextcloud | Install | Get admin user info
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:info {{ cs_nc_admin_user }} --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_admin_info
+
+- name: Nextcloud | Install | Set admin user display_name
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:setting {{ cs_nc_admin_user }} settings display_name 'nc-admin-{{ cs_nc_admin_user }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  when: "'nc-admin-'+cs_nc_admin_user != cs_nc_admin_info.stdout | from_json | json_query('display_name')"
+
+- name: Nextcloud | Install | Add user to admin group
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:adduser admin {{ cs_nc_admin_user }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  when: "'admin' not in cs_nc_admin_info.stdout | from_json | json_query('groups')"

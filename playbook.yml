@@ -1,9 +1,23 @@
 ---
+- name: Access Key
+  hosts: localhost
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tags: always
+  tasks:
+      - name: Access Key | Write SSH Private Key
+        ansible.builtin.copy:
+            content: "{{ cs_vm_ssh_priv_id_ecdsa_b64 | b64decode
+                | get_unencrypted_id_ecdsa(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
+            mode: "0600"
+            dest: "{{ cs_vm_ssh_local_key_file }}"
+
 - name: Mini0
   hosts: localhost
   become: false
   gather_facts: false
-  no_log: "{{ pv_global_config_no_log }}"
+  no_log: "{{ cs_no_log }}"
   tags: never,mini0
   tasks:
       - name: Get BWS Secret
@@ -15,23 +29,32 @@
 
 - name: Nextcloud
   hosts: nextcloud-aio
-  become: false
+  become: true
   become_user: root
-  gather_facts: false
-  no_log: "{{ pv_global_config_no_log }}"
-  tags: never,nextcloud
+  gather_facts: true
+  no_log: "{{ cs_no_log }}"
   tasks:
-      - name: Nextcloud | Patch Cloud System | Write SSH Private Key
-        delegate_to: localhost
-        become: false
-        ansible.builtin.copy:
-            content: "{{ cs_nc_vm_ssh_priv_id_ecdsa_b64 | b64decode
-                | get_unencrypted_id_ecdsa(password=cs_nc_vm_ssh_priv_id_ecdsa_password) }}"
-            mode: "0600"
-            dest: "{{ cs_nc_vm_ssh_local_key_file }}"
-
-      - name: Nextcloud
-        become: true
-        become_user: root
+      - name: Patch Cloud System
+        tags: never,nextcloud_patch
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud.yml
+            file: tasks/patch.yml
+
+      - name: Nextcloud | Prepare
+        tags: never,nextcloud_prepare
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/prepare.yml
+
+      - name: Nextcloud | Dependencies
+        tags: never,nextcloud_dependencies
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/dependencies.yml
+
+      - name: Nextcloud | Install
+        tags: never,nextcloud_install
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/install.yml
+
+      - name: Nextcloud | Post Install
+        tags: never,nextcloud_post_install,nextcloud_install
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/post-install.yml

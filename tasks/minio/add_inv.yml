@@ -46,7 +46,7 @@
       hostname: cs-minio-linode-host
       ansible_ssh_host: "{{ minio_linode_instance_info.networking.ipv4.public[0].address }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-      ansible_user: "{{ pv_cs_linode_vm_ssh_service_user }}"
+      ansible_user: "{{ cs_vm_ssh_service_user_id }}"
       ansible_connection: ssh
       ansible_become_method: sudo
       ansible_ssh_private_key_file: "{{ ssh_key_file_temp.path }}"

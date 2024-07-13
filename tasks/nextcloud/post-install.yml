@@ -1,0 +1,16 @@
+---
+- name: Nextcloud | Post Install | Enable required systemd services
+  ansible.builtin.systemd_service:
+      name: "{{ item }}"
+      enabled: true
+      state: restarted
+      daemon_reload: true
+  with_items:
+      - apache2
+      - php{{ cs_nc_php_version }}-fpm
+
+- name: Nextcloud | Post Install | Enable UFW port
+  community.general.ufw:
+      rule: allow
+      port: "{{ cs_nc_port }}"
+      state: enabled

@@ -291,4 +291,3 @@ dist
 .vscode/settings.json
 /vault_config/*
 /tmp/*
-host_vars/nextcloud-aio/secrets.yml
