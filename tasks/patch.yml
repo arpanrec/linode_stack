@@ -1,6 +1,5 @@
 ---
 - name: Patch Cloud System | Linux Patching
-  when: false
   ansible.builtin.import_role:
       name: arpanrec.nebula.linux_patching
   vars:

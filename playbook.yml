@@ -35,26 +35,26 @@
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Patch Cloud System
-        tags: never,nextcloud_patch
+        tags: never,nextcloud,nextcloud_patch
         ansible.builtin.import_tasks:
             file: tasks/patch.yml
 
       - name: Nextcloud | Prepare
-        tags: never,nextcloud_prepare
+        tags: never,nextcloud,nextcloud_prepare
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/prepare.yml
 
       - name: Nextcloud | Dependencies
-        tags: never,nextcloud_dependencies
+        tags: never,nextcloud,nextcloud_dependencies
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/dependencies.yml
 
       - name: Nextcloud | Install
-        tags: never,nextcloud_install
+        tags: never,nextcloud,nextcloud_install
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/install.yml
 
       - name: Nextcloud | Post Install
-        tags: never,nextcloud_post_install,nextcloud_install
+        tags: never,nextcloud,nextcloud_post_install,nextcloud_install
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/post-install.yml
