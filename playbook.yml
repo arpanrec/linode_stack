@@ -54,6 +54,21 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/install.yml
 
+      - name: Nextcloud | Users
+        tags: never,nextcloud,nextcloud_users
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/users.yml
+
+      - name: Nextcloud | Imaginary
+        tags: never,nextcloud,nextcloud_imaginary
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/imaginary.yml
+
+      - name: Nextcloud | Full Text Search
+        tags: never,nextcloud,nextcloud_fulltextsearch
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/fulltextsearch.yml
+
       - name: Nextcloud | Post Install
         tags: never,nextcloud,nextcloud_post_install,nextcloud_install
         ansible.builtin.import_tasks:
