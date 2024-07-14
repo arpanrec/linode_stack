@@ -1,5 +1,4 @@
 ---
-
 - name: Nextcloud | Prepare | Install Packages
   ansible.builtin.apt:
       state: present
@@ -30,19 +29,19 @@
       - "PS"
       - "PS3"
 
-- name: Nextcloud | Prepare | Enable memcache.distributed
+- name: Nextcloud | Prepare | Enable Local Memcached
   ansible.builtin.systemd_service:
       name: memcached
       enabled: true
       state: started
 
-- name: Nextcloud | Prepare | Download php key
+- name: Nextcloud | Prepare | Download Debian PHP Repository gpg key
   ansible.builtin.get_url:
       url: "https://packages.sury.org/php/apt.gpg"
       dest: "/etc/apt/trusted.gpg.d/php.gpg"
       mode: "0644"
 
-- name: Nextcloud | Prepare | Add php repo
+- name: Nextcloud | Prepare | Add PHP Repository
   ansible.builtin.apt_repository:
       repo: "deb [signed-by=/etc/apt/trusted.gpg.d/php.gpg] https://packages.sury.org/php/
           {{ ansible_distribution_release }} main"
@@ -50,7 +49,7 @@
       filename: "php"
       update_cache: true
 
-- name: Nextcloud | Prepare | Install php
+- name: Nextcloud | Prepare | Install php packages for {{ cs_nc_php_version }}
   ansible.builtin.apt:
       name:
           - php{{ cs_nc_php_version }}
@@ -89,7 +88,7 @@
           - apache2-utils
           - libapache2-mod-php{{ cs_nc_php_version }}
 
-- name: Nextcloud | Prepare | PHP ini config
+- name: Nextcloud | Prepare | Change PHP ini settings
   community.general.ini_file:
       path: "{{ item.path }}"
       section: "{{ item.section | default('') }}"
@@ -171,7 +170,7 @@
         option: opcache.memory_consumption
         value: 256
 
-- name: Nextcloud | Prepare | Enable php fpm
+- name: Nextcloud | Prepare | Enable php fpm as a service and restart
   ansible.builtin.systemd_service:
       name: php{{ cs_nc_php_version }}-fpm
       enabled: true
@@ -183,7 +182,7 @@
       state: directory
       mode: "0755"
 
-- name: Nextcloud | Prepare | Copy certs
+- name: Nextcloud | Prepare | Copy SSL Certificates
   ansible.builtin.copy:
       content: "{{ item.content | b64decode }}"
       dest: "/etc/ssl/{{ cs_nc_domain }}/{{ item.dest }}"
@@ -215,12 +214,12 @@
       - ssl
       - socache_shmcb
 
-- name: Nextcloud | Prepare | Enable Apache2 config
+- name: Nextcloud | Prepare | Enable Apache2 config for PHP
   ansible.builtin.command:
       cmd: a2enconf php{{ cs_nc_php_version }}-fpm
   changed_when: true
 
-- name: Nextcloud | Prepare | Enable Apache2 sites
+- name: Nextcloud | Prepare | Enable Apache2 site for Nextcloud and SSL
   ansible.builtin.command:
       cmd: a2ensite default-ssl nextcloud
   changed_when: true

@@ -1,15 +1,14 @@
 ---
-- name: Nextcloud | Dependencies | Stop old dependency containers
+- name: Nextcloud | Database | Stop old dependency containers
   community.docker.docker_container:
       name: "{{ item }}"
       state: absent
       force_kill: true
   with_items:
       - nextcloud-mysql
-      - nextcloud-redis
       - nextcloud-postgres
 
-- name: Nextcloud | Dependencies | Run postgres docker
+- name: Nextcloud | Database | Run postgres docker
   community.docker.docker_container:
       name: nextcloud-postgres
       image: docker.io/library/postgres:16.3
@@ -23,7 +22,7 @@
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
 
-- name: Nextcloud | Dependencies | Wait for postgres to start
+- name: Nextcloud | Database | Wait for postgres to start
   community.postgresql.postgresql_ping:
       login_host: "127.0.0.1"
       login_password: "{{ cs_nc_postgres_root_password }}"
@@ -34,7 +33,7 @@
   retries: 10
   delay: 5
 
-- name: Nextcloud | Dependencies | Create postgres user
+- name: Nextcloud | Database | Create postgres user
   community.postgresql.postgresql_user:
       name: "nextcloud"
       password: "{{ cs_nc_postgres_password }}"
@@ -43,7 +42,7 @@
       login_password: "{{ cs_nc_postgres_root_password }}"
       login_port: "5432"
 
-- name: Nextcloud | Dependencies | Create postgres database
+- name: Nextcloud | Database | Create postgres database
   community.postgresql.postgresql_db:
       name: "nextcloud"
       state: "present"
@@ -52,15 +51,3 @@
       login_password: "{{ cs_nc_postgres_root_password }}"
       login_host: "127.0.0.1"
       login_port: "5432"
-
-- name: Nextcloud | Dependencies | Run Redis docker
-  community.docker.docker_container:
-      name: "nextcloud-redis"
-      image: "docker.io/library/redis:7.2.0"
-      state: "started"
-      restart_policy: "always"
-      volumes:
-          - "{{ cs_nc_redis_data_dir }}/redis:/data"
-      ports:
-          - "6379:6379"
-      command: redis-server --save 20 1

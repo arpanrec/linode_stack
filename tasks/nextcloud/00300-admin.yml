@@ -1,5 +1,5 @@
 ---
-- name: Nextcloud | Users | Get all users
+- name: Nextcloud | Admin | Get all users
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -8,7 +8,7 @@
   register: cs_nc_user_list
   changed_when: false
 
-- name: Nextcloud | Users | Create Admin User if not exists
+- name: Nextcloud | Admin | Create Admin User if not exists
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -20,7 +20,7 @@
   changed_when: true
   when: "cs_nc_admin_user not in cs_nc_user_list.stdout | from_json"
 
-- name: Nextcloud | Users | Get all users in admin group
+- name: Nextcloud | Admin | Get all users in admin group
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -29,7 +29,7 @@
   register: cs_nc_group_list
   changed_when: false
 
-- name: Nextcloud | Users | Disable all admin users
+- name: Nextcloud | Admin | Disable all admin users
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -38,7 +38,7 @@
   with_items: "{{ cs_nc_group_list.stdout | from_json | json_query('admin') }}"
   changed_when: true
 
-- name: Nextcloud | Users | Set admin user properties
+- name: Nextcloud | Admin | Set admin user properties
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -52,7 +52,7 @@
       - "twofactorauth:disable {{ cs_nc_admin_user }} totp"
       - "user:enable {{ cs_nc_admin_user }}"
 
-- name: Nextcloud | Users | Reset admin user password
+- name: Nextcloud | Admin | Reset admin user password
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -64,7 +64,7 @@
   environment:
       OC_PASS: "{{ cs_nc_admin_password }}"
 
-- name: Nextcloud | Users | Get admin user info
+- name: Nextcloud | Admin | Get admin user info
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -73,7 +73,7 @@
   changed_when: false
   register: cs_nc_admin_info
 
-- name: Nextcloud | Users | Set admin user display_name
+- name: Nextcloud | Admin | Set admin user display_name
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -82,7 +82,7 @@
   changed_when: true
   when: "'nc-admin-'+cs_nc_admin_user != cs_nc_admin_info.stdout | from_json | json_query('display_name')"
 
-- name: Nextcloud | Users | Add user to admin group
+- name: Nextcloud | Admin | Add user to admin group
   become: true
   become_user: www-data
   ansible.builtin.command:

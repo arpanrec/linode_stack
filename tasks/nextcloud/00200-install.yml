@@ -90,7 +90,7 @@
       - src: files/nc-background.jpg
         dest: /tmp/nc-background.jpg
 
-- name: Nextcloud | Install | Set nextcloud config
+- name: Nextcloud | Install | Enable encryption
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -102,24 +102,43 @@
       - "encryption:enable"
       - "encryption:enable-master-key"
 
+- name: Nextcloud | Install | Set Trusted Domains
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
       - "config:system:set trusted_domains 0 --value={{ cs_nc_domain }}"
       - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
       - "config:system:set trusted_domains 2 --value=localhost"
       - "config:system:set trusted_domains 3 --value=127.0.0.1"
 
+- name: Nextcloud | Install | Set Database Password
+  become: true
+  when: false
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
       - "config:system:set dbtype --value pgsql"
       - "config:system:set dbname --value nextcloud"
       - "config:system:set dbuser --value nextcloud"
       - "config:system:set dbpassword --value {{ cs_nc_postgres_password }}"
       - "config:system:set dbhost --value 127.0.0.1:5432"
+      - "db:add-missing-indices"
 
-      - "config:system:set redis host --value 127.0.0.1"
-      - "config:system:set redis port --value 6379"
-
-      - "config:system:set memcache.local --value '\\OC\\Memcache\\APCu'"
-      - "config:system:set memcache.distributed --value '\\OC\\Memcache\\Redis'"
-      - "config:system:set memcache.locking --value '\\OC\\Memcache\\Redis'"
-
+- name: Nextcloud | Install | Set log config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
       - "config:system:set log_type --value file"
       - "config:system:set logfile --value '{{ cs_nc_log_file }}'"
       - "config:system:set logfile_audit --value '{{ cs_nc_log_file }}'"
@@ -127,13 +146,28 @@
       - "config:app:set admin_audit logfile --value={{ cs_nc_log_file }}"
       - "config:system:set loglevel --value 2"
       - "config:system:set logdateformat --value 'Y-m-d H:i:s'"
+
+- name: Nextcloud | Install | Set locals
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
       - "config:system:set logtimezone --value '{{ cs_nc_logtimezone }}'"
       - "config:system:set default_phone_region --value '{{ cs_nc_default_phone_region }}'"
+      - "config:system:set default_language --value en"
+      - "config:system:set default_locale --value en_IN"
 
-      - "config:system:set maintenance_window_start --type=integer --value=1"
-
-      - "db:add-missing-indices"
-
+- name: Nextcloud | Install | Set email config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
       - "config:system:set mail_smtpmode --value {{ cs_nc_mail_smtpmode }}"
       - "config:system:set mail_sendmailmode --value {{ cs_nc_mail_sendmailmode }}"
       - "config:system:set mail_smtpport --value {{ cs_nc_mail_smtpport }}"
@@ -145,20 +179,38 @@
       - "config:system:set mail_smtpname --value {{ cs_nc_mail_smtpname }}"
       - "config:system:set mail_smtppassword --value {{ cs_nc_mail_smtppassword }}"
 
+- name: Nextcloud | Install | Set nextcloud config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set maintenance_window_start --type=integer --value=1"
+
       - "config:system:set skeletondirectory --value ''"
       - "config:system:set templatedirectory --value ''"
 
       - "config:system:set overwriteprotocol --value https"
       - "config:system:set overwrite.cli.url --value https://{{ cs_nc_domain }}:{{ cs_nc_port }}"
 
-      - "config:system:set default_language --value en"
-      - "config:system:set default_locale --value en_IN"
-
       - "config:app:set theming AndroidClientUrl
         --value 'https://play.google.com/store/apps/details?id=com.nextcloud.client'"
       - "config:app:set theming iOSClientUrl --value 'https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8'"
       - "config:app:set theming iTunesAppId --value '1125420102'"
 
+      # - "twofactorauth:enforce --on --exclude=admin --exclude=daily"
+      - "twofactorauth:enforce --on --exclude=admin"
+
+- name: Nextcloud | Install | Set theming
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
       - "theming:config name 'Home Server'"
       - "theming:config slogan 'Where bytes go to retire and data parties in pajamas!'"
       - "theming:config url 'https://{{ cs_nc_domain }}:{{ cs_nc_port }}'"
@@ -168,9 +220,6 @@
       - "theming:config logoheader '/tmp/nc-logoheader.png'"
       - "theming:config background '/tmp/nc-background.jpg'"
       - "theming:config disable-user-theming yes"
-
-      # - "twofactorauth:enforce --on --exclude=admin --exclude=daily"
-      - "twofactorauth:enforce --on --exclude=admin"
 
 - name: Nextcloud | Install | List all apps
   become: true

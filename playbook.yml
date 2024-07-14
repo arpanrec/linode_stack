@@ -42,34 +42,39 @@
       - name: Nextcloud | Prepare
         tags: never,nextcloud,nextcloud_prepare
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/prepare.yml
+            file: tasks/nextcloud/00000-prepare.yml
 
-      - name: Nextcloud | Dependencies
-        tags: never,nextcloud,nextcloud_dependencies
+      - name: Nextcloud | Database
+        tags: never,nextcloud,nextcloud_database
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/dependencies.yml
+            file: tasks/nextcloud/00100-db.yml
 
       - name: Nextcloud | Install
         tags: never,nextcloud,nextcloud_install
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/install.yml
+            file: tasks/nextcloud/00200-install.yml
 
-      - name: Nextcloud | Users
-        tags: never,nextcloud,nextcloud_users
+      - name: Nextcloud | Admin
+        tags: never,nextcloud,nextcloud_admin
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/users.yml
+            file: tasks/nextcloud/00300-admin.yml
+
+      - name: Nextcloud | Cache
+        tags: never,nextcloud,nextcloud_cache
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/00400-cache.yml
 
       - name: Nextcloud | Imaginary
         tags: never,nextcloud,nextcloud_imaginary
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/imaginary.yml
+            file: tasks/nextcloud/00500-imaginary.yml
 
       - name: Nextcloud | Full Text Search
         tags: never,nextcloud,nextcloud_fulltextsearch
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/fulltextsearch.yml
+            file: tasks/nextcloud/00600-fulltextsearch.yml
 
       - name: Nextcloud | Post Install
         tags: never,nextcloud,nextcloud_post_install,nextcloud_install
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/post-install.yml
+            file: tasks/nextcloud/99999-post-install.yml
