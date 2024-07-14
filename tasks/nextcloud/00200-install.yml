@@ -141,7 +141,6 @@
 
 - name: Nextcloud | Install | Add missing indices
   become: true
-  when: false
   become_user: www-data
   ansible.builtin.command:
       cmd: "php occ db:add-missing-indices"
