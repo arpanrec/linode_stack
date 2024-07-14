@@ -42,6 +42,18 @@
       ulimits:
           - "memlock:-1:-1"
 
+- name: Nextcloud | Full Text Search | Wait for Elasticsearch to start
+  ansible.builtin.uri:
+      url: "http://elastic:{{ cs_nc_elasticsearch_password }}@127.0.0.1:9200"
+      method: GET
+      status_code: [200]
+      timeout: 3
+      return_content: true
+  register: cs_nc_elasticsearch_status
+  until: cs_nc_elasticsearch_status.status == 200
+  retries: 30
+  delay: 3
+
 - name: Nextcloud | Full Text Search | List all apps
   become: true
   become_user: www-data
@@ -83,6 +95,7 @@
           Group=www-data
           Type=simple
           WorkingDirectory={{ cs_nc_web_root_dir }}
+          ExecStartPre=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:index
           ExecStart=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:live -q
           ExecStop=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:stop
           Nice=19
@@ -91,13 +104,6 @@
           [Install]
           WantedBy=multi-user.target
       mode: "0644"
-
-- name: Nextcloud | Full Text Search | Enable nextcloud-fulltext-elasticsearch-worker
-  ansible.builtin.systemd_service:
-      name: nextcloud-fulltext-elasticsearch-worker.service
-      enabled: true
-      state: restarted
-      daemon_reload: true
 
 - name: Nextcloud | Full Text Search | Set Apps Config
   ansible.builtin.set_fact:
@@ -129,3 +135,10 @@
       cmd: "php occ config:import /tmp/nc-apps-config.json"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
+
+- name: Nextcloud | Full Text Search | Start nextcloud-fulltext-elasticsearch-worker
+  ansible.builtin.systemd_service:
+      name: nextcloud-fulltext-elasticsearch-worker.service
+      enabled: true
+      state: restarted
+      daemon_reload: true
