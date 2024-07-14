@@ -57,6 +57,21 @@
       group: www-data
       mode: "0755"
 
+- name: Nextcloud | Install | Copy icons
+  ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: "0644"
+  with_items:
+      - src: files/nc-favicon.svg
+        dest: /tmp/nc-favicon.ico
+      - src: files/nc-logo.png
+        dest: /tmp/nc-logo.png
+      - src: files/nc-logoheader.png
+        dest: /tmp/nc-logoheader.png
+      - src: files/nc-background.jpg
+        dest: /tmp/nc-background.jpg
+
 - name: Nextcloud | Install | Check if Nextcloud is installed
   ansible.builtin.stat:
       path: "{{ cs_nc_web_root_dir }}/config/CAN_INSTALL"
@@ -75,20 +90,14 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
 
-- name: Nextcloud | Install | Copy icons
-  ansible.builtin.copy:
-      src: "{{ item.src }}"
-      dest: "{{ item.dest }}"
-      mode: "0644"
-  with_items:
-      - src: files/nc-favicon.svg
-        dest: /tmp/nc-favicon.ico
-      - src: files/nc-logo.png
-        dest: /tmp/nc-logo.png
-      - src: files/nc-logoheader.png
-        dest: /tmp/nc-logoheader.png
-      - src: files/nc-background.jpg
-        dest: /tmp/nc-background.jpg
+- name: Nextcloud | Install | Enable Featured Apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:enable encryption admin_audit bruteforcesettings files_external suspicious_login
+          twofactor_totp user_ldap"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
 
 - name: Nextcloud | Install | Enable encryption
   become: true
@@ -129,7 +138,15 @@
       - "config:system:set dbuser --value nextcloud"
       - "config:system:set dbpassword --value {{ cs_nc_postgres_password }}"
       - "config:system:set dbhost --value 127.0.0.1:5432"
-      - "db:add-missing-indices"
+
+- name: Nextcloud | Install | Add missing indices
+  become: true
+  when: false
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ db:add-missing-indices"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
 
 - name: Nextcloud | Install | Set log config
   become: true
@@ -189,19 +206,19 @@
   with_items:
       - "config:system:set maintenance_window_start --type=integer --value=1"
 
-      - "config:system:set skeletondirectory --value ''"
-      - "config:system:set templatedirectory --value ''"
-
       - "config:system:set overwriteprotocol --value https"
       - "config:system:set overwrite.cli.url --value https://{{ cs_nc_domain }}:{{ cs_nc_port }}"
 
-      - "config:app:set theming AndroidClientUrl
-        --value 'https://play.google.com/store/apps/details?id=com.nextcloud.client'"
-      - "config:app:set theming iOSClientUrl --value 'https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8'"
-      - "config:app:set theming iTunesAppId --value '1125420102'"
-
-      # - "twofactorauth:enforce --on --exclude=admin --exclude=daily"
-      - "twofactorauth:enforce --on --exclude=admin"
+- name: Nextcloud | Install | Remove default skeleton and template directories
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set skeletondirectory --value ''"
+      - "config:system:set templatedirectory --value ''"
 
 - name: Nextcloud | Install | Set theming
   become: true
@@ -221,14 +238,18 @@
       - "theming:config background '/tmp/nc-background.jpg'"
       - "theming:config disable-user-theming yes"
 
-- name: Nextcloud | Install | List all apps
+- name: Nextcloud | Install | Set theming for client apps
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ app:list --output=json"
+      cmd: "php occ {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"
-  changed_when: false
-  register: cs_nc_app_list
+  changed_when: true
+  with_items:
+      - "config:app:set theming AndroidClientUrl
+        --value 'https://play.google.com/store/apps/details?id=com.nextcloud.client'"
+      - "config:app:set theming iOSClientUrl --value 'https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8'"
+      - "config:app:set theming iTunesAppId --value '1125420102'"
 
 - name: Nextcloud | Install | Create systemd unit files for nextcloud cron
   ansible.builtin.copy:

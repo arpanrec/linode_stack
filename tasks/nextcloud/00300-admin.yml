@@ -1,4 +1,15 @@
 ---
+- name: Nextcloud | Admin | Disable twofactorauth for admin group
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      # - "twofactorauth:enforce --on --exclude=admin --exclude=daily"
+      - "twofactorauth:enforce --on --exclude=admin"
+
 - name: Nextcloud | Admin | Get all users
   become: true
   become_user: www-data

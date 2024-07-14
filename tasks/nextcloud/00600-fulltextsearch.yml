@@ -42,6 +42,15 @@
       ulimits:
           - "memlock:-1:-1"
 
+- name: Nextcloud | Full Text Search | List all apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_app_list
+
 - name: Nextcloud | Full Text Search | Install apps
   become: true
   become_user: www-data

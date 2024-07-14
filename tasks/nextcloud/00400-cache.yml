@@ -1,11 +1,11 @@
 ---
-- name: Nextcloud | Dependencies | Stop old dependency containers
+- name: Nextcloud | Cache | Stop old dependency containers
   community.docker.docker_container:
       name: "nextcloud-redis"
       state: absent
       force_kill: true
 
-- name: Nextcloud | Dependencies | Run Redis docker
+- name: Nextcloud | Cache | Run Redis docker
   community.docker.docker_container:
       name: "nextcloud-redis"
       image: "docker.io/library/redis:7.2.0"
@@ -17,7 +17,7 @@
           - "6379:6379"
       command: redis-server --save 20 1
 
-- name: Nextcloud | Dependencies | Set nextcloud config
+- name: Nextcloud | Cache | Set nextcloud config
   become: true
   become_user: www-data
   ansible.builtin.command:
