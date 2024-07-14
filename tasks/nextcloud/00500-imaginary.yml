@@ -39,3 +39,6 @@
       - "config:system:set enable_previews --value true"
       - "config:system:set preview_imaginary_url --value 'http://127.0.0.1:9000'"
       - "config:system:set preview_imaginary_key --value '{{ cs_nc_imaginary_key }}'"
+      - "config:system:set preview_max_x --value 2048"
+      - "config:system:set preview_max_y --value 2048"
+      - "config:system:set jpeg_quality --value 60"
