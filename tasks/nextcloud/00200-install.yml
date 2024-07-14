@@ -158,6 +158,7 @@
       - "config:system:set logfile --value '{{ cs_nc_log_file }}'"
       - "config:system:set logfile_audit --value '{{ cs_nc_log_file }}'"
       - "config:system:set log.condition apps 0 --value=admin_audit"
+      - "config:system:set log_rotate_size --value 10485760"
       - "config:app:set admin_audit logfile --value={{ cs_nc_log_file }}"
       - "config:system:set loglevel --value 2"
       - "config:system:set logdateformat --value 'Y-m-d H:i:s'"
@@ -202,10 +203,20 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   with_items:
-      - "config:system:set maintenance_window_start --type=integer --value=1"
+      - "config:system:set maintenance_window_start --type=integer --value=100"
 
-      - "config:system:set overwriteprotocol --value https"
       - "config:system:set overwrite.cli.url --value https://{{ cs_nc_domain }}:{{ cs_nc_port }}"
+      - "config:system:set overwritehost --value {{ cs_nc_domain }}:{{ cs_nc_port }}"
+      - "config:system:set overwriteprotocol --value https"
+      - "config:system:set htaccess.RewriteBase --value /"
+
+- name: Nextcloud | Install | Maintenance Update htaccess
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ maintenance:update:htaccess"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
 
 - name: Nextcloud | Install | Remove default skeleton and template directories
   become: true
