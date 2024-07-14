@@ -107,7 +107,6 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   with_items:
-      - "app:enable encryption admin_audit bruteforcesettings files_external suspicious_login twofactor_totp user_ldap"
       - "encryption:enable"
       - "encryption:enable-master-key"
 
