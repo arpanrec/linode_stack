@@ -44,6 +44,11 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/00000-prepare.yml
 
+      - name: Nextcloud | Mount Disk
+        tags: never,nextcloud,nextcloud_mount
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/00010-mount.yml
+
       - name: Nextcloud | Database
         tags: never,nextcloud,nextcloud_database
         ansible.builtin.import_tasks:
