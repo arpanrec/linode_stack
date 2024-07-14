@@ -1,15 +1,8 @@
 ---
-- name: Patch Cloud System | Linux Patching
-  ansible.builtin.import_role:
-      name: arpanrec.nebula.linux_patching
-  vars:
-      linux_patching_rv_install_devel_packages: true
-
-- name: Patch Cloud System | Make sure zsh is installed
-  ansible.builtin.apt:
-      name: zsh
+- name: Patch Cloud System | Create wheel group
+  ansible.builtin.group:
+      name: wheel
       state: present
-      update_cache: true
 
 - name: Patch Cloud System | Create ssh user
   when: cs_vm_ssh_service_user_id != "root"
@@ -22,6 +15,18 @@
       user_add_rv_ssh_access_public_key_content_list:
           - "{{ cs_vm_ssh_priv_id_ecdsa_b64 | b64decode
             | get_encrypted_id_ecdsa_pub_key(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
+
+- name: Patch Cloud System | Linux Patching
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.linux_patching
+  vars:
+      linux_patching_rv_install_devel_packages: true
+
+- name: Patch Cloud System | Make sure zsh is installed
+  ansible.builtin.apt:
+      name: zsh
+      state: present
+      update_cache: true
 
 - name: Patch Cloud System | Fail if service user is root
   ansible.builtin.fail:
