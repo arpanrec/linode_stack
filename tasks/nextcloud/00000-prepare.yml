@@ -11,6 +11,7 @@
           - python3-mysqldb
           - python3-lxml
           - python3-psycopg2
+          - python3-requests
           - memcached
           - libmagickcore-6.q16-6-extra
 
