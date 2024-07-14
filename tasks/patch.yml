@@ -4,6 +4,12 @@
       name: wheel
       state: present
 
+- name: Patch Cloud System | Make sure zsh is installed
+  ansible.builtin.apt:
+      name: zsh
+      state: present
+      update_cache: true
+
 - name: Patch Cloud System | Create ssh user
   when: cs_vm_ssh_service_user_id != "root"
   ansible.builtin.import_role:
@@ -21,12 +27,6 @@
       name: arpanrec.nebula.linux_patching
   vars:
       linux_patching_rv_install_devel_packages: true
-
-- name: Patch Cloud System | Make sure zsh is installed
-  ansible.builtin.apt:
-      name: zsh
-      state: present
-      update_cache: true
 
 - name: Patch Cloud System | Fail if service user is root
   ansible.builtin.fail:
