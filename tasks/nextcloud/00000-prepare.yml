@@ -196,7 +196,7 @@
 
 - name: Nextcloud | Prepare | Create Apache2 config
   ansible.builtin.template:
-      src: templates/apache-nc-conf.js
+      src: templates/apache-nc-conf.j2
       dest: "/etc/apache2/sites-available/nextcloud.conf"
       mode: "0644"
 
