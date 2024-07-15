@@ -35,13 +35,13 @@
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Calculate Nextcloud Protocol cs_nc_protocol
-        tags: always
+        tags: never,nextcloud,nextcloud_prepare,nextcloud_install
         ansible.builtin.set_fact:
             cs_nc_protocol: "{{ (cs_nc_full_chain_b64 is defined and cs_nc_priv_key_b64 is defined)
                 | ternary('https', 'http') }}"
 
       - name: Nextcloud | Test cs_nc_protocol
-        tags: always
+        tags: never,nextcloud,nextcloud_prepare,nextcloud_install
         ansible.builtin.assert:
             that:
                 - "cs_nc_protocol in ['http', 'https']"
