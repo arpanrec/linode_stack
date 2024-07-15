@@ -17,7 +17,7 @@
       state: "started"
       networks:
           - name: "nextcloud"
-      restart_policy: "always"
+      restart_policy: "unless-stopped"
       volumes:
           - "{{ cs_nc_redis_data_dir }}/redis:/data"
       ports:

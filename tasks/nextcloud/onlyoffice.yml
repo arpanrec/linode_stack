@@ -26,7 +26,7 @@
       state: started
       ports:
           - "{{ cs_nc_onlyoffice_port }}:443"
-      restart_policy: always
+      restart_policy: unless-stopped
       env:
           JWT_SECRET: "{{ cs_nc_onlyoffice_jwt_secret }}"
           SSL_KEY_PATH: "/priv.key"

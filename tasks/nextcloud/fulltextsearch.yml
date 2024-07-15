@@ -36,7 +36,7 @@
           - "9200:9200"
           - "9300:9300"
       state: started
-      restart_policy: always
+      restart_policy: unless-stopped
       env:
           TZ: Asia/Kolkata
           "discovery.type": "single-node"

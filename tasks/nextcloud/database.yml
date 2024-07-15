@@ -18,6 +18,7 @@
   community.docker.docker_container:
       name: nextcloud-postgres
       image: docker.io/library/postgres:16.3
+      restart_policy: unless-stopped
       networks:
           - name: nextcloud
       volumes:
@@ -136,6 +137,7 @@
       name: nextcloud-pgadmin
       image: docker.io/dpage/pgadmin4:8.9
       user: "5050:5050"
+      restart_policy: unless-stopped
       networks:
           - name: nextcloud
       state: started
