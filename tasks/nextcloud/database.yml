@@ -6,7 +6,7 @@
       force_kill: true
   with_items:
       - nextcloud-mysql
-      # - nextcloud-postgres
+      - nextcloud-postgres
       - nextcloud-pgadmin
 
 - name: Nextcloud | Database | Create network
@@ -14,61 +14,61 @@
       name: nextcloud
       state: present
 
-# - name: Nextcloud | Database | Run postgres docker
-#   community.docker.docker_container:
-#       name: nextcloud-postgres
-#       image: docker.io/library/postgres:16.3
-#       networks:
-#           - name: nextcloud
-#       volumes:
-#           - "{{ cs_nc_postgres_data_dir }}:/var/lib/postgresql/data"
-#       state: started
-#       ports:
-#           - "5432:5432"
-#       env:
-#           POSTGRES_PASSWORD: "{{ cs_nc_postgres_root_password }}"
-#           POSTGRES_USER: postgres
-#           POSTGRES_DB: postgres
+- name: Nextcloud | Database | Run postgres docker
+  community.docker.docker_container:
+      name: nextcloud-postgres
+      image: docker.io/library/postgres:16.3
+      networks:
+          - name: nextcloud
+      volumes:
+          - "{{ cs_nc_postgres_data_dir }}:/var/lib/postgresql/data"
+      state: started
+      ports:
+          - "5432:5432"
+      env:
+          POSTGRES_PASSWORD: "{{ cs_nc_postgres_root_password }}"
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
 
-# - name: Nextcloud | Database | Wait for postgres to start
-#   community.postgresql.postgresql_ping:
-#       login_host: "127.0.0.1"
-#       login_password: "{{ cs_nc_postgres_root_password }}"
-#       login_user: "postgres"
-#       login_port: "5432"
-#   register: is_postgres_up
-#   until: is_postgres_up.is_available
-#   retries: 30
-#   delay: 3
+- name: Nextcloud | Database | Wait for postgres to start
+  community.postgresql.postgresql_ping:
+      login_host: "127.0.0.1"
+      login_password: "{{ cs_nc_postgres_root_password }}"
+      login_user: "postgres"
+      login_port: "5432"
+  register: is_postgres_up
+  until: is_postgres_up.is_available
+  retries: 30
+  delay: 3
 
-# - name: Nextcloud | Database | Create postgres user
-#   community.postgresql.postgresql_user:
-#       name: "{{ item.name }}"
-#       password: "{{ item.password }}"
-#       login_host: "127.0.0.1"
-#       login_user: "postgres"
-#       login_password: "{{ cs_nc_postgres_root_password }}"
-#       login_port: "5432"
-#   with_items:
-#       - name: "{{ cs_nc_postgres_user }}"
-#         password: "{{ cs_nc_postgres_password }}"
-#       - name: "{{ cs_nc_onlyoffice_postgres_user }}"
-#         password: "{{ cs_nc_onlyoffice_postgres_password }}"
+- name: Nextcloud | Database | Create postgres user
+  community.postgresql.postgresql_user:
+      name: "{{ item.name }}"
+      password: "{{ item.password }}"
+      login_host: "127.0.0.1"
+      login_user: "postgres"
+      login_password: "{{ cs_nc_postgres_root_password }}"
+      login_port: "5432"
+  with_items:
+      - name: "{{ cs_nc_postgres_user }}"
+        password: "{{ cs_nc_postgres_password }}"
+      - name: "{{ cs_nc_onlyoffice_postgres_user }}"
+        password: "{{ cs_nc_onlyoffice_postgres_password }}"
 
-# - name: Nextcloud | Database | Create postgres database
-#   community.postgresql.postgresql_db:
-#       name: "{{ item.name }}"
-#       state: "present"
-#       owner: "{{ item.owner }}"
-#       login_user: "postgres"
-#       login_password: "{{ cs_nc_postgres_root_password }}"
-#       login_host: "127.0.0.1"
-#       login_port: "5432"
-#   with_items:
-#       - name: "{{ cs_nc_postgres_database }}"
-#         owner: "{{ cs_nc_postgres_user }}"
-#       - name: "{{ cs_nc_onlyoffice_postgres_database }}"
-#         owner: "{{ cs_nc_onlyoffice_postgres_user }}"
+- name: Nextcloud | Database | Create postgres database
+  community.postgresql.postgresql_db:
+      name: "{{ item.name }}"
+      state: "present"
+      owner: "{{ item.owner }}"
+      login_user: "postgres"
+      login_password: "{{ cs_nc_postgres_root_password }}"
+      login_host: "127.0.0.1"
+      login_port: "5432"
+  with_items:
+      - name: "{{ cs_nc_postgres_database }}"
+        owner: "{{ cs_nc_postgres_user }}"
+      - name: "{{ cs_nc_onlyoffice_postgres_database }}"
+        owner: "{{ cs_nc_onlyoffice_postgres_user }}"
 
 - name: Nextcloud | Database | Write pgpassfile # TODO: Not working
   ansible.builtin.copy:
