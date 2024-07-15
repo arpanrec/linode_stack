@@ -1,62 +1,11 @@
 ---
-pv_global_config_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
-pv_global_config_no_log: "{{ not pv_global_config_env_debug }}"
+cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
+cs_no_log: "{{ not cs_env_debug }}"
 
-# pv_cs_acme_account_key_base64: # From secrets
+cs_vm_ssh_service_user_id: "svc_admin"
+cs_vm_ssh_local_key_file: "/tmp/nextcloud.pem"
+# cs_vm_ssh_priv_id_ecdsa_b64: # From Secrets
+# cs_vm_ssh_priv_id_ecdsa_password: # From Secrets
 
-# pv_cs_godaddy_api_key: # From secrets
-# pv_cs_godaddy_api_secret: # From secrets
-pv_cs_godaddy_master_domain: arpanrec.com
-
-pv_cs_linode_ssh_key_label: cs-id-ed25519
-# pv_cs_linode_api_token: # From secrets
-pv_cs_linode_manage_sub_domain_name: cs
-pv_cs_contact_email_id: arpan.rec@gmail.com
-pv_cs_linode_ops_region: ap-west
-# pv_cs_linode_ssh_key_priv_base64: # From secrets
-# pv_cs_linode_ssh_key_pub: # From secrets
-# pv_cs_linode_vm_ssh_service_user: # From secrets
-pv_cs_linode_managed_domain: "{{ pv_cs_linode_manage_sub_domain_name }}.{{ pv_cs_godaddy_master_domain }}"
-
-pv_cs_minio_linode_volume_label: cs-minio
-pv_cs_minio_linode_instance_label: "{{ pv_cs_minio_linode_volume_label }}"
-pv_cs_minio_linode_volume_mount_path: /app/cs/minio
-
-pv_cs_minio_docker_network_name: cs-minio
-
-pv_cs_minio_kes_working_dir: "{{ pv_cs_minio_linode_volume_mount_path }}/kes"
-pv_cs_minio_kes_image: docker.io/minio/kes
-pv_cs_minio_kes_version: 2024-06-17T15-47-05Z
-pv_cs_minio_kes_cert_file: "{{ pv_cs_minio_kes_working_dir }}/cert.pem"
-pv_cs_minio_kes_cert_key_file: "{{ pv_cs_minio_kes_working_dir }}/key.pem"
-pv_cs_minio_kes_cert_id_file: "{{ pv_cs_minio_kes_working_dir }}/cert.pem.id.txt"
-pv_cs_minio_kes_keystore_dir: "{{ pv_cs_minio_kes_working_dir }}/keystore"
-pv_cs_minio_kes_config_file: "{{ pv_cs_minio_kes_working_dir }}/config.yml"
-pv_cs_minio_kes_group_name: cs-minio-kes
-pv_cs_minio_kes_user_name: "{{ pv_cs_minio_kes_group_name }}"
-pv_cs_minio_kes_container_name: "{{ pv_cs_minio_kes_group_name }}"
-pv_cs_minio_kes_port: 7373
-
-pv_cs_minio_server_email: "{{ pv_cs_contact_email_id }}"
-pv_cs_minio_server_working_dir: "{{ pv_cs_minio_linode_volume_mount_path }}/minio"
-pv_cs_minio_server_image: docker.io/minio/minio
-pv_cs_minio_server_version: RELEASE.2024-07-04T14-25-45Z
-pv_cs_minio_server_group_name: cs-minio-minio
-pv_cs_minio_server_user_name: "{{ pv_cs_minio_server_group_name }}"
-pv_cs_minio_server_container_name: "{{ pv_cs_minio_server_group_name }}"
-pv_cs_minio_server_kes_admin_cert: "{{ pv_cs_minio_server_working_dir }}/kesadmin.crt"
-pv_cs_minio_server_kes_admin_key: "{{ pv_cs_minio_server_working_dir }}/kesadmin.key"
-pv_cs_minio_server_kes_ca_cert: "{{ pv_cs_minio_server_working_dir }}/kesadmin.ca"
-pv_cs_minio_server_kes_endpoint: https://{{ pv_cs_minio_kes_container_name }}:{{ pv_cs_minio_kes_port }}
-pv_cs_minio_server_volume_dir: "{{ pv_cs_minio_server_working_dir }}/data"
-# pv_cs_minio_server_certs_dir/public.crt and pv_cs_minio_server_certs_dir/private.key
-pv_cs_minio_server_certs_dir: "{{ pv_cs_minio_server_working_dir }}/certs"
-
-# pv_cs_minio_server_root_user: # From secrets
-# pv_cs_minio_server_root_password: # From secrets
-pv_cs_minio_server_port: 9000
-pv_cs_minio_server_console_port: 9001
-pv_cs_minio_server_default_kms_key_id: cs-minio-default
-pv_cs_minio_server_region: "{{ pv_cs_linode_ops_region }}"
-pv_cs_minio_server_sub_domain_name: s3
-pv_cs_minio_server_domain: "{{ pv_cs_minio_server_sub_domain_name }}.{{ pv_cs_linode_managed_domain }}"
+ansible_user: "{{ cs_vm_ssh_service_user_id }}"
+ansible_ssh_private_key_file: "{{ cs_vm_ssh_local_key_file }}"

@@ -1,0 +1,62 @@
+---
+- name: Patch Cloud System | Create wheel group
+  ansible.builtin.group:
+      name: wheel
+      state: present
+
+- name: Patch Cloud System | Make sure zsh is installed
+  ansible.builtin.apt:
+      name: zsh
+      state: present
+      update_cache: true
+
+- name: Patch Cloud System | Create ssh user
+  when: cs_vm_ssh_service_user_id != "root"
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.user_add
+  vars:
+      user_add_rv_username: "{{ cs_vm_ssh_service_user_id }}"
+      user_add_rv_user_default_shell: "/bin/zsh"
+      user_add_rv_user_extra_groups: ["wheel"]
+      user_add_rv_ssh_access_public_key_content_list:
+          - "{{ cs_vm_ssh_priv_id_ecdsa_b64 | b64decode
+            | get_encrypted_id_ecdsa_pub_key(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
+
+- name: Patch Cloud System | Linux Patching
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.linux_patching
+  vars:
+      linux_patching_rv_install_devel_packages: true
+
+- name: Patch Cloud System | Fail if service user is root
+  ansible.builtin.fail:
+      msg: "Service user should be {{ cs_vm_ssh_service_user_id }} and not root"
+  when: >
+      cs_vm_ssh_service_user_id == "root"
+      or
+      ansible_user != cs_vm_ssh_service_user_id
+
+- name: Patch Cloud System | SSH Hardening
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.ssh_hardening
+
+- name: Patch Cloud System | Install Docker
+  ansible.builtin.import_role:
+      name: geerlingguy.docker
+  vars:
+      docker_users:
+          - "{{ cs_vm_ssh_service_user_id }}"
+
+- name: Patch Cloud System | Flush Handlers after root tasks
+  ansible.builtin.meta: flush_handlers
+
+- name: Patch Cloud System | Beautify Terminal
+  become: true
+  become_user: "{{ cs_vm_ssh_service_user_id }}"
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.terminal
+
+- name: Patch Cloud System | Flush Handlers after user tasks
+  become: true
+  become_user: "{{ cs_vm_ssh_service_user_id }}"
+  ansible.builtin.meta: flush_handlers

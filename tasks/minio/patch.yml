@@ -1,6 +1,7 @@
 ---
 - name: Mini0 | Patch Cloud System | Linux Patching
   become: true
+  become_user: root
   ansible.builtin.import_role:
       name: arpanrec.nebula.linux_patching
   vars:
@@ -8,6 +9,7 @@
 
 - name: Mini0 | Patch Cloud System | Make sure zsh is installed
   become: true
+  become_user: root
   ansible.builtin.apt:
       name: zsh
       state: present
@@ -15,10 +17,11 @@
 
 - name: Mini0 | Patch Cloud System | Add application user
   become: true
+  become_user: root
   ansible.builtin.import_role:
       name: arpanrec.nebula.user_add
   vars:
-      user_add_rv_username: "{{ pv_cs_linode_vm_ssh_service_user }}"
+      user_add_rv_username: "{{ cs_vm_ssh_service_user_id }}"
       user_add_rv_ssh_access_public_key_content_list:
           - "{{ pv_cs_linode_ssh_key_pub }}"
       user_add_rv_user_default_shell: "/bin/zsh"
@@ -27,28 +30,31 @@
 
 - name: Mini0 | Patch Cloud System | SSH Hardening
   become: true
+  become_user: root
   ansible.builtin.import_role:
       name: arpanrec.nebula.ssh_hardening
 
 - name: Mini0 | Patch Cloud System | Install Docker
   become: true
+  become_user: root
   ansible.builtin.import_role:
       name: geerlingguy.docker
   vars:
       docker_users:
-          - "{{ pv_cs_linode_vm_ssh_service_user }}"
+          - "{{ cs_vm_ssh_service_user_id }}"
 
 - name: Mini0 | Patch Cloud System | Flush Handlers after root tasks
   become: true
+  become_user: root
   ansible.builtin.meta: flush_handlers
 
 - name: Mini0 | Patch Cloud System | Beautify Terminal
   become: true
-  become_user: "{{ pv_cs_linode_vm_ssh_service_user }}"
+  become_user: "{{ cs_vm_ssh_service_user_id }}"
   ansible.builtin.import_role:
       name: arpanrec.nebula.terminal
 
 - name: Mini0 | Patch Cloud System | Flush Handlers after user tasks
   become: true
-  become_user: "{{ pv_cs_linode_vm_ssh_service_user }}"
+  become_user: "{{ cs_vm_ssh_service_user_id }}"
   ansible.builtin.meta: flush_handlers

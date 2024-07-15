@@ -1,0 +1,71 @@
+---
+- name: Nextcloud | Mount Disk | Create mount point
+  ansible.builtin.file:
+      path: /mnt/nextcloud
+      state: directory
+      mode: "0755"
+
+- name: Mini0 | Mount Disk | Remove all fstab entries
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^UUID=029d8364-b165-4b7e-a7b3-5202f2a3e21a"
+      state: absent
+
+# 3AB277C5B2778463
+# - name: Nextcloud | Mount Disk | Mount disk
+#   ansible.posix.mount:
+#       path: /mnt/nextcloud
+#       src: UUID=3AB277C5B2778463
+#       fstype: ntfs
+#       opts: "rw,auto,user,fmask=133,dmask=022,uid=1000,gid=1000"
+#       state: "mounted"
+#       boot: true
+#       dump: 0
+#       passno: 0
+
+- name: Nextcloud | Mount Disk | Create systemd mount unit
+  ansible.builtin.copy:
+      content: |+
+          [Unit]
+          Description=Nextcloud Disk
+          After=network.target
+
+          [Mount]
+          What=/dev/disk/by-uuid/029d8364-b165-4b7e-a7b3-5202f2a3e21a
+          Where=/mnt/nextcloud
+          Type=ext4
+          Options=defaults,noatime,nofail
+
+          [Install]
+          WantedBy=multi-user.target
+      dest: /etc/systemd/system/mnt-nextcloud.mount
+      mode: "0644"
+
+- name: Nextcloud | Mount Disk | Enable systemd mount unit
+  ansible.builtin.systemd:
+      name: "mnt-nextcloud.mount"
+      enabled: false
+      state: stopped
+      daemon_reload: true
+
+- name: Nextcloud | Mount Disk | Create systemd automount unit
+  ansible.builtin.copy:
+      content: |+
+          [Unit]
+          Description=Nextcloud Disk Automount
+          After=network.target
+
+          [Automount]
+          Where=/mnt/nextcloud
+
+          [Install]
+          WantedBy=multi-user.target
+      dest: /etc/systemd/system/mnt-nextcloud.automount
+      mode: "0644"
+
+- name: Nextcloud | Mount Disk | Enable systemd automount unit
+  ansible.builtin.systemd:
+      name: "mnt-nextcloud.automount"
+      enabled: true
+      state: started
+      daemon_reload: true

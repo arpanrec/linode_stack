@@ -24,8 +24,9 @@
 *.gz binary
 *.zip binary
 *.tar binary
+*.png binary
+*.jpg binary
 *.deb binary
 *.db binary
-secrets.tar.gz.asc binary
 *.asc binary
 *.ico binary

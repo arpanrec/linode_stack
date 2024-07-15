@@ -1,0 +1,304 @@
+---
+- name: Nextcloud | Install | Check if Nextcloud is installed
+  ansible.builtin.stat:
+      path: "{{ cs_nc_web_root_dir }}"
+  register: is_nc_installed
+
+- name: Nextcloud | Install | Download New
+  when: not is_nc_installed.stat.exists
+  block:
+      - name: Nextcloud | Install | Download New | Get Nextcloud
+        ansible.builtin.get_url:
+            url: "https://download.nextcloud.com/server/releases/nextcloud-{{ cs_nc_version }}.zip"
+            dest: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+            mode: "0644"
+
+      - name: Nextcloud | Install | Download New | Create unzip directory
+        ansible.builtin.file:
+            path: /tmp/nextcloud-{{ cs_nc_version }}
+            state: directory
+            mode: "0755"
+
+      - name: Nextcloud | Install | Download New | Unzip Nextcloud
+        ansible.builtin.unarchive:
+            src: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+            dest: "/tmp/nextcloud-{{ cs_nc_version }}"
+            remote_src: true
+            creates: "/tmp/nextcloud-{{ cs_nc_version }}/index.php"
+            mode: "0644"
+
+      - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_root_dir }}
+        ansible.builtin.copy:
+            src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"
+            dest: "{{ cs_nc_web_root_dir }}"
+            remote_src: true
+            owner: www-data
+            group: www-data
+            mode: "0755"
+
+- name: Nextcloud | Install | Remove AD
+  ansible.builtin.command:
+      cmd: truncate -s 0 {{ cs_nc_web_root_dir }}/apps/settings/templates/settings/personal/development.notice.php
+  changed_when: true
+
+- name: Nextcloud | Install | change ownership
+  ansible.builtin.file:
+      path: "{{ cs_nc_web_root_dir }}"
+      owner: www-data
+      group: www-data
+      mode: "0755"
+      recurse: true
+
+- name: Nextcloud | Install | Create data directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_data_dir }}"
+      state: directory
+      owner: www-data
+      group: www-data
+      mode: "0755"
+
+- name: Nextcloud | Install | Copy icons
+  ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: "0644"
+  with_items:
+      - src: files/nc-favicon.svg
+        dest: /tmp/nc-favicon.ico
+      - src: files/nc-logo.png
+        dest: /tmp/nc-logo.png
+      - src: files/nc-logoheader.png
+        dest: /tmp/nc-logoheader.png
+      - src: files/nc-background.jpg
+        dest: /tmp/nc-background.jpg
+
+- name: Nextcloud | Install | Check if Nextcloud is installed
+  ansible.builtin.stat:
+      path: "{{ cs_nc_web_root_dir }}/config/CAN_INSTALL"
+  register: is_nc_occ_installed
+
+- name: Nextcloud | Install | Install Nextcloud for the first time
+  when: is_nc_occ_installed.stat.exists
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ maintenance:install --database 'pgsql' \
+          --database-name 'nextcloud' --database-user 'nextcloud' \
+          --database-pass '{{ cs_nc_postgres_password }}' --database-host '127.0.0.1:5432' \
+          --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}' \
+          --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Enable Featured Apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:enable encryption admin_audit bruteforcesettings files_external suspicious_login
+          twofactor_totp user_ldap"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Enable encryption
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "encryption:enable"
+      - "encryption:enable-master-key"
+
+- name: Nextcloud | Install | Set Trusted Domains
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set trusted_domains 0 --value={{ cs_nc_domain }}"
+      - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
+      - "config:system:set trusted_domains 2 --value=localhost"
+      - "config:system:set trusted_domains 3 --value=127.0.0.1"
+
+- name: Nextcloud | Install | Set Database Password
+  become: true
+  when: false
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set dbtype --value pgsql"
+      - "config:system:set dbname --value nextcloud"
+      - "config:system:set dbuser --value nextcloud"
+      - "config:system:set dbpassword --value {{ cs_nc_postgres_password }}"
+      - "config:system:set dbhost --value 127.0.0.1:5432"
+
+- name: Nextcloud | Install | Add missing indices
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ db:add-missing-indices"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Set log config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set log_type --value file"
+      - "config:system:set logfile --value '{{ cs_nc_log_file }}'"
+      - "config:system:set logfile_audit --value '{{ cs_nc_log_file }}'"
+      - "config:system:set log.condition apps 0 --value=admin_audit"
+      - "config:system:set log_rotate_size --value 10485760"
+      - "config:app:set admin_audit logfile --value={{ cs_nc_log_file }}"
+      - "config:system:set loglevel --value 2"
+      - "config:system:set logdateformat --value 'Y-m-d H:i:s'"
+
+- name: Nextcloud | Install | Set locals
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set logtimezone --value '{{ cs_nc_logtimezone }}'"
+      - "config:system:set default_phone_region --value '{{ cs_nc_default_phone_region }}'"
+      - "config:system:set default_language --value en"
+      - "config:system:set default_locale --value en_IN"
+
+- name: Nextcloud | Install | Set email config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set mail_smtpmode --value {{ cs_nc_mail_smtpmode }}"
+      - "config:system:set mail_sendmailmode --value {{ cs_nc_mail_sendmailmode }}"
+      - "config:system:set mail_smtpport --value {{ cs_nc_mail_smtpport }}"
+      - "config:system:set mail_from_address --value {{ cs_nc_mail_from_address }}"
+      - "config:system:set mail_domain --value {{ cs_nc_mail_domain }}"
+      - "config:system:set mail_smtpsecure --value {{ cs_nc_mail_smtpsecure }}"
+      - "config:system:set mail_smtpauth --value {{ cs_nc_mail_smtpauth }}"
+      - "config:system:set mail_smtphost --value {{ cs_nc_mail_smtphost }}"
+      - "config:system:set mail_smtpname --value {{ cs_nc_mail_smtpname }}"
+      - "config:system:set mail_smtppassword --value {{ cs_nc_mail_smtppassword }}"
+
+- name: Nextcloud | Install | Set nextcloud maintenance window at 3 am
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ config:system:set maintenance_window_start --type=integer --value=3"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Set nextcloud url
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
+      - "config:system:set overwritehost --value {{ cs_nc_domain }}:{{ cs_nc_port }}"
+      - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
+      - "config:system:set htaccess.RewriteBase --value /"
+
+- name: Nextcloud | Install | Maintenance Update htaccess
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ maintenance:update:htaccess"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Remove default skeleton and template directories
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set skeletondirectory --value ''"
+      - "config:system:set templatedirectory --value ''"
+
+- name: Nextcloud | Install | Set theming
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "theming:config name 'Home Server'"
+      - "theming:config slogan 'Where bytes go to retire and data parties in pajamas!'"
+      - "theming:config url '{{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}'"
+      - "theming:config color '#2C2222'"
+      - "theming:config favicon '/tmp/nc-favicon.ico'"
+      - "theming:config logo '/tmp/nc-logo.png'"
+      - "theming:config logoheader '/tmp/nc-logoheader.png'"
+      - "theming:config background '/tmp/nc-background.jpg'"
+      - "theming:config disable-user-theming yes"
+
+- name: Nextcloud | Install | Set theming for client apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:app:set theming AndroidClientUrl
+        --value 'https://play.google.com/store/apps/details?id=com.nextcloud.client'"
+      - "config:app:set theming iOSClientUrl --value 'https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8'"
+      - "config:app:set theming iTunesAppId --value '1125420102'"
+
+- name: Nextcloud | Install | Create systemd unit files for nextcloud cron
+  ansible.builtin.copy:
+      dest: "{{ item.dest }}"
+      content: "{{ item.content }}"
+      mode: "0644"
+  with_items:
+      - dest: /etc/systemd/system/nextcloudcron.service
+        content: |+
+            [Unit]
+            Description=Nextcloud cron.php job
+
+            [Service]
+            User=www-data
+            ExecCondition=php -f {{ cs_nc_web_root_dir }}/occ status -e
+            ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/cron.php
+            KillMode=process
+
+      - dest: /etc/systemd/system/nextcloudcron.timer
+        content: |
+            [Unit]
+            Description=Run Nextcloud cron every 15 minutes
+
+            [Timer]
+            OnBootSec=1min
+            OnUnitActiveSec=15min
+            Unit=nextcloudcron.service
+
+            [Install]
+            WantedBy=multi-user.target
+
+- name: Nextcloud | Install | Enable systemd timmer for nextcloud cron
+  ansible.builtin.systemd_service:
+      name: nextcloudcron.timer
+      enabled: true
+      state: restarted
+      daemon_reload: true

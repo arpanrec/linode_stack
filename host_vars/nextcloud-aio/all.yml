@@ -1,0 +1,21 @@
+---
+cs_nc_app_data_root_dir: "/app/nextcloud"
+
+cs_nc_admin_user: "admin"
+
+cs_nc_port: "8477"
+cs_nc_data_dir: "{{ cs_nc_app_data_root_dir }}/data"
+cs_nc_web_root_dir: "{{ cs_nc_app_data_root_dir }}/www"
+cs_nc_version: "29.0.3"
+cs_nc_log_file: "{{ cs_nc_data_dir }}/nextcloud.log"
+cs_nc_logtimezone: "Asia/Kolkata"
+cs_nc_default_phone_region: "IN"
+cs_nc_fail2ban_log_file: "{{ cs_nc_data_dir }}/fail2ban.log"
+
+cs_nc_postgres_data_dir: "{{ cs_nc_app_data_root_dir }}/postgres"
+
+cs_nc_redis_data_dir: "{{ cs_nc_app_data_root_dir }}/redis"
+
+cs_nc_elasticsearch_data_dir: "{{ cs_nc_app_data_root_dir }}/elasticsearch"
+
+cs_nc_php_version: "8.3"

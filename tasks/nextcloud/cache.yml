@@ -1,0 +1,33 @@
+---
+- name: Nextcloud | Cache | Stop old dependency containers
+  community.docker.docker_container:
+      name: "nextcloud-redis"
+      state: absent
+      force_kill: true
+
+- name: Nextcloud | Cache | Run Redis docker
+  community.docker.docker_container:
+      name: "nextcloud-redis"
+      image: "docker.io/library/redis:7.2.0"
+      state: "started"
+      restart_policy: "always"
+      volumes:
+          - "{{ cs_nc_redis_data_dir }}/redis:/data"
+      ports:
+          - "6379:6379"
+      command: redis-server --save 20 1
+
+- name: Nextcloud | Cache | Set nextcloud config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "config:system:set redis host --value 127.0.0.1"
+      - "config:system:set redis port --value 6379"
+
+      - "config:system:set memcache.local --value '\\OC\\Memcache\\APCu'"
+      - "config:system:set memcache.distributed --value '\\OC\\Memcache\\Redis'"
+      - "config:system:set memcache.locking --value '\\OC\\Memcache\\Redis'"
