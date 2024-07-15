@@ -121,6 +121,17 @@
                   elastic_type: "file"
                   analyzer_tokenizer: "standard"
                   types: ""
+              files_fulltextsearch:
+                  enabled: "yes"
+                  types: "filesystem"
+                  files_local: "1"
+                  files_size: "20"
+                  files_pdf: "1"
+                  files_office: "1"
+                  files_image: "0"
+                  files_audio: "0"
+                  files_group_folders: "1"
+                  files_external: "1"
 
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
