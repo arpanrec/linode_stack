@@ -27,6 +27,14 @@
             creates: "/tmp/nextcloud-{{ cs_nc_version }}/index.php"
             mode: "0644"
 
+      - name: Nextcloud | Install | Download New | Create Nextcloud directory
+        ansible.builtin.file:
+            path: "{{ cs_nc_web_root_dir }}"
+            state: directory
+            mode: "0755"
+            owner: www-data
+            group: www-data
+
       - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_root_dir }}
         ansible.builtin.copy:
             src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"

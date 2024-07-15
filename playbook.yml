@@ -28,7 +28,7 @@
             file: tasks/minio.yml
 
 - name: Nextcloud
-  hosts: nextcloud-aio
+  hosts: nextcloud-server
   become: true
   become_user: root
   gather_facts: true
