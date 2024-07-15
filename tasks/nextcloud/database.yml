@@ -70,6 +70,14 @@
       - name: "{{ cs_nc_onlyoffice_postgres_database }}"
         owner: "{{ cs_nc_onlyoffice_postgres_user }}"
 
+- name: Nextcloud | Database | Create pgadmin directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_pg_admin_dir }}"
+      state: directory
+      mode: "0755"
+      owner: "5050"
+      group: "5050"
+
 - name: Nextcloud | Database | Write pgpassfile # TODO: Not working
   ansible.builtin.copy:
       content: |+
@@ -80,6 +88,8 @@
           nextcloud-postgres:5432:postgres:postgres:{{ cs_nc_postgres_root_password | regex_escape() }}
       dest: "{{ cs_nc_pg_admin_dir }}/pgpassfile"
       mode: "0600"
+      owner: "5050"
+      group: "5050"
 
 - name: Nextcloud | Database | Set Server json fact
   ansible.builtin.set_fact:
@@ -118,12 +128,14 @@
       content: "{{ cs_nc_pg_admin_servers | to_nice_json }}"
       dest: "{{ cs_nc_pg_admin_dir }}/servers.json"
       mode: "0644"
+      owner: "5050"
+      group: "5050"
 
 - name: Nextcloud | Database | Run pgadmin docker
   community.docker.docker_container:
       name: nextcloud-pgadmin
       image: docker.io/dpage/pgadmin4:8.9
-      user: "0:0"
+      user: "5050:5050"
       networks:
           - name: nextcloud
       state: started
@@ -135,7 +147,7 @@
           PGADMIN_LISTEN_PORT: "{{ cs_nc_pg_admin_port }}"
           PGADMIN_ENABLE_TLS: "True"
       volumes:
-          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert"
-          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/certs/server.key"
+          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert:ro"
+          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/certs/server.key:ro"
           - "{{ cs_nc_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
           - "{{ cs_nc_pg_admin_dir }}/pgpassfile:/pgadmin4/pgpassfile:ro"

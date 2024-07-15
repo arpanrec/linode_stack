@@ -21,8 +21,8 @@
           - "{{ cs_nc_onlyoffice_dir }}/logs:/var/log/onlyoffice"
           - "{{ cs_nc_onlyoffice_dir }}/lib:/var/lib/onlyoffice"
           - "{{ cs_nc_onlyoffice_dir }}/db:/var/lib/postgresql"
-          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/cert.pem"
-          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/priv.key"
+          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/cert.pem:ro"
+          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/priv.key:ro"
       state: started
       ports:
           - "{{ cs_nc_onlyoffice_port }}:443"
