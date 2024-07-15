@@ -93,7 +93,7 @@
                   MaintenanceDB: "{{ cs_nc_postgres_database }}"
                   Username: "{{ cs_nc_postgres_user }}"
                   SSLMode: "prefer"
-                  PassFile: "/tmp/pgpassfile"
+                  PassFile: "/pgadmin4/pgpassfile"
               2:
                   Name: "OnlyOffice-Main"
                   Group: "Servers"
@@ -102,7 +102,7 @@
                   MaintenanceDB: "{{ cs_nc_onlyoffice_postgres_database }}"
                   Username: "{{ cs_nc_onlyoffice_postgres_user }}"
                   SSLMode: "prefer"
-                  PassFile: "/tmp/pgpassfile"
+                  PassFile: "/pgadmin4/pgpassfile"
               3:
                   Name: "Postgres-Main"
                   Group: "Servers"
@@ -111,7 +111,7 @@
                   MaintenanceDB: "postgres"
                   Username: "postgres"
                   SSLMode: "prefer"
-                  PassFile: "/tmp/pgpassfile"
+                  PassFile: "/pgadmin4/pgpassfile"
 
 - name: Nextcloud | Database | Write pgadmin servers.json
   ansible.builtin.copy:
@@ -138,4 +138,4 @@
           - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert"
           - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/certs/server.key"
           - "{{ cs_nc_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
-          - "{{ cs_nc_pg_admin_dir }}/pgpassfile:/tmp/pgpassfile:ro"
+          - "{{ cs_nc_pg_admin_dir }}/pgpassfile:/pgadmin4/pgpassfile:ro"
