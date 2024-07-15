@@ -19,13 +19,3 @@ cs_nc_redis_data_dir: "{{ cs_nc_app_data_root_dir }}/redis"
 cs_nc_elasticsearch_data_dir: "{{ cs_nc_app_data_root_dir }}/elasticsearch"
 
 cs_nc_php_version: "8.3"
-
-cs_nc_mail_smtpmode: "smtp"
-cs_nc_mail_sendmailmode: "smtp"
-cs_nc_mail_smtpport: "465"
-cs_nc_mail_from_address: "bot"
-cs_nc_mail_domain: "arpanrec.com"
-cs_nc_mail_smtpsecure: "ssl"
-cs_nc_mail_smtpauth: "1"
-cs_nc_mail_smtphost: "smtp.zoho.in"
-cs_nc_mail_smtpname: "{{ cs_nc_mail_from_address }}@{{ cs_nc_mail_domain }}"
