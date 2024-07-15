@@ -93,6 +93,11 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/fulltextsearch.yml
 
+      - name: Nextcloud | Talk
+        tags: never,nextcloud,nextcloud_talk
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/talk.yml
+
       - name: Nextcloud | Post Install
         tags: never,nextcloud,nextcloud_post_install
         ansible.builtin.import_tasks:

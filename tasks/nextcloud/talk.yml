@@ -1,0 +1,26 @@
+---
+- name: Nextcloud | Talk | List all apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_app_list
+
+- name: Nextcloud | Talk | Install apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:install {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "spreed"
+  when: >
+      not
+      (
+        item in cs_nc_app_list.stdout | from_json | json_query('enabled')
+      or
+        item in cs_nc_app_list.stdout | from_json | json_query('disabled')
+      )
