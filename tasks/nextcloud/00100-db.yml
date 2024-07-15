@@ -30,8 +30,8 @@
       login_port: "5432"
   register: is_postgres_up
   until: is_postgres_up.is_available
-  retries: 10
-  delay: 5
+  retries: 30
+  delay: 3
 
 - name: Nextcloud | Database | Create postgres user
   community.postgresql.postgresql_user:
