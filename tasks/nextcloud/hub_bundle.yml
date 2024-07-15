@@ -1,0 +1,51 @@
+---
+- name: Nextcloud | Hub Bundle | Set apps
+  ansible.builtin.set_fact:
+      cs_nc_hub_bundle_apps:
+          - "calendar"
+          - "contacts"
+          - "mail"
+          - "spreed"
+          # Enterprise bundle
+          - "admin_audit"
+          - "files_accesscontrol"
+          - "files_automatedtagging"
+          - "user_ldap"
+          - "files_retention"
+          # Groupware bundle
+          - "deck"
+          # Education Edition
+          - "announcementcenter"
+          - "dashboard"
+          - "groupfolders"
+          - "quota_warning"
+          - "user_saml"
+          - "circles"
+          # Public sector bundle
+          # - files_antivirus
+          - "forms"
+
+- name: Nextcloud | Hub Bundle | List all apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_app_list
+
+- name: Nextcloud | Hub Bundle | Install apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:install {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items: "{{ cs_nc_hub_bundle_apps }}"
+  when: >
+      not
+      (
+        item in cs_nc_app_list.stdout | from_json | json_query('enabled')
+      or
+        item in cs_nc_app_list.stdout | from_json | json_query('disabled')
+      )

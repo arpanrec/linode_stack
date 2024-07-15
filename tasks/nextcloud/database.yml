@@ -1,0 +1,141 @@
+---
+- name: Nextcloud | Database | Stop old dependency containers
+  community.docker.docker_container:
+      name: "{{ item }}"
+      state: absent
+      force_kill: true
+  with_items:
+      - nextcloud-mysql
+      # - nextcloud-postgres
+      - nextcloud-pgadmin
+
+- name: Nextcloud | Database | Create network
+  community.docker.docker_network:
+      name: nextcloud
+      state: present
+
+# - name: Nextcloud | Database | Run postgres docker
+#   community.docker.docker_container:
+#       name: nextcloud-postgres
+#       image: docker.io/library/postgres:16.3
+#       networks:
+#           - name: nextcloud
+#       volumes:
+#           - "{{ cs_nc_postgres_data_dir }}:/var/lib/postgresql/data"
+#       state: started
+#       ports:
+#           - "5432:5432"
+#       env:
+#           POSTGRES_PASSWORD: "{{ cs_nc_postgres_root_password }}"
+#           POSTGRES_USER: postgres
+#           POSTGRES_DB: postgres
+
+# - name: Nextcloud | Database | Wait for postgres to start
+#   community.postgresql.postgresql_ping:
+#       login_host: "127.0.0.1"
+#       login_password: "{{ cs_nc_postgres_root_password }}"
+#       login_user: "postgres"
+#       login_port: "5432"
+#   register: is_postgres_up
+#   until: is_postgres_up.is_available
+#   retries: 30
+#   delay: 3
+
+# - name: Nextcloud | Database | Create postgres user
+#   community.postgresql.postgresql_user:
+#       name: "{{ item.name }}"
+#       password: "{{ item.password }}"
+#       login_host: "127.0.0.1"
+#       login_user: "postgres"
+#       login_password: "{{ cs_nc_postgres_root_password }}"
+#       login_port: "5432"
+#   with_items:
+#       - name: "{{ cs_nc_postgres_user }}"
+#         password: "{{ cs_nc_postgres_password }}"
+#       - name: "{{ cs_nc_onlyoffice_postgres_user }}"
+#         password: "{{ cs_nc_onlyoffice_postgres_password }}"
+
+# - name: Nextcloud | Database | Create postgres database
+#   community.postgresql.postgresql_db:
+#       name: "{{ item.name }}"
+#       state: "present"
+#       owner: "{{ item.owner }}"
+#       login_user: "postgres"
+#       login_password: "{{ cs_nc_postgres_root_password }}"
+#       login_host: "127.0.0.1"
+#       login_port: "5432"
+#   with_items:
+#       - name: "{{ cs_nc_postgres_database }}"
+#         owner: "{{ cs_nc_postgres_user }}"
+#       - name: "{{ cs_nc_onlyoffice_postgres_database }}"
+#         owner: "{{ cs_nc_onlyoffice_postgres_user }}"
+
+- name: Nextcloud | Database | Write pgpassfile # TODO: Not working
+  ansible.builtin.copy:
+      content: |+
+          nextcloud-postgres:5432:{{ cs_nc_postgres_database }}:{{ cs_nc_postgres_user }}:{{
+           cs_nc_postgres_password | regex_escape() }}
+          nextcloud-postgres:5432:{{ cs_nc_onlyoffice_postgres_database }}:{{ cs_nc_onlyoffice_postgres_user }}:{{
+            cs_nc_onlyoffice_postgres_password | regex_escape() }}
+          nextcloud-postgres:5432:postgres:postgres:{{ cs_nc_postgres_root_password | regex_escape() }}
+      dest: "{{ cs_nc_pg_admin_dir }}/pgpassfile"
+      mode: "0600"
+
+- name: Nextcloud | Database | Set Server json fact
+  ansible.builtin.set_fact:
+      cs_nc_pg_admin_servers:
+          Servers:
+              1:
+                  Name: "Nextcloud-Main"
+                  Group: "Servers"
+                  Host: "nextcloud-postgres"
+                  Port: 5432
+                  MaintenanceDB: "{{ cs_nc_postgres_database }}"
+                  Username: "{{ cs_nc_postgres_user }}"
+                  SSLMode: "prefer"
+                  PassFile: "/tmp/pgpassfile"
+              2:
+                  Name: "OnlyOffice-Main"
+                  Group: "Servers"
+                  Host: "nextcloud-postgres"
+                  Port: 5432
+                  MaintenanceDB: "{{ cs_nc_onlyoffice_postgres_database }}"
+                  Username: "{{ cs_nc_onlyoffice_postgres_user }}"
+                  SSLMode: "prefer"
+                  PassFile: "/tmp/pgpassfile"
+              3:
+                  Name: "Postgres-Main"
+                  Group: "Servers"
+                  Host: "nextcloud-postgres"
+                  Port: 5432
+                  MaintenanceDB: "postgres"
+                  Username: "postgres"
+                  SSLMode: "prefer"
+                  PassFile: "/tmp/pgpassfile"
+
+- name: Nextcloud | Database | Write pgadmin servers.json
+  ansible.builtin.copy:
+      content: "{{ cs_nc_pg_admin_servers | to_nice_json }}"
+      dest: "{{ cs_nc_pg_admin_dir }}/servers.json"
+      mode: "0644"
+
+- name: Nextcloud | Database | Run pgadmin docker
+  community.docker.docker_container:
+      name: nextcloud-pgadmin
+      image: docker.io/dpage/pgadmin4:8.9
+      user: "0:0"
+      networks:
+          - name: nextcloud
+      state: started
+      ports:
+          - "{{ cs_nc_pg_admin_port }}:{{ cs_nc_pg_admin_port }}"
+      env:
+          PGADMIN_DEFAULT_EMAIL: "{{ cs_nc_pg_admin_email }}"
+          PGADMIN_DEFAULT_PASSWORD: "{{ cs_nc_pg_admin_password }}"
+          PGADMIN_LISTEN_PORT: "{{ cs_nc_pg_admin_port }}"
+          PGADMIN_ENABLE_TLS: "True"
+      volumes:
+          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert"
+          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/certs/server.key"
+          - "{{ cs_nc_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
+          - "{{ cs_nc_pg_admin_dir }}/pgpassfile:/tmp/pgpassfile:ro"

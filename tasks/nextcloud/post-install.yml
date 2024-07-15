@@ -12,8 +12,12 @@
 - name: Nextcloud | Post Install | Enable UFW port
   community.general.ufw:
       rule: allow
-      port: "{{ cs_nc_port }}"
+      port: "{{ item }}"
       state: enabled
+  with_items:
+      - "{{ cs_nc_port }}"
+      - "{{ cs_nc_onlyoffice_port }}"
+      - "{{ cs_nc_pg_admin_port }}"
 
 - name: Nextcloud | Post Install | Create log directory
   ansible.builtin.file:

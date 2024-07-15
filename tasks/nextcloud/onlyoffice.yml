@@ -1,0 +1,97 @@
+---
+- name: Nextcloud | OnlyOffice | Stop old dependency containers
+  community.docker.docker_container:
+      name: "nextcloud-onlyoffice"
+      state: absent
+      force_kill: true
+
+- name: Nextcloud | OnlyOffice | Create network
+  community.docker.docker_network:
+      name: nextcloud
+      state: present
+
+- name: Nextcloud | OnlyOffice | Create onlyoffice Container
+  community.docker.docker_container:
+      name: nextcloud-onlyoffice
+      image: "docker.io/onlyoffice/documentserver:8.1.1.1"
+      networks:
+          - name: nextcloud
+      volumes:
+          - "{{ cs_nc_onlyoffice_dir }}/data:/var/www/onlyoffice/Data"
+          - "{{ cs_nc_onlyoffice_dir }}/logs:/var/log/onlyoffice"
+          - "{{ cs_nc_onlyoffice_dir }}/lib:/var/lib/onlyoffice"
+          - "{{ cs_nc_onlyoffice_dir }}/db:/var/lib/postgresql"
+          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/cert.pem"
+          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/priv.key"
+      state: started
+      ports:
+          - "{{ cs_nc_onlyoffice_port }}:443"
+      restart_policy: always
+      env:
+          JWT_SECRET: "{{ cs_nc_onlyoffice_jwt_secret }}"
+          SSL_KEY_PATH: "/priv.key"
+          SSL_CERTIFICATE_PATH: "/cert.pem"
+          REDIS_SERVER_HOST: "nextcloud-redis"
+          REDIS_SERVER_PORT: "6379"
+          DB_TYPE: "postgres"
+          DB_HOST: "nextcloud-postgres"
+          DB_PORT: "5432"
+          DB_NAME: "{{ cs_nc_onlyoffice_postgres_database }}"
+          DB_USER: "{{ cs_nc_onlyoffice_postgres_user }}"
+          DB_PWD: "{{ cs_nc_onlyoffice_postgres_password }}"
+
+- name: Nextcloud | OnlyOffice | Wait for onlyoffice to start
+  ansible.builtin.uri:
+      url: "https://{{ cs_nc_domain }}:{{ cs_nc_onlyoffice_port }}/healthcheck"
+      method: GET
+      status_code: 200
+      return_content: true
+  register: is_onlyoffice_up
+  until: is_onlyoffice_up.status == 200
+  retries: 30
+  delay: 3
+
+- name: Nextcloud | Hub Bundle | Set Apps Config
+  ansible.builtin.set_fact:
+      cs_nc_app_config:
+          apps:
+              onlyoffice:
+                  # yamllint disable
+                  "verify_peer_off": "false"
+                  "DocumentServerUrl": "https://{{ cs_nc_domain }}:{{ cs_nc_onlyoffice_port }}/"
+                  "DocumentServerInternalUrl": "https://localhost:{{ cs_nc_onlyoffice_port }}/"
+                  "jwt_secret": "{{ cs_nc_onlyoffice_jwt_secret }}"
+                  "customization_plugins": "true"
+                  "types": "prevent_group_restriction"
+                  "customization_macros": "true"
+                  "protection": "owner"
+                  "defFormats": '{"doc":"false","docm":"false","docx":"true","dot":"false","dotm":"false","dotx":"false","epub":"false","fb2":"false","fodt":"false","htm":"false","html":"false","mht":"false","mhtml":"false","odt":"false","ott":"false","rtf":"false","stw":"false","sxw":"false","txt":"false","wps":"false","xml":"false","csv":"false","fods":"false","ods":"false","ots":"false","sxc":"false","xls":"false","xlsb":"false","xlsm":"false","xlsx":"true","xlt":"false","xltm":"false","xltx":"false","fodp":"false","odp":"false","otp":"false","pot":"false","potm":"false","potx":"false","pps":"false","ppsm":"false","ppsx":"false","ppt":"false","pptm":"false","pptx":"true","sxi":"false","pdf":"true","djvu":"false","docxf":"true","oform":"true","oxps":"false","xps":"false"}'
+                  "editFormats": '{"epub":"false","fb2":"false","html":"false","odt":"false","ott":"false","rtf":"false","txt":"true","csv":"true","ods":"false","ots":"false","odp":"false","otp":"false"}'
+                  "sameTab": "true"
+                  "preview": "true"
+                  "advanced": "false"
+                  "cronChecker": "true"
+                  "versionHistory": "true"
+                  "groups": "[]"
+                  "customizationChat": "true"
+                  "customizationCompactHeader": "true"
+                  "customizationFeedback": "true"
+                  "customizationForcesave": "false"
+                  "customizationHelp": "true"
+                  "customizationToolbarNoTabs": "true"
+                  "customizationReviewDisplay": "original"
+                  "customizationTheme": "theme-classic-light"
+
+- name: Nextcloud | Hub Bundle | Write
+  ansible.builtin.copy:
+      content: "{{ cs_nc_app_config | to_nice_json }}"
+      dest: "/tmp/nc-apps-config.json"
+      mode: "0644"
+
+- name: Nextcloud | Hub Bundle | Import Apps Config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ config:import /tmp/nc-apps-config.json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true

@@ -5,11 +5,18 @@
       state: absent
       force_kill: true
 
+- name: Nextcloud | Imaginary | Create network
+  community.docker.docker_network:
+      name: nextcloud
+      state: present
+
 - name: Nextcloud | Imaginary | Run Imaginary
   community.docker.docker_container:
       name: nextcloud-imaginary
       image: "docker.io/nextcloud/aio-imaginary:latest"
       state: started
+      networks:
+          - name: nextcloud
       restart_policy: always
       ports:
           - "9000:9000"

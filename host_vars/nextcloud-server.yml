@@ -3,7 +3,6 @@ cs_nc_app_data_root_dir: "/app/nextcloud"
 
 cs_nc_admin_user: "admin"
 
-cs_nc_port: "8477"
 cs_nc_data_dir: "{{ cs_nc_app_data_root_dir }}/data"
 cs_nc_web_root_dir: "{{ cs_nc_app_data_root_dir }}/www"
 cs_nc_version: "29.0.3"
@@ -16,6 +15,10 @@ cs_nc_postgres_data_dir: "{{ cs_nc_app_data_root_dir }}/postgres"
 
 cs_nc_redis_data_dir: "{{ cs_nc_app_data_root_dir }}/redis"
 
-cs_nc_elasticsearch_data_dir: "{{ cs_nc_app_data_root_dir }}/elasticsearch"
+cs_nc_fulltextsearch_data_dir: "{{ cs_nc_app_data_root_dir }}/fulltextsearch"
 
 cs_nc_php_version: "8.3"
+
+cs_nc_onlyoffice_dir: "{{ cs_nc_app_data_root_dir }}/onlyoffice/DocumentServer"
+
+cs_nc_pg_admin_dir: "{{ cs_nc_app_data_root_dir }}/pgadmin"

@@ -1,4 +1,9 @@
 ---
+- name: Nextcloud | Cache | Create network
+  community.docker.docker_network:
+      name: nextcloud
+      state: present
+
 - name: Nextcloud | Cache | Stop old dependency containers
   community.docker.docker_container:
       name: "nextcloud-redis"
@@ -10,6 +15,8 @@
       name: "nextcloud-redis"
       image: "docker.io/library/redis:7.2.0"
       state: "started"
+      networks:
+          - name: "nextcloud"
       restart_policy: "always"
       volumes:
           - "{{ cs_nc_redis_data_dir }}/redis:/data"

@@ -35,13 +35,13 @@
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Calculate Nextcloud Protocol cs_nc_protocol
-        tags: never,nextcloud,nextcloud_prepare,nextcloud_install
+        tags: never,nextcloud,nextcloud_prepare,nextcloud_install,nextcloud_hub_bundle
         ansible.builtin.set_fact:
             cs_nc_protocol: "{{ (cs_nc_full_chain_b64 is defined and cs_nc_priv_key_b64 is defined)
                 | ternary('https', 'http') }}"
 
       - name: Nextcloud | Test cs_nc_protocol
-        tags: never,nextcloud,nextcloud_prepare,nextcloud_install
+        tags: never,nextcloud,nextcloud_prepare,nextcloud_install,nextcloud_hub_bundle
         ansible.builtin.assert:
             that:
                 - "cs_nc_protocol in ['http', 'https']"
@@ -66,7 +66,7 @@
       - name: Nextcloud | Database
         tags: never,nextcloud,nextcloud_database
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/db.yml
+            file: tasks/nextcloud/database.yml
 
       - name: Nextcloud | Install
         tags: never,nextcloud,nextcloud_install
@@ -93,10 +93,15 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/fulltextsearch.yml
 
-      - name: Nextcloud | Talk
-        tags: never,nextcloud,nextcloud_talk
+      - name: Nextcloud | OnlyOffice
+        tags: never,nextcloud,nextcloud_onlyoffice
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/talk.yml
+            file: tasks/nextcloud/onlyoffice.yml
+
+      - name: Nextcloud | Hub Bundle
+        tags: never,nextcloud,nextcloud_hub_bundle
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/hub_bundle.yml
 
       - name: Nextcloud | Post Install
         tags: never,nextcloud,nextcloud_post_install
