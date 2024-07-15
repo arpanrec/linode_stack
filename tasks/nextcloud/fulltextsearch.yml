@@ -147,9 +147,24 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
 
+- name: Nextcloud | Full Text Search | Stop nextcloud-fulltext-elasticsearch-worker
+  ansible.builtin.systemd_service:
+      name: nextcloud-fulltext-elasticsearch-worker.service
+      enabled: false
+      state: stopped
+      daemon_reload: true
+
+- name: Nextcloud | Full Text Search | Stop fulltextsearch
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ fulltextsearch:stop"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
 - name: Nextcloud | Full Text Search | Start nextcloud-fulltext-elasticsearch-worker
   ansible.builtin.systemd_service:
       name: nextcloud-fulltext-elasticsearch-worker.service
       enabled: true
-      state: restarted
+      state: started
       daemon_reload: true
