@@ -1,5 +1,9 @@
 # Core Services
 
+## Nextcloud
+
+Deploy a nextcloud storage server.
+
 Deploy public facing core services on Linode.
 
 Service: Mini0
