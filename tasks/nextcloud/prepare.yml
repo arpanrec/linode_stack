@@ -171,19 +171,15 @@
         option: opcache.memory_consumption
         value: 256
 
-- name: Nextcloud | Prepare | Enable php fpm as a service and restart
-  ansible.builtin.systemd_service:
-      name: php{{ cs_nc_php_version }}-fpm
-      enabled: true
-      state: restarted
-
 - name: Nextcloud | Prepare | Create SSL Directory
+  when: cs_nc_protocol == "https"
   ansible.builtin.file:
       path: /etc/ssl/{{ cs_nc_domain }}
       state: directory
       mode: "0755"
 
 - name: Nextcloud | Prepare | Copy SSL Certificates
+  when: cs_nc_protocol == "https"
   ansible.builtin.copy:
       content: "{{ item.content | b64decode }}"
       dest: "/etc/ssl/{{ cs_nc_domain }}/{{ item.dest }}"

@@ -20,12 +20,16 @@
       path: "{{ cs_nc_fail2ban_log_file | dirname }}"
       state: directory
       mode: "0755"
+      owner: www-data
+      group: www-data
 
 - name: Nextcloud | Post Install | Touch log file
   ansible.builtin.file:
       path: "{{ cs_nc_fail2ban_log_file }}"
       state: touch
       mode: "0777"
+      owner: www-data
+      group: www-data
 
 - name: Nextcloud | Post Install | Add fail2ban filter
   ansible.builtin.copy:

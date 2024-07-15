@@ -195,7 +195,15 @@
       - "config:system:set mail_smtpname --value {{ cs_nc_mail_smtpname }}"
       - "config:system:set mail_smtppassword --value {{ cs_nc_mail_smtppassword }}"
 
-- name: Nextcloud | Install | Set nextcloud config
+- name: Nextcloud | Install | Set nextcloud maintenance window at 3 am
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ config:system:set maintenance_window_start --type=integer --value=3"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+
+- name: Nextcloud | Install | Set nextcloud url
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -203,11 +211,9 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   with_items:
-      - "config:system:set maintenance_window_start --type=integer --value=100"
-
-      - "config:system:set overwrite.cli.url --value https://{{ cs_nc_domain }}:{{ cs_nc_port }}"
+      - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
       - "config:system:set overwritehost --value {{ cs_nc_domain }}:{{ cs_nc_port }}"
-      - "config:system:set overwriteprotocol --value https"
+      - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
       - "config:system:set htaccess.RewriteBase --value /"
 
 - name: Nextcloud | Install | Maintenance Update htaccess
@@ -239,7 +245,7 @@
   with_items:
       - "theming:config name 'Home Server'"
       - "theming:config slogan 'Where bytes go to retire and data parties in pajamas!'"
-      - "theming:config url 'https://{{ cs_nc_domain }}:{{ cs_nc_port }}'"
+      - "theming:config url '{{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}'"
       - "theming:config color '#2C2222'"
       - "theming:config favicon '/tmp/nc-favicon.ico'"
       - "theming:config logo '/tmp/nc-logo.png'"

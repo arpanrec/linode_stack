@@ -21,14 +21,19 @@ Listen {{ cs_nc_port }}
     </Directory>
     ErrorLog ${APACHE_LOG_DIR}/nextcloud_error.log
     CustomLog ${APACHE_LOG_DIR}/nextcloud_access.log combined
-    
+{% if cs_nc_protocol == "https" %}
     SSLEngine on
     SSLCertificateFile /etc/ssl/{{ cs_nc_domain }}/fullchain.pem
     SSLCertificateKeyFile /etc/ssl/{{ cs_nc_domain }}/privkey.pem
     SSLProtocol             all -SSLv3 -TLSv1 -TLSv1.1 -TLSv1.2
     SSLHonorCipherOrder     off
     SSLSessionTickets       off
+{% else %}
+    SSLEngine off
+{% endif %}
 
 </VirtualHost>
+{% if cs_nc_protocol == "https" %}
 SSLUseStapling On
 SSLStaplingCache "shmcb:logs/ssl_stapling(32768)"
+{% endif %}
