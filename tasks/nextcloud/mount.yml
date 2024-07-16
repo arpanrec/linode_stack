@@ -5,11 +5,11 @@
       state: directory
       mode: "0755"
 
-- name: Mini0 | Mount Disk | Remove all fstab entries
-  ansible.builtin.lineinfile:
-      path: /etc/fstab
-      regexp: "^UUID=029d8364-b165-4b7e-a7b3-5202f2a3e21a"
-      state: absent
+# - name: Mini0 | Mount Disk | Remove all fstab entries
+#   ansible.builtin.lineinfile:
+#       path: /etc/fstab
+#       regexp: "^UUID=029d8364-b165-4b7e-a7b3-5202f2a3e21a"
+#       state: absent
 
 # 3AB277C5B2778463
 # - name: Nextcloud | Mount Disk | Mount disk
@@ -17,7 +17,7 @@
 #       path: /mnt/nextcloud
 #       src: UUID=3AB277C5B2778463
 #       fstype: ntfs
-#       opts: "rw,auto,user,fmask=133,dmask=022,uid=1000,gid=1000"
+#       opts: "defaults,noatime,nofail"
 #       state: "mounted"
 #       boot: true
 #       dump: 0
@@ -29,6 +29,7 @@
           [Unit]
           Description=Nextcloud Disk
           After=network.target
+          SourcePath=/etc/fstab
 
           [Mount]
           What=/dev/disk/by-uuid/029d8364-b165-4b7e-a7b3-5202f2a3e21a
@@ -43,9 +44,9 @@
 
 - name: Nextcloud | Mount Disk | Enable systemd mount unit
   ansible.builtin.systemd:
-      name: "mnt-nextcloud.mount"
-      enabled: false
-      state: stopped
+      name: mnt-nextcloud.mount
+      enabled: true
+      state: started
       daemon_reload: true
 
 - name: Nextcloud | Mount Disk | Create systemd automount unit
@@ -54,6 +55,7 @@
           [Unit]
           Description=Nextcloud Disk Automount
           After=network.target
+          SourcePath=/etc/fstab
 
           [Automount]
           Where=/mnt/nextcloud
@@ -65,7 +67,20 @@
 
 - name: Nextcloud | Mount Disk | Enable systemd automount unit
   ansible.builtin.systemd:
-      name: "mnt-nextcloud.automount"
+      name: mnt-nextcloud.automount
       enabled: true
       state: started
       daemon_reload: true
+
+- name: Nextcloud | Mount Disk | Gather facts
+  ansible.builtin.setup:
+
+- name: Nextcloud | Mount Disk | Fail if volume not mounted
+  ansible.builtin.assert:
+      that:
+          - ansible_mounts | community.general.json_query('[?mount==`/mnt/nextcloud`].uuid') is defined
+          - ansible_mounts | community.general.json_query('[?mount==`/mnt/nextcloud`].uuid') | length > 0
+          - ansible_mounts | community.general.json_query('[?mount==`/mnt/nextcloud`].uuid') | first
+            == "029d8364-b165-4b7e-a7b3-5202f2a3e21a"
+      fail_msg: "Nextcloud volume not mounted"
+      success_msg: "Nextcloud volume mounted"
