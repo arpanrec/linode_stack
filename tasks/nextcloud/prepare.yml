@@ -223,9 +223,27 @@
       cmd: a2ensite default-ssl nextcloud
   changed_when: true
 
-- name: Nextcloud | Post Install | Restart apache2
+- name: Nextcloud | Prepare | Create php systemd fpm override directory
+  ansible.builtin.file:
+      path: /etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d
+      state: directory
+      mode: "0755"
+
+- name: Nextcloud | Prepare | Create php systemd fpm override config for run directory
+  ansible.builtin.copy:
+      content: |+
+          [Service]
+          ExecStartPre=/bin/bash -c 'mkdir -p /run/php'
+          ExecStartPre=/bin/bash -c 'chown -R www-data:www-data /run/php'
+      dest: "/etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d/override.conf"
+      mode: "0644"
+
+- name: Nextcloud | Prepare | Restart apache2 and php-fpm
   ansible.builtin.systemd_service:
-      name: "apache2"
+      name: "{{ item }}"
       enabled: true
       state: restarted
       daemon_reload: true
+  with_items:
+      - apache2
+      - php{{ cs_nc_php_version }}-fpm
