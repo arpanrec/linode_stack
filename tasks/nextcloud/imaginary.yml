@@ -5,11 +5,6 @@
       state: absent
       force_kill: true
 
-- name: Nextcloud | Imaginary | Create network
-  community.docker.docker_network:
-      name: nextcloud
-      state: present
-
 - name: Nextcloud | Imaginary | Run Imaginary
   community.docker.docker_container:
       name: nextcloud-imaginary
@@ -19,11 +14,11 @@
           - name: nextcloud
       restart_policy: unless-stopped
       ports:
-          - "9000:9000"
+          - "{{ cs_nc_imaginary_port }}:{{ cs_nc_imaginary_port }}"
       env:
           TZ: "Asia/Kolkata"
           IMAGINARY_SECRET: "{{ cs_nc_imaginary_key }}"
-          PORT: "9000"
+          PORT: "{{ cs_nc_imaginary_port | string }}"
       command: -enable-url-source
 
 - name: Nextcloud | Imaginary | Set Imaginary as Preview Provider
@@ -44,7 +39,8 @@
       - "config:system:set enabledPreviewProviders 6 --value='OC\\Preview\\Movie'"
       - "config:system:set enabledPreviewProviders 7 --value='OC\\Preview\\Krita'"
       - "config:system:set enable_previews --value true"
-      - "config:system:set preview_imaginary_url --value 'http://127.0.0.1:9000'"
+      - "config:system:set preview_imaginary_url --value 'http://{{ cs_nc_imaginary_domain }}:{{
+        cs_nc_imaginary_port }}'"
       - "config:system:set preview_imaginary_key --value '{{ cs_nc_imaginary_key }}'"
       - "config:system:set preview_max_x --value 2048"
       - "config:system:set preview_max_y --value 2048"
