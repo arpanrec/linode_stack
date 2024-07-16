@@ -7,4 +7,4 @@ cs_pg_admin_dir: "/app/pgadmin"
 
 cs_redis_data_dir: "/app/redis"
 
-cs_nc_elasticsearch_data_dir: "/app/elasticsearch"
+cs_elasticsearch_data_dir: "/app/elasticsearch"
