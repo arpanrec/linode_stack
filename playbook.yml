@@ -41,20 +41,43 @@
 
 - name: Database
   hosts: rb4-m1
-  become: true
-  become_user: root
-  gather_facts: true
+  become: false
+  gather_facts: false
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Database | Postgres
-        tags: never,databse,postgres
+        become: true
+        become_user: root
+        tags: never,database,postgres
         ansible.builtin.import_tasks:
             file: tasks/postgres.yml
 
       - name: Database | Redis
-        tags: never,databse,redis
+        become: true
+        become_user: root
+        tags: never,database,redis
         ansible.builtin.import_tasks:
             file: tasks/redis.yml
+
+      - name: Database | Elasticsearch
+        become: true
+        become_user: root
+        tags: never,database,elasticsearch
+        ansible.builtin.import_tasks:
+            file: tasks/elasticsearch.yml
+
+- name: OnlyOffice
+  hosts: rb4-m2
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: OnlyOffice
+        tags: never,onlyoffice
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/onlyoffice.yml
 
 - name: Nextcloud
   hosts: rb4-m3

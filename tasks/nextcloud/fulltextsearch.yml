@@ -1,70 +1,4 @@
 ---
-- name: Nextcloud | Full Text Search | Stop old dependency containers
-  community.docker.docker_container:
-      name: "nextcloud-fulltextsearch"
-      state: absent
-      force_kill: true
-
-- name: Nextcloud | Full Text Search | Get Service user details
-  ansible.builtin.getent:
-      database: passwd
-      key: "{{ cs_vm_ssh_service_user_id }}"
-  register: cs_nc_service_user
-
-- name: Nextcloud | Full Text Search | Create fulltextsearch Data Directory
-  ansible.builtin.file:
-      path: "{{ cs_nc_fulltextsearch_data_dir }}"
-      state: directory
-      mode: "0755"
-      owner: "{{ cs_vm_ssh_service_user_id }}"
-
-- name: Nextcloud | Full Text Search | Create network
-  community.docker.docker_network:
-      name: nextcloud
-      state: present
-
-- name: Nextcloud | Full Text Search | Create fulltextsearch Container
-  community.docker.docker_container:
-      name: nextcloud-fulltextsearch
-      image: "docker.io/nextcloud/aio-fulltextsearch:latest"
-      user: "{{ getent_passwd[cs_vm_ssh_service_user_id].1 }}"
-      networks:
-          - name: nextcloud
-      volumes:
-          - "{{ cs_nc_fulltextsearch_data_dir }}:/usr/share/elasticsearch/data:rw"
-      ports:
-          - "9200:9200"
-          - "9300:9300"
-      state: started
-      restart_policy: unless-stopped
-      env:
-          TZ: Asia/Kolkata
-          "discovery.type": "single-node"
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-          "node.name": "es01"
-          "cluster.name": docker-cluster
-          "bootstrap.memory_lock": "true"
-          "http.port": "9200"
-          "xpack.license.self_generated.type": basic
-          "xpack.security.enabled": "false"
-          "logger.org.elasticsearch.discovery": WARN
-          ELASTIC_CONTAINER: "true"
-          FULLTEXTSEARCH_PASSWORD: "{{ cs_nc_fulltextsearch_password }}"
-      ulimits:
-          - "memlock:-1:-1"
-
-- name: Nextcloud | Full Text Search | Wait for fulltextsearch to start
-  ansible.builtin.uri:
-      url: "http://elastic:{{ cs_nc_fulltextsearch_password }}@127.0.0.1:9200"
-      method: GET
-      status_code: [200]
-      timeout: 3
-      return_content: true
-  register: cs_nc_fulltextsearch_status
-  until: cs_nc_fulltextsearch_status.status == 200
-  retries: 30
-  delay: 3
-
 - name: Nextcloud | Full Text Search | List all apps
   become: true
   become_user: www-data
@@ -127,7 +61,7 @@
                   "types": ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
-                  elastic_host: "http://elastic:{{ cs_nc_fulltextsearch_password }}@127.0.0.1:9200"
+                  elastic_host: "http://elastic:{{ cs_elasticsearch_password }}@127.0.0.1:9200"
                   elastic_index: "nextcloud"
                   elastic_type: "file"
                   analyzer_tokenizer: "standard"

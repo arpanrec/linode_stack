@@ -12,6 +12,4 @@ cs_nc_logtimezone: "Asia/Kolkata"
 cs_nc_default_phone_region: "IN"
 cs_nc_fail2ban_log_file: "{{ cs_nc_data_dir }}/fail2ban.log"
 
-cs_nc_fulltextsearch_data_dir: "{{ cs_nc_app_data_root_dir }}/fulltextsearch"
-
 cs_nc_php_version: "8.3"

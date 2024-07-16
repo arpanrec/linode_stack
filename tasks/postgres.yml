@@ -11,7 +11,7 @@
   with_items:
       - nextcloud-mysql
       - postgres-main
-      - nextcloud-pgadmin
+      - pgadmin-main
 
 - name: Database | Postgres | Create network
   community.docker.docker_network:
@@ -156,7 +156,7 @@
 
 - name: Database | Postgres | Run pgadmin docker
   community.docker.docker_container:
-      name: nextcloud-pgadmin
+      name: pgadmin-main
       image: docker.io/dpage/pgadmin4:8.9
       user: "5050:5050"
       restart_policy: unless-stopped
