@@ -1,14 +1,40 @@
 ---
-- name: Nextcloud | Hub Bundle | Set Apps Config
+- name: Nextcloud | Onlyoffice | List all apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_app_list
+
+- name: Nextcloud | Onlyoffice | Install apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:install {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "onlyoffice"
+  when: >
+      not
+      (
+        item in cs_nc_app_list.stdout | from_json | json_query('enabled')
+      or
+        item in cs_nc_app_list.stdout | from_json | json_query('disabled')
+      )
+
+- name: Nextcloud | Onlyoffice | Set Apps Config
   ansible.builtin.set_fact:
-      cs_nc_app_config:
+      cs_nc_onlyoffice_config:
           apps:
               onlyoffice:
                   # yamllint disable
                   "verify_peer_off": "false"
-                  "DocumentServerUrl": "https://{{ cs_nc_domain }}:{{ cs_onlyoffice_port }}/"
-                  "DocumentServerInternalUrl": "https://localhost:{{ cs_onlyoffice_port }}/"
-                  "jwt_secret": "{{ cs_onlyoffice_jwt_secret }}"
+                  "DocumentServerUrl": "https://{{ cs_nc_onlyoffice_domain }}:{{ cs_nc_onlyoffice_port }}/"
+                  "DocumentServerInternalUrl": "https://{{ cs_nc_onlyoffice_domain }}:{{ cs_nc_onlyoffice_port }}/"
+                  "jwt_secret": "{{ cs_nc_onlyoffice_jwt_secret }}"
                   "customization_plugins": "true"
                   "types": "prevent_group_restriction"
                   "customization_macros": "true"
@@ -30,16 +56,16 @@
                   "customizationReviewDisplay": "original"
                   "customizationTheme": "theme-classic-light"
 
-- name: Nextcloud | Hub Bundle | Write
+- name: Nextcloud | Onlyoffice | Write
   ansible.builtin.copy:
-      content: "{{ cs_nc_app_config | to_nice_json }}"
-      dest: "/tmp/nc-apps-config.json"
+      content: "{{ cs_nc_onlyoffice_config | to_nice_json }}"
+      dest: "/tmp/nc-apps-onlyoffice-config.json"
       mode: "0644"
 
-- name: Nextcloud | Hub Bundle | Import Apps Config
+- name: Nextcloud | Onlyoffice | Import Apps Config
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ config:import /tmp/nc-apps-config.json"
+      cmd: "php occ config:import /tmp/nc-apps-onlyoffice-config.json"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
