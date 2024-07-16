@@ -41,6 +41,9 @@
       dest: "/etc/apt/trusted.gpg.d/php.gpg"
       mode: "0644"
 
+- name: Nextcloud | Prepare | Gather Facts
+  ansible.builtin.setup:
+
 - name: Nextcloud | Prepare | Add PHP Repository
   ansible.builtin.apt_repository:
       repo: "deb [signed-by=/etc/apt/trusted.gpg.d/php.gpg] https://packages.sury.org/php/
