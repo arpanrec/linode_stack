@@ -71,13 +71,13 @@
       dest: "{{ item.dest }}"
       mode: "0644"
   with_items:
-      - src: files/nc-favicon.svg
+      - src: files/nc/favicon.svg
         dest: /tmp/nc-favicon.ico
-      - src: files/nc-logo.png
+      - src: files/nc/logo.png
         dest: /tmp/nc-logo.png
-      - src: files/nc-logoheader.png
+      - src: files/nc/logoheader.png
         dest: /tmp/nc-logoheader.png
-      - src: files/nc-background.jpg
+      - src: files/nc/background.jpg
         dest: /tmp/nc-background.jpg
 
 - name: Nextcloud | Install | Check if Nextcloud is installed

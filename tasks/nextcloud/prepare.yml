@@ -194,8 +194,8 @@
 
 - name: Nextcloud | Prepare | Create Apache2 config
   ansible.builtin.template:
-      src: templates/apache-nc-conf.j2
-      dest: "/etc/apache2/sites-available/nextcloud.conf"
+      src: templates/nc/100-apache.j2
+      dest: "/etc/apache2/sites-available/100-nextcloud.conf"
       mode: "0644"
 
 - name: Nextcloud | Prepare | Enable Apache2 Modules
@@ -220,7 +220,7 @@
 
 - name: Nextcloud | Prepare | Enable Apache2 site for Nextcloud and SSL
   ansible.builtin.command:
-      cmd: a2ensite default-ssl nextcloud
+      cmd: a2ensite default-ssl 100-nextcloud
   changed_when: true
 
 - name: Nextcloud | Prepare | Create php systemd fpm override directory
