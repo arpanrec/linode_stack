@@ -46,7 +46,7 @@
   ansible.builtin.command:
       cmd: "php occ user:disable {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"
-  with_items: "{{ cs_nc_group_list.stdout | from_json | json_query('admin') }}"
+  with_items: "{{ cs_nc_group_list.stdout | from_json | community.general.json_query('admin') }}"
   changed_when: true
 
 - name: Nextcloud | Admin | Set admin user properties
@@ -91,7 +91,8 @@
       cmd: "php occ user:setting {{ cs_nc_admin_user }} settings display_name 'nc-admin-{{ cs_nc_admin_user }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
-  when: "'nc-admin-'+cs_nc_admin_user != cs_nc_admin_info.stdout | from_json | json_query('display_name')"
+  when: "'nc-admin-'+cs_nc_admin_user != cs_nc_admin_info.stdout | from_json
+      | community.general.json_query('display_name')"
 
 - name: Nextcloud | Admin | Add user to admin group
   become: true
@@ -100,4 +101,4 @@
       cmd: "php occ group:adduser admin {{ cs_nc_admin_user }}"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
-  when: "'admin' not in cs_nc_admin_info.stdout | from_json | json_query('groups')"
+  when: "'admin' not in cs_nc_admin_info.stdout | from_json | community.general.json_query('groups')"
