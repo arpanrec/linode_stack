@@ -1,7 +1,7 @@
 ---
 - name: Database | Elasticsearch | Stop old dependency containers
   community.docker.docker_container:
-      name: "nextcloud-elasticsearch"
+      name: elasticsearch-main
       state: absent
       force_kill: true
 
@@ -17,22 +17,15 @@
       mode: "0755"
       owner: "{{ cs_vm_ssh_service_user_id }}"
 
-- name: Database | Elasticsearch | Create network
-  community.docker.docker_network:
-      name: nextcloud
-      state: present
-
 - name: Database | Elasticsearch | Create elasticsearch Container
   community.docker.docker_container:
-      name: nextcloud-elasticsearch
+      name: elasticsearch-main
       image: "docker.io/nextcloud/aio-fulltextsearch:latest"
       user: "{{ getent_passwd[cs_vm_ssh_service_user_id].1 }}"
-      networks:
-          - name: nextcloud
       volumes:
           - "{{ cs_elasticsearch_data_dir }}:/usr/share/elasticsearch/data:rw"
       ports:
-          - "{{ cs_elasticsearch_servlet_port }}:9200"
+          - "{{ cs_elasticsearch_servlet_port }}:{{ cs_elasticsearch_servlet_port }}"
           - "{{ cs_elasticsearch_transport_port }}:9300"
       state: started
       restart_policy: unless-stopped
@@ -43,7 +36,7 @@
           "node.name": "es01"
           "cluster.name": docker-cluster
           "bootstrap.memory_lock": "true"
-          "http.port": "{{ cs_elasticsearch_servlet_port }}"
+          "http.port": "{{ cs_elasticsearch_servlet_port | string }}"
           "xpack.license.self_generated.type": basic
           "xpack.security.enabled": "false"
           "logger.org.elasticsearch.discovery": WARN
