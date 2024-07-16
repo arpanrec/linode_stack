@@ -84,3 +84,10 @@
             == "029d8364-b165-4b7e-a7b3-5202f2a3e21a"
       fail_msg: "Nextcloud volume not mounted"
       success_msg: "Nextcloud volume mounted"
+
+- name: Nextcloud | Mount Disk
+      | Check for self uuid file /mnt/nextcloud/029d8364-b165-4b7e-a7b3-5202f2a3e21a file should exist
+  ansible.builtin.stat:
+      path: /mnt/nextcloud/029d8364-b165-4b7e-a7b3-5202f2a3e21a
+  register: nextcloud_uuid_file
+  failed_when: not nextcloud_uuid_file.stat.exists
