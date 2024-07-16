@@ -81,9 +81,8 @@
 
 - name: Nextcloud
   hosts: rb4-m3
-  become: true
-  become_user: root
-  gather_facts: true
+  become: false
+  gather_facts: false
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Calculate Nextcloud Protocol cs_nc_protocol
@@ -102,6 +101,8 @@
 
       - name: Nextcloud | Prepare
         tags: never,nextcloud,nextcloud_prepare
+        become: true
+        become_user: root
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/prepare.yml
 

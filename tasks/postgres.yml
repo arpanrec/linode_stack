@@ -87,11 +87,14 @@
 
 - name: Database | Postgres | Create pgadmin directory
   ansible.builtin.file:
-      path: "{{ cs_pg_admin_dir }}"
+      path: "{{ item }}"
       state: directory
       mode: "0755"
       owner: "5050"
       group: "5050"
+  with_items:
+      - "{{ cs_pg_admin_dir }}"
+      - "/etc/ssl/{{ cs_pg_admin_domain }}"
 
 - name: Database | Postgres | Write pgpassfile # TODO: Not working
   ansible.builtin.copy:
@@ -125,6 +128,17 @@
       owner: "5050"
       group: "5050"
 
+- name: Database | Postgres | Write SSL certificate and key
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "/etc/ssl/{{ cs_pg_admin_domain }}/{{ item.dest }}"
+      mode: "0644"
+  with_items:
+      - dest: fullchain.pem
+        content: "{{ cs_pg_admin_ssl_cert_b64 | b64decode }}"
+      - dest: privkey.pem
+        content: "{{ cs_pg_admin_ssl_key_b64 | b64decode }}"
+
 - name: Database | Postgres | Run pgadmin docker
   community.docker.docker_container:
       name: pgadmin-main
@@ -140,9 +154,20 @@
           PGADMIN_DEFAULT_EMAIL: "{{ cs_pg_admin_email }}"
           PGADMIN_DEFAULT_PASSWORD: "{{ cs_pg_admin_password }}"
           PGADMIN_LISTEN_PORT: "{{ cs_pg_admin_port | string }}"
-          # PGADMIN_ENABLE_TLS: "True"
+          PGADMIN_ENABLE_TLS: "True"
       volumes:
-          # - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert:ro"
-          # - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/certs/server.key:ro"
+          - "/etc/ssl/{{ cs_pg_admin_domain }}/fullchain.pem:/certs/server.cert:ro"
+          - "/etc/ssl/{{ cs_pg_admin_domain }}/privkey.pem:/certs/server.key:ro"
           - "{{ cs_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
           - "{{ cs_pg_admin_dir }}/pgpassfile:/pgadmin4/pgpassfile:ro"
+
+- name: Database | Postgres | Wait for pgadmin
+  ansible.builtin.uri:
+      url: https://{{ cs_pg_admin_domain }}:{{ cs_pg_admin_port }}/misc/ping
+      return_content: true
+      status_code:
+          - 200
+  register: is_pgadmin_up
+  retries: 30
+  delay: 3
+  until: is_pgadmin_up.status == 200 and is_pgadmin_up.content == "PING"
