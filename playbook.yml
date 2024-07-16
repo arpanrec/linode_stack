@@ -121,36 +121,50 @@
             file: tasks/nextcloud/install.yml
 
       - name: Nextcloud | Admin
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_admin
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/admin.yml
 
       - name: Nextcloud | Cache
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_cache
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/cache.yml
 
       - name: Nextcloud | Imaginary
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_imaginary
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/imaginary.yml
 
       - name: Nextcloud | Full Text Search
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_fulltextsearch
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/fulltextsearch.yml
 
       - name: Nextcloud | OnlyOffice
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_onlyoffice
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/onlyoffice.yml
 
       - name: Nextcloud | Hub Bundle
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_hub_bundle
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/hub_bundle.yml
 
       - name: Nextcloud | Post Install
+        become: true
+        become_user: root
         tags: never,nextcloud,nextcloud_post_install
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/post-install.yml
