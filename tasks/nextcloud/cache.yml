@@ -7,8 +7,10 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   with_items:
-      - "config:system:set redis host --value 127.0.0.1"
-      - "config:system:set redis port --value 6379"
+      - "config:system:set redis host --value {{ cs_nc_redis_host }}"
+      - "config:system:set redis port --value {{ cs_nc_redis_port }}"
+      - "config:system:set redis timeout --value {{ cs_nc_redis_timeout }}"
+      - "config:system:set redis password --value {{ cs_nc_redis_password }}"
 
       - "config:system:set memcache.local --value '\\OC\\Memcache\\APCu'"
       - "config:system:set memcache.distributed --value '\\OC\\Memcache\\Redis'"
