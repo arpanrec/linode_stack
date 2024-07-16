@@ -46,17 +46,17 @@
       ports:
           - "{{ cs_postgres_port }}:5432"
       env:
-          POSTGRES_PASSWORD: "{{ cs_postgres_root_password }}"
-          POSTGRES_USER: "{{ cs_postgres_root_user }}"
-          POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
+          POSTGRES_PASSWORD: "{{ cs_postgres_password }}"
+          POSTGRES_USER: "{{ cs_postgres_user }}"
+          POSTGRES_DB: "{{ cs_postgres_db }}"
 
 - name: Database | Postgres | Wait for postgres to start
   community.postgresql.postgresql_ping:
       login_host: "{{ cs_postgres_host }}"
-      login_password: "{{ cs_postgres_root_password }}"
-      login_user: "{{ cs_postgres_root_user }}"
+      login_password: "{{ cs_postgres_password }}"
+      login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
-      login_db: "{{ cs_postgres_maintenance_db }}"
+      login_db: "{{ cs_postgres_db }}"
   register: is_postgres_up
   until: is_postgres_up.is_available
   retries: 30
@@ -64,33 +64,26 @@
 
 - name: Database | Postgres | Create postgres user
   community.postgresql.postgresql_user:
-      name: "{{ item.name }}"
-      password: "{{ item.password }}"
+      name: "{{ item.value.user }}"
+      password: "{{ item.value.password }}"
+      state: "present"
       login_host: "{{ cs_postgres_host }}"
-      login_password: "{{ cs_postgres_root_password }}"
-      login_user: "{{ cs_postgres_root_user }}"
+      login_password: "{{ cs_postgres_password }}"
+      login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
-      login_db: "{{ cs_postgres_maintenance_db }}"
-  with_items:
-      - name: "{{ cs_nc_postgres_user }}"
-        password: "{{ cs_nc_postgres_password }}"
-      - name: "{{ cs_onlyoffice_postgres_user }}"
-        password: "{{ cs_onlyoffice_postgres_password }}"
+      login_db: "{{ cs_postgres_db }}"
+  with_items: "{{ cs_postgres_apps | dict2items }}"
 
 - name: Database | Postgres | Create postgres database
   community.postgresql.postgresql_db:
-      name: "{{ item.name }}"
+      name: "{{ item.value.database }}"
       state: "present"
-      owner: "{{ item.owner }}"
+      owner: "{{ item.value.user }}"
       login_host: "{{ cs_postgres_host }}"
-      login_password: "{{ cs_postgres_root_password }}"
-      login_user: "{{ cs_postgres_root_user }}"
+      login_password: "{{ cs_postgres_password }}"
+      login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
-  with_items:
-      - name: "{{ cs_nc_postgres_database }}"
-        owner: "{{ cs_nc_postgres_user }}"
-      - name: "{{ cs_onlyoffice_postgres_database }}"
-        owner: "{{ cs_onlyoffice_postgres_user }}"
+  with_items: "{{ cs_postgres_apps | dict2items }}"
 
 - name: Database | Postgres | Create pgadmin directory
   ansible.builtin.file:
@@ -103,12 +96,8 @@
 - name: Database | Postgres | Write pgpassfile # TODO: Not working
   ansible.builtin.copy:
       content: |+
-          postgres-main:{{ cs_postgres_port }}:{{ cs_nc_postgres_database }}:{{ cs_nc_postgres_user }}:{{
-           cs_nc_postgres_password | regex_escape() }}
-          postgres-main:{{ cs_postgres_port }}:{{ cs_onlyoffice_postgres_database }}:{{
-           cs_onlyoffice_postgres_user }}:{{ cs_onlyoffice_postgres_password | regex_escape() }}
-          postgres-main:{{ cs_postgres_port }}:{{ cs_postgres_maintenance_db }}:{{ cs_postgres_root_user }}:{{
-           cs_postgres_root_password | regex_escape() }}
+          postgres-main:{{ cs_postgres_port }}:{{ cs_postgres_db }}:{{ cs_postgres_user }}:{{
+           cs_postgres_password | regex_escape() }}
       dest: "{{ cs_pg_admin_dir }}/pgpassfile"
       mode: "0600"
       owner: "5050"
@@ -125,24 +114,6 @@
                   Port: "{{ cs_postgres_port }}"
                   MaintenanceDB: "{{ cs_nc_postgres_database }}"
                   Username: "{{ cs_nc_postgres_user }}"
-                  SSLMode: "prefer"
-                  PassFile: "/pgadmin4/pgpassfile"
-              2:
-                  Name: "OnlyOffice-Main"
-                  Group: "Servers"
-                  Host: "postgres-main"
-                  Port: "{{ cs_postgres_port }}"
-                  MaintenanceDB: "{{ cs_onlyoffice_postgres_database }}"
-                  Username: "{{ cs_onlyoffice_postgres_user }}"
-                  SSLMode: "prefer"
-                  PassFile: "/pgadmin4/pgpassfile"
-              3:
-                  Name: "Postgres-Main"
-                  Group: "Servers"
-                  Host: "postgres-main"
-                  Port: "{{ cs_postgres_port }}"
-                  MaintenanceDB: "{{ cs_postgres_maintenance_db }}"
-                  Username: "{{ cs_postgres_root_user }}"
                   SSLMode: "prefer"
                   PassFile: "/pgadmin4/pgpassfile"
 
@@ -168,7 +139,7 @@
       env:
           PGADMIN_DEFAULT_EMAIL: "{{ cs_pg_admin_email }}"
           PGADMIN_DEFAULT_PASSWORD: "{{ cs_pg_admin_password }}"
-          PGADMIN_LISTEN_PORT: "{{ cs_pg_admin_port }}"
+          PGADMIN_LISTEN_PORT: "{{ cs_pg_admin_port | string }}"
           # PGADMIN_ENABLE_TLS: "True"
       volumes:
           # - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert:ro"
