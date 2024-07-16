@@ -27,7 +27,7 @@
           - "{{ cs_redis_data_dir }}:/data"
       ports:
           - "{{ cs_redis_port }}:{{ cs_redis_port }}"
-      command: redis-server --save 20 1 --loglevel warning \
+      command: redis-server --save 20 1 --loglevel warning
           --requirepass "{{ cs_redis_password }}"
           --port "{{ cs_redis_port }}"
 
@@ -38,4 +38,4 @@
   register: redis_ping
   retries: 30
   delay: 5
-  until: redis_ping.stdout == "PONG"
+  until: redis_ping.stdout is defined and redis_ping.stdout == "PONG"
