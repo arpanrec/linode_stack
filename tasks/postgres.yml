@@ -43,8 +43,9 @@
       volumes:
           - "{{ cs_postgres_data_dir }}:/var/lib/postgresql/data"
       state: started
+      command: --port={{ cs_postgres_port }}
       ports:
-          - "{{ cs_postgres_port }}:5432"
+          - "{{ cs_postgres_port }}:{{ cs_postgres_port }}"
       env:
           POSTGRES_PASSWORD: "{{ cs_postgres_password }}"
           POSTGRES_USER: "{{ cs_postgres_user }}"
@@ -111,12 +112,12 @@
       cs_pg_admin_servers:
           Servers:
               1:
-                  Name: "Nextcloud-Main"
+                  Name: "PG-Main"
                   Group: "Servers"
                   Host: "postgres-main"
                   Port: "{{ cs_postgres_port }}"
-                  MaintenanceDB: "{{ cs_nc_postgres_database }}"
-                  Username: "{{ cs_nc_postgres_user }}"
+                  MaintenanceDB: "{{ cs_postgres_db }}"
+                  Username: "{{ cs_postgres_user }}"
                   SSLMode: "prefer"
                   PassFile: "/pgadmin4/pgpassfile"
 
