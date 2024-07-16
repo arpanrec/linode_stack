@@ -1,0 +1,30 @@
+---
+- name: Database | Redis | Create data directory
+  ansible.builtin.file:
+      path: "{{ cs_redis_data_dir }}"
+      state: directory
+      mode: "0755"
+
+- name: Database | Redis | Stop old dependency containers
+  community.docker.docker_container:
+      name: "main-redis"
+      state: absent
+      force_kill: true
+
+- name: Database | Redis | Enable UFW port
+  community.general.ufw:
+      rule: allow
+      port: "{{ cs_redis_port }}"
+      state: enabled
+
+- name: Database | Redis | Run Redis docker
+  community.docker.docker_container:
+      name: "main-redis"
+      image: "docker.io/library/redis:7.2.0"
+      state: started
+      restart_policy: "unless-stopped"
+      volumes:
+          - "{{ cs_redis_data_dir }}:/data"
+      ports:
+          - "{{ cs_redis_port }}:6379"
+      command: redis-server --save 20 1 --loglevel warning --requirepass "{{ cs_redis_password }}"

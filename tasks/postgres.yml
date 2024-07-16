@@ -1,0 +1,177 @@
+---
+- name: Database | Postgres | Install python3-psycopg2
+  ansible.builtin.apt:
+      name: python3-psycopg2
+
+- name: Database | Postgres | Stop old dependency containers
+  community.docker.docker_container:
+      name: "{{ item }}"
+      state: absent
+      force_kill: true
+  with_items:
+      - nextcloud-mysql
+      - postgres-main
+      - nextcloud-pgadmin
+
+- name: Database | Postgres | Create network
+  community.docker.docker_network:
+      name: postgres-net
+      state: present
+
+- name: Database | Postgres | Enable UFW port
+  community.general.ufw:
+      rule: allow
+      port: "{{ item }}"
+      state: enabled
+  with_items:
+      - "{{ cs_postgres_port }}"
+      - "{{ cs_pg_admin_port }}"
+
+- name: Database | Postgres | Create postgres data directory
+  ansible.builtin.file:
+      path: "{{ cs_postgres_data_dir }}"
+      state: directory
+      mode: "0755"
+
+- name: Database | Postgres | Run postgres docker
+  community.docker.docker_container:
+      name: postgres-main
+      image: docker.io/library/postgres:16.3
+      restart_policy: unless-stopped
+      networks:
+          - name: postgres-net
+      volumes:
+          - "{{ cs_postgres_data_dir }}:/var/lib/postgresql/data"
+      state: started
+      ports:
+          - "{{ cs_postgres_port }}:5432"
+      env:
+          POSTGRES_PASSWORD: "{{ cs_postgres_root_password }}"
+          POSTGRES_USER: "{{ cs_postgres_root_user }}"
+          POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
+
+- name: Database | Postgres | Wait for postgres to start
+  community.postgresql.postgresql_ping:
+      login_host: "{{ cs_postgres_host }}"
+      login_password: "{{ cs_postgres_root_password }}"
+      login_user: "{{ cs_postgres_root_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
+  register: is_postgres_up
+  until: is_postgres_up.is_available
+  retries: 30
+  delay: 3
+
+- name: Database | Postgres | Create postgres user
+  community.postgresql.postgresql_user:
+      name: "{{ item.name }}"
+      password: "{{ item.password }}"
+      login_host: "{{ cs_postgres_host }}"
+      login_password: "{{ cs_postgres_root_password }}"
+      login_user: "{{ cs_postgres_root_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
+  with_items:
+      - name: "{{ cs_nc_postgres_user }}"
+        password: "{{ cs_nc_postgres_password }}"
+      - name: "{{ cs_onlyoffice_postgres_user }}"
+        password: "{{ cs_onlyoffice_postgres_password }}"
+
+- name: Database | Postgres | Create postgres database
+  community.postgresql.postgresql_db:
+      name: "{{ item.name }}"
+      state: "present"
+      owner: "{{ item.owner }}"
+      login_host: "{{ cs_postgres_host }}"
+      login_password: "{{ cs_postgres_root_password }}"
+      login_user: "{{ cs_postgres_root_user }}"
+      login_port: "{{ cs_postgres_port }}"
+  with_items:
+      - name: "{{ cs_nc_postgres_database }}"
+        owner: "{{ cs_nc_postgres_user }}"
+      - name: "{{ cs_onlyoffice_postgres_database }}"
+        owner: "{{ cs_onlyoffice_postgres_user }}"
+
+- name: Database | Postgres | Create pgadmin directory
+  ansible.builtin.file:
+      path: "{{ cs_pg_admin_dir }}"
+      state: directory
+      mode: "0755"
+      owner: "5050"
+      group: "5050"
+
+- name: Database | Postgres | Write pgpassfile # TODO: Not working
+  ansible.builtin.copy:
+      content: |+
+          postgres-main:{{ cs_postgres_port }}:{{ cs_nc_postgres_database }}:{{ cs_nc_postgres_user }}:{{
+           cs_nc_postgres_password | regex_escape() }}
+          postgres-main:{{ cs_postgres_port }}:{{ cs_onlyoffice_postgres_database }}:{{
+           cs_onlyoffice_postgres_user }}:{{ cs_onlyoffice_postgres_password | regex_escape() }}
+          postgres-main:{{ cs_postgres_port }}:{{ cs_postgres_maintenance_db }}:{{ cs_postgres_root_user }}:{{
+           cs_postgres_root_password | regex_escape() }}
+      dest: "{{ cs_pg_admin_dir }}/pgpassfile"
+      mode: "0600"
+      owner: "5050"
+      group: "5050"
+
+- name: Database | Postgres | Set Server json fact
+  ansible.builtin.set_fact:
+      cs_pg_admin_servers:
+          Servers:
+              1:
+                  Name: "Nextcloud-Main"
+                  Group: "Servers"
+                  Host: "postgres-main"
+                  Port: "{{ cs_postgres_port }}"
+                  MaintenanceDB: "{{ cs_nc_postgres_database }}"
+                  Username: "{{ cs_nc_postgres_user }}"
+                  SSLMode: "prefer"
+                  PassFile: "/pgadmin4/pgpassfile"
+              2:
+                  Name: "OnlyOffice-Main"
+                  Group: "Servers"
+                  Host: "postgres-main"
+                  Port: "{{ cs_postgres_port }}"
+                  MaintenanceDB: "{{ cs_onlyoffice_postgres_database }}"
+                  Username: "{{ cs_onlyoffice_postgres_user }}"
+                  SSLMode: "prefer"
+                  PassFile: "/pgadmin4/pgpassfile"
+              3:
+                  Name: "Postgres-Main"
+                  Group: "Servers"
+                  Host: "postgres-main"
+                  Port: "{{ cs_postgres_port }}"
+                  MaintenanceDB: "{{ cs_postgres_maintenance_db }}"
+                  Username: "{{ cs_postgres_root_user }}"
+                  SSLMode: "prefer"
+                  PassFile: "/pgadmin4/pgpassfile"
+
+- name: Database | Postgres | Write pgadmin servers.json
+  ansible.builtin.copy:
+      content: "{{ cs_pg_admin_servers | to_nice_json }}"
+      dest: "{{ cs_pg_admin_dir }}/servers.json"
+      mode: "0644"
+      owner: "5050"
+      group: "5050"
+
+- name: Database | Postgres | Run pgadmin docker
+  community.docker.docker_container:
+      name: nextcloud-pgadmin
+      image: docker.io/dpage/pgadmin4:8.9
+      user: "5050:5050"
+      restart_policy: unless-stopped
+      networks:
+          - name: postgres-net
+      state: started
+      ports:
+          - "{{ cs_pg_admin_port }}:{{ cs_pg_admin_port }}"
+      env:
+          PGADMIN_DEFAULT_EMAIL: "{{ cs_pg_admin_email }}"
+          PGADMIN_DEFAULT_PASSWORD: "{{ cs_pg_admin_password }}"
+          PGADMIN_LISTEN_PORT: "{{ cs_pg_admin_port }}"
+          # PGADMIN_ENABLE_TLS: "True"
+      volumes:
+          # - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/certs/server.cert:ro"
+          # - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/certs/server.key:ro"
+          - "{{ cs_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
+          - "{{ cs_pg_admin_dir }}/pgpassfile:/pgadmin4/pgpassfile:ro"

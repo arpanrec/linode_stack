@@ -1,0 +1,57 @@
+---
+- name: Nextcloud | OnlyOffice | Stop old dependency containers
+  community.docker.docker_container:
+      name: "main-onlyoffice"
+      state: absent
+      force_kill: true
+
+- name: Nextcloud | OnlyOffice | Create onlyoffice directories
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+  with_items:
+      - "{{ cs_onlyoffice_dir }}/data"
+      - "{{ cs_onlyoffice_dir }}/logs"
+      - "{{ cs_onlyoffice_dir }}/lib"
+      - "{{ cs_onlyoffice_dir }}/db"
+
+- name: Nextcloud | OnlyOffice | Create onlyoffice Container
+  community.docker.docker_container:
+      name: main-onlyoffice
+      image: "docker.io/onlyoffice/documentserver:8.1.1.1"
+      volumes:
+          - "{{ cs_onlyoffice_dir }}/data:/var/www/onlyoffice/Data"
+          - "{{ cs_onlyoffice_dir }}/logs:/var/log/onlyoffice"
+          - "{{ cs_onlyoffice_dir }}/lib:/var/lib/onlyoffice"
+          - "{{ cs_onlyoffice_dir }}/db:/var/lib/postgresql"
+          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/cert.pem:ro"
+          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/priv.key:ro"
+      state: started
+      ports:
+          - "{{ cs_onlyoffice_port }}:443"
+      restart_policy: unless-stopped
+      env:
+          JWT_SECRET: "{{ cs_onlyoffice_jwt_secret }}"
+          SSL_KEY_PATH: "/priv.key"
+          SSL_CERTIFICATE_PATH: "/cert.pem"
+          REDIS_SERVER_HOST: "nextcloud-redis"
+          REDIS_SERVER_PORT: "6379"
+          REDIS_SERVER_PASS: "{{ cs_redis_password }}"
+          DB_TYPE: "postgres"
+          DB_HOST: "{{ cs_postgres_host }}"
+          DB_PORT: "{{ cs_postgres_port }}"
+          DB_NAME: "{{ cs_onlyoffice_postgres_database }}"
+          DB_USER: "{{ cs_onlyoffice_postgres_user }}"
+          DB_PWD: "{{ cs_onlyoffice_postgres_password }}"
+
+- name: Nextcloud | OnlyOffice | Wait for onlyoffice to start
+  ansible.builtin.uri:
+      url: "https://{{ cs_nc_domain }}:{{ cs_onlyoffice_port }}/healthcheck"
+      method: GET
+      status_code: 200
+      return_content: true
+  register: is_onlyoffice_up
+  until: is_onlyoffice_up.status == 200
+  retries: 30
+  delay: 3

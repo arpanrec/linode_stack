@@ -1,29 +1,4 @@
 ---
-- name: Nextcloud | Cache | Create network
-  community.docker.docker_network:
-      name: nextcloud
-      state: present
-
-- name: Nextcloud | Cache | Stop old dependency containers
-  community.docker.docker_container:
-      name: "nextcloud-redis"
-      state: absent
-      force_kill: true
-
-- name: Nextcloud | Cache | Run Redis docker
-  community.docker.docker_container:
-      name: "nextcloud-redis"
-      image: "docker.io/library/redis:7.2.0"
-      state: "started"
-      networks:
-          - name: "nextcloud"
-      restart_policy: "unless-stopped"
-      volumes:
-          - "{{ cs_nc_redis_data_dir }}/redis:/data"
-      ports:
-          - "6379:6379"
-      command: redis-server --save 20 1
-
 - name: Nextcloud | Cache | Set nextcloud config
   become: true
   become_user: www-data

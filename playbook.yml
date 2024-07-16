@@ -27,6 +27,35 @@
         ansible.builtin.import_tasks:
             file: tasks/minio.yml
 
+- name: Patch Cloud System
+  hosts: patchservers
+  become: true
+  become_user: root
+  gather_facts: true
+  no_log: "{{ cs_no_log }}"
+  tags: never,patch
+  tasks:
+      - name: Patch Cloud System
+        ansible.builtin.import_tasks:
+            file: tasks/patch.yml
+
+- name: Database
+  hosts: rb4-m1
+  become: true
+  become_user: root
+  gather_facts: true
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Database | Postgres
+        tags: never,databse,postgres
+        ansible.builtin.import_tasks:
+            file: tasks/postgres.yml
+
+      - name: Database | Redis
+        tags: never,databse,redis
+        ansible.builtin.import_tasks:
+            file: tasks/redis.yml
+
 - name: Nextcloud
   hosts: rb4-m3
   become: true
@@ -48,11 +77,6 @@
             fail_msg: "cs_nc_protocol must be either 'http' or 'https'"
             success_msg: "cs_nc_protocol is valid"
 
-      - name: Patch Cloud System
-        tags: never,nextcloud,nextcloud_patch
-        ansible.builtin.import_tasks:
-            file: tasks/patch.yml
-
       - name: Nextcloud | Prepare
         tags: never,nextcloud,nextcloud_prepare
         ansible.builtin.import_tasks:
@@ -62,11 +86,6 @@
         tags: never,nextcloud,nextcloud_mount
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/mount.yml
-
-      - name: Nextcloud | Database
-        tags: never,nextcloud,nextcloud_database
-        ansible.builtin.import_tasks:
-            file: tasks/nextcloud/database.yml
 
       - name: Nextcloud | Install
         tags: never,nextcloud,nextcloud_install
