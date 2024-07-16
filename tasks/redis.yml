@@ -27,7 +27,8 @@
           - "{{ cs_redis_data_dir }}:/data"
       ports:
           - "{{ cs_redis_port }}:{{ cs_redis_port }}"
-      command: redis-server --save 20 1 --loglevel verbose --requirepass "{{ cs_redis_password }}"
+      command: redis-server --save 20 1 --loglevel warning \
+          --requirepass "{{ cs_redis_password }}"
           --port "{{ cs_redis_port }}"
 
 - name: Database | Redis | Run ping
