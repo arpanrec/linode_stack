@@ -10,7 +10,6 @@
           - imagemagick
           - python3-mysqldb
           - python3-lxml
-          - python3-psycopg2
           - python3-requests
           - memcached
           - libmagickcore-6.q16-6-extra
@@ -41,6 +40,9 @@
       url: "https://packages.sury.org/php/apt.gpg"
       dest: "/etc/apt/trusted.gpg.d/php.gpg"
       mode: "0644"
+
+- name: Nextcloud | Prepare | Gather Facts
+  ansible.builtin.setup:
 
 - name: Nextcloud | Prepare | Add PHP Repository
   ansible.builtin.apt_repository:

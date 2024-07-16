@@ -1,65 +1,39 @@
 ---
-- name: Nextcloud | OnlyOffice | Stop old dependency containers
-  community.docker.docker_container:
-      name: "nextcloud-onlyoffice"
-      state: absent
-      force_kill: true
+- name: Nextcloud | Onlyoffice | List all apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: cs_nc_app_list
 
-- name: Nextcloud | OnlyOffice | Create network
-  community.docker.docker_network:
-      name: nextcloud
-      state: present
+- name: Nextcloud | Onlyoffice | Install apps
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ app:install {{ item }}"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - "onlyoffice"
+  when: >
+      not
+      (
+        item in cs_nc_app_list.stdout | from_json | json_query('enabled')
+      or
+        item in cs_nc_app_list.stdout | from_json | json_query('disabled')
+      )
 
-- name: Nextcloud | OnlyOffice | Create onlyoffice Container
-  community.docker.docker_container:
-      name: nextcloud-onlyoffice
-      image: "docker.io/onlyoffice/documentserver:8.1.1.1"
-      networks:
-          - name: nextcloud
-      volumes:
-          - "{{ cs_nc_onlyoffice_dir }}/data:/var/www/onlyoffice/Data"
-          - "{{ cs_nc_onlyoffice_dir }}/logs:/var/log/onlyoffice"
-          - "{{ cs_nc_onlyoffice_dir }}/lib:/var/lib/onlyoffice"
-          - "{{ cs_nc_onlyoffice_dir }}/db:/var/lib/postgresql"
-          - "/etc/ssl/{{ cs_nc_domain }}/fullchain.pem:/cert.pem:ro"
-          - "/etc/ssl/{{ cs_nc_domain }}/privkey.pem:/priv.key:ro"
-      state: started
-      ports:
-          - "{{ cs_nc_onlyoffice_port }}:443"
-      restart_policy: unless-stopped
-      env:
-          JWT_SECRET: "{{ cs_nc_onlyoffice_jwt_secret }}"
-          SSL_KEY_PATH: "/priv.key"
-          SSL_CERTIFICATE_PATH: "/cert.pem"
-          REDIS_SERVER_HOST: "nextcloud-redis"
-          REDIS_SERVER_PORT: "6379"
-          DB_TYPE: "postgres"
-          DB_HOST: "nextcloud-postgres"
-          DB_PORT: "5432"
-          DB_NAME: "{{ cs_nc_onlyoffice_postgres_database }}"
-          DB_USER: "{{ cs_nc_onlyoffice_postgres_user }}"
-          DB_PWD: "{{ cs_nc_onlyoffice_postgres_password }}"
-
-- name: Nextcloud | OnlyOffice | Wait for onlyoffice to start
-  ansible.builtin.uri:
-      url: "https://{{ cs_nc_domain }}:{{ cs_nc_onlyoffice_port }}/healthcheck"
-      method: GET
-      status_code: 200
-      return_content: true
-  register: is_onlyoffice_up
-  until: is_onlyoffice_up.status == 200
-  retries: 30
-  delay: 3
-
-- name: Nextcloud | Hub Bundle | Set Apps Config
+- name: Nextcloud | Onlyoffice | Set Apps Config
   ansible.builtin.set_fact:
-      cs_nc_app_config:
+      cs_nc_onlyoffice_config:
           apps:
               onlyoffice:
                   # yamllint disable
                   "verify_peer_off": "false"
-                  "DocumentServerUrl": "https://{{ cs_nc_domain }}:{{ cs_nc_onlyoffice_port }}/"
-                  "DocumentServerInternalUrl": "https://localhost:{{ cs_nc_onlyoffice_port }}/"
+                  "DocumentServerUrl": "https://{{ cs_nc_onlyoffice_domain }}:{{ cs_nc_onlyoffice_port }}/"
+                  "DocumentServerInternalUrl": "https://{{ cs_nc_onlyoffice_domain }}:{{ cs_nc_onlyoffice_port }}/"
                   "jwt_secret": "{{ cs_nc_onlyoffice_jwt_secret }}"
                   "customization_plugins": "true"
                   "types": "prevent_group_restriction"
@@ -82,16 +56,16 @@
                   "customizationReviewDisplay": "original"
                   "customizationTheme": "theme-classic-light"
 
-- name: Nextcloud | Hub Bundle | Write
+- name: Nextcloud | Onlyoffice | Write
   ansible.builtin.copy:
-      content: "{{ cs_nc_app_config | to_nice_json }}"
-      dest: "/tmp/nc-apps-config.json"
+      content: "{{ cs_nc_onlyoffice_config | to_nice_json }}"
+      dest: "/tmp/nc-apps-onlyoffice-config.json"
       mode: "0644"
 
-- name: Nextcloud | Hub Bundle | Import Apps Config
+- name: Nextcloud | Onlyoffice | Import Apps Config
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ config:import /tmp/nc-apps-config.json"
+      cmd: "php occ config:import /tmp/nc-apps-onlyoffice-config.json"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true

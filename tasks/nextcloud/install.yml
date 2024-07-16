@@ -91,8 +91,9 @@
   become_user: www-data
   ansible.builtin.command:
       cmd: "php occ maintenance:install --database 'pgsql' \
-          --database-name 'nextcloud' --database-user 'nextcloud' \
-          --database-pass '{{ cs_nc_postgres_password }}' --database-host '127.0.0.1:5432' \
+          --database-name '{{ cs_nc_postgres_database }}' --database-user '{{ cs_nc_postgres_user }}' \
+          --database-pass '{{ cs_nc_postgres_password }}' \
+          --database-host '{{ cs_nc_postgres_host }}:{{ cs_nc_postgres_port }}' \
           --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}' \
           --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -117,6 +118,9 @@
   with_items:
       - "encryption:enable"
       - "encryption:enable-master-key"
+
+- name: Nextcloud | Install | Gather facts
+  ansible.builtin.setup:
 
 - name: Nextcloud | Install | Set Trusted Domains
   become: true

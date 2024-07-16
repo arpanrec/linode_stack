@@ -1,0 +1,99 @@
+---
+- name: OnlyOffice | Stop old dependency containers
+  community.docker.docker_container:
+      name: "main-onlyoffice"
+      state: absent
+      force_kill: true
+
+- name: OnlyOffice | Create onlyoffice directories
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+  with_items:
+      - "{{ cs_onlyoffice_dir }}/data"
+      - "{{ cs_onlyoffice_dir }}/logs"
+      - "{{ cs_onlyoffice_dir }}/lib"
+      - "{{ cs_onlyoffice_dir }}/db"
+      - "/etc/ssl/{{ cs_onlyoffice_domain }}"
+
+- name: OnlyOffice | Write SSL certificate and key
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/{{ item.dest }}"
+      mode: "0644"
+  with_items:
+      - dest: fullchain.pem
+        content: "{{ cs_onlyoffice_full_chain_b64 | b64decode }}"
+      - dest: privkey.pem
+        content: "{{ cs_onlyoffice_priv_key_b64 | b64decode }}"
+
+- name: OnlyOffice | Create onlyoffice Container
+  community.docker.docker_container:
+      name: main-onlyoffice
+      image: "docker.io/onlyoffice/documentserver:8.1.1.1"
+      volumes:
+          - "{{ cs_onlyoffice_dir }}/data:/var/www/onlyoffice/Data"
+          - "{{ cs_onlyoffice_dir }}/logs:/var/log/onlyoffice"
+          - "{{ cs_onlyoffice_dir }}/lib:/var/lib/onlyoffice"
+          - "{{ cs_onlyoffice_dir }}/db:/var/lib/postgresql"
+          - "/etc/ssl/{{ cs_onlyoffice_domain }}/fullchain.pem:/cert.pem:ro"
+          - "/etc/ssl/{{ cs_onlyoffice_domain }}/privkey.pem:/priv.key:ro"
+      state: started
+      ports:
+          - "{{ cs_onlyoffice_port }}:443"
+      restart_policy: unless-stopped
+      env:
+          JWT_SECRET: "{{ cs_onlyoffice_jwt_secret }}"
+          SSL_KEY_PATH: "/priv.key"
+          SSL_CERTIFICATE_PATH: "/cert.pem"
+          REDIS_SERVER_HOST: "{{ cs_onlyoffice_redis_host }}"
+          REDIS_SERVER_PORT: "{{ cs_onlyoffice_redis_port | string }}"
+          REDIS_SERVER_PASS: "{{ cs_onlyoffice_redis_password }}"
+          DB_TYPE: "postgres"
+          DB_HOST: "{{ cs_onlyoffice_postgres_host }}"
+          DB_PORT: "{{ cs_onlyoffice_postgres_port | string }}"
+          DB_NAME: "{{ cs_onlyoffice_postgres_database }}"
+          DB_USER: "{{ cs_onlyoffice_postgres_user }}"
+          DB_PWD: "{{ cs_onlyoffice_postgres_password }}"
+          WOPI_ENABLED: "true"
+
+- name: OnlyOffice | Enable UFW port
+  community.general.ufw:
+      rule: allow
+      port: "{{ item }}"
+      state: enabled
+  with_items:
+      - "{{ cs_onlyoffice_port }}"
+
+- name: OnlyOffice | Wait for onlyoffice to start
+  ansible.builtin.uri:
+      url: "https://{{ cs_onlyoffice_domain }}:{{ cs_onlyoffice_port }}/healthcheck"
+      method: GET
+      status_code: 200
+      return_content: true
+  register: is_onlyoffice_up
+  until: is_onlyoffice_up.status == 200
+  retries: 30
+  delay: 3
+
+- name: OnlyOffice | Enable example document server
+  community.docker.docker_container_exec:
+      container: main-onlyoffice
+      command: sudo supervisorctl start ds:example
+  register: onlyoffice_example
+  changed_when: true
+
+- name: OnlyOffice | Debug example document server
+  ansible.builtin.debug:
+      var: onlyoffice_example
+
+- name: OnlyOffice | Add to auto start
+  community.docker.docker_container_exec:
+      container: main-onlyoffice
+      command: sudo sed 's,autostart=false,autostart=true,' -i /etc/supervisor/conf.d/ds-example.conf
+  register: onlyoffice_autostart
+
+- name: OnlyOffice | Debug auto start
+  ansible.builtin.debug:
+      var: onlyoffice_autostart
