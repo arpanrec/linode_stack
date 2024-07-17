@@ -163,6 +163,13 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/hub_bundle.yml
 
+      - name: Nextcloud | Users
+        become: true
+        become_user: root
+        tags: never,nextcloud,nextcloud_users
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/users.yml
+
       - name: Nextcloud | Post Install
         become: true
         become_user: root
