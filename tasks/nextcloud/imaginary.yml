@@ -10,8 +10,6 @@
       name: nextcloud-imaginary
       image: "docker.io/nextcloud/aio-imaginary:latest"
       state: started
-      networks:
-          - name: nextcloud
       restart_policy: unless-stopped
       ports:
           - "{{ cs_nc_imaginary_port }}:{{ cs_nc_imaginary_port }}"

@@ -1,11 +1,11 @@
 ---
-- name: OnlyOffice | Stop old dependency containers
+- name: OnlyOffice | Stop old container
   community.docker.docker_container:
-      name: "main-onlyoffice"
+      name: onlyoffice-main
       state: absent
       force_kill: true
 
-- name: OnlyOffice | Create onlyoffice directories
+- name: OnlyOffice | Create directories
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
@@ -28,9 +28,9 @@
       - dest: privkey.pem
         content: "{{ cs_onlyoffice_priv_key_b64 | b64decode }}"
 
-- name: OnlyOffice | Create onlyoffice Container
+- name: OnlyOffice | Start Container
   community.docker.docker_container:
-      name: main-onlyoffice
+      name: onlyoffice-main
       image: "docker.io/onlyoffice/documentserver:8.1.1.1"
       volumes:
           - "{{ cs_onlyoffice_dir }}/data:/var/www/onlyoffice/Data"
@@ -66,7 +66,7 @@
   with_items:
       - "{{ cs_onlyoffice_port }}"
 
-- name: OnlyOffice | Wait for onlyoffice to start
+- name: OnlyOffice | Wait for service to start
   ansible.builtin.uri:
       url: "https://{{ cs_onlyoffice_domain }}:{{ cs_onlyoffice_port }}/healthcheck"
       method: GET
@@ -79,7 +79,7 @@
 
 - name: OnlyOffice | Enable example document server
   community.docker.docker_container_exec:
-      container: main-onlyoffice
+      container: onlyoffice-main
       command: sudo supervisorctl start ds:example
   register: onlyoffice_example
   changed_when: true
@@ -90,7 +90,7 @@
 
 - name: OnlyOffice | Add to auto start
   community.docker.docker_container_exec:
-      container: main-onlyoffice
+      container: onlyoffice-main
       command: sudo sed 's,autostart=false,autostart=true,' -i /etc/supervisor/conf.d/ds-example.conf
   register: onlyoffice_autostart
 

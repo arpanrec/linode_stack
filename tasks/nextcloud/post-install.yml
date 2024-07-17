@@ -53,3 +53,11 @@
   with_items:
       - fail2ban
       - sendmail
+
+- name: Nextcloud | Post Install | Add missing indices
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ db:add-missing-indices"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
