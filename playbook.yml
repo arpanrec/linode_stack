@@ -171,7 +171,7 @@
             file: tasks/nextcloud/post-install.yml
 
 - name: Delete all
-  hosts: all
+  hosts: patchservers
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
@@ -184,11 +184,9 @@
             cmd: |+
                 docker rm -v -f $(docker ps -qa)
                 docker system prune -af --volumes
-                if [ -x "$(command -v apt)" ]; then
-                    apt-get clean
-                    apt-get autoremove -y
-                    apt autopurge -y apache2* php*
-                fi
+                apt-get clean
+                apt-get autoremove -y
+                apt autopurge -y apache2* php*
                 rm -rf /app /etc/apache2 /etc/php /etc/apache2 /run/apache2 /run/php
         changed_when: true
         register: delete_all
