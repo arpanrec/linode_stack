@@ -169,3 +169,30 @@
         tags: never,nextcloud,nextcloud_post_install
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/post-install.yml
+
+- name: Delete all
+  hosts: all
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Delete all
+        become: true
+        become_user: root
+        tags: never,delete_all
+        ansible.builtin.shell:
+            cmd: |+
+                docker rm -v -f $(docker ps -qa)
+                docker system prune -af --volumes
+                if [ -x "$(command -v apt)" ]; then
+                    apt-get clean
+                    apt-get autoremove -y
+                    apt autopurge -y apache2* php*
+                fi
+                rm -rf /app /etc/apache2 /etc/php /etc/apache2 /run/apache2 /run/php
+        changed_when: true
+        register: delete_all
+
+      - name: Delete all | Debug
+        ansible.builtin.debug:
+            var: delete_all
