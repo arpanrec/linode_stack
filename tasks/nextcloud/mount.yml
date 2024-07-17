@@ -166,3 +166,41 @@
       - files_external:option {{ existing_storage_mount_id }} encoding_compatibility false
       - files_external:option {{ existing_storage_mount_id }} readonly false
       - files_external:option {{ existing_storage_mount_id }} encrypt true
+
+- name: Nextcloud | Mount Disk | Create systemd unit files for nextcloud scan files
+  ansible.builtin.copy:
+      dest: "{{ item.dest }}"
+      content: "{{ item.content }}"
+      mode: "0644"
+  with_items:
+      - dest: /etc/systemd/system/nextcloudscanfiles.service
+        content: |+
+            [Unit]
+            Description=Nextcloud scan files
+
+            [Service]
+            User=www-data
+            ExecCondition=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ status -e
+            ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ files:scan --all
+            WorkingDirectory={{ cs_nc_web_root_dir }}
+            KillMode=process
+
+      - dest: /etc/systemd/system/nextcloudscanfiles.timer
+        content: |
+            [Unit]
+            Description=Run Nextcloud cron every 15 minutes
+
+            [Timer]
+            OnBootSec=1min
+            OnUnitActiveSec=15min
+            Unit=nextcloudscanfiles.service
+
+            [Install]
+            WantedBy=multi-user.target
+
+- name: Nextcloud | Mount Disk | Enable and start nextcloudscanfiles.timer
+  ansible.builtin.systemd_service:
+      name: nextcloudscanfiles.timer
+      enabled: true
+      state: started
+      daemon_reload: true
