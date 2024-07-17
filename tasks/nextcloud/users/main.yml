@@ -3,6 +3,30 @@
   ansible.builtin.import_tasks:
       file: tasks/nextcloud/users/create.yml
 
+- name: Nextcloud | Users | Set all groups list from all users
+  ansible.builtin.set_fact:
+      all_user_groups: "{{ all_user_groups | default([]) + (item | flatten | unique) }}"
+  loop: "{{ cs_nc_users | community.general.json_query('*.groups') | flatten | unique }}"
+
+- name: Nextcloud | Users | Get all existing groups in Nextcloud
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_all_existing_groups
+
+- name: Nextcloud | Users | Create groups if not exists
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:add '{{ item }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  loop: "{{ all_user_groups }}"
+  when: item not in nextcloud_all_existing_groups.stdout | from_json
+
 - name: Nextcloud | Users | Groups Manage
   ansible.builtin.include_tasks:
       file: tasks/nextcloud/users/groups_manage.yml
