@@ -5,9 +5,9 @@
       state: directory
       mode: "0755"
 
-- name: Database | Redis | Stop old Redis container
+- name: Database | Redis | Stop old container
   community.docker.docker_container:
-      name: main-redis
+      name: redis-main
       state: absent
       force_kill: true
 
@@ -17,9 +17,9 @@
       port: "{{ cs_redis_port }}"
       state: enabled
 
-- name: Database | Redis | Run Redis docker
+- name: Database | Redis | Start container
   community.docker.docker_container:
-      name: main-redis
+      name: redis-main
       image: docker.io/library/redis:7.2.0
       state: started
       restart_policy: unless-stopped
@@ -31,7 +31,7 @@
           --requirepass "{{ cs_redis_password }}"
           --port "{{ cs_redis_port }}"
 
-- name: Database | Redis | Run ping
+- name: Database | Redis | Wait for service to start
   community.docker.docker_container_exec:
       container: main-redis
       command: redis-cli -a "{{ cs_redis_password }}" -p "{{ cs_redis_port }}" --no-auth-warning ping
