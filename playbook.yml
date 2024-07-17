@@ -109,7 +109,6 @@
       - name: Nextcloud | Mount Disk
         become: true
         become_user: root
-        when: false
         tags: never,nextcloud,nextcloud_mount
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/mount.yml
@@ -194,7 +193,7 @@
                 apt-get clean
                 apt-get autoremove -y
                 apt autopurge -y apache2* php*
-                rm -rf /app /etc/apache2 /etc/php /etc/apache2 /run/apache2 /run/php
+                rm -rf /app /etc/php /etc/apache2 /run/apache2 /run/php
         changed_when: true
         register: delete_all
 

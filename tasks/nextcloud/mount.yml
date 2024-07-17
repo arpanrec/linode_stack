@@ -1,27 +1,19 @@
 ---
+- name: Nextcloud | Mount Disk | Set facts
+  ansible.builtin.set_fact:
+      cold_storage_disk_uuid: 029d8364-b165-4b7e-a7b3-5202f2a3e21a
+      cold_storage_disk_mount_point: /mnt/coldstorage
+
+- name: Nextcloud | Mount Disk | Set facts systemd service name
+  ansible.builtin.set_fact:
+      cold_storage_disk_systemd_service_name: "{{ cold_storage_disk_mount_point
+          | regex_replace('^/', '') | regex_replace('/', '-') }}"
+
 - name: Nextcloud | Mount Disk | Create mount point
   ansible.builtin.file:
-      path: /mnt/nextcloud
+      path: "{{ cold_storage_disk_mount_point }}"
       state: directory
       mode: "0755"
-
-# - name: Mini0 | Mount Disk | Remove all fstab entries
-#   ansible.builtin.lineinfile:
-#       path: /etc/fstab
-#       regexp: "^UUID=029d8364-b165-4b7e-a7b3-5202f2a3e21a"
-#       state: absent
-
-# 3AB277C5B2778463
-# - name: Nextcloud | Mount Disk | Mount disk
-#   ansible.posix.mount:
-#       path: /mnt/nextcloud
-#       src: UUID=3AB277C5B2778463
-#       fstype: ntfs
-#       opts: "defaults,noatime,nofail"
-#       state: "mounted"
-#       boot: true
-#       dump: 0
-#       passno: 0
 
 - name: Nextcloud | Mount Disk | Create systemd mount unit
   ansible.builtin.copy:
@@ -32,22 +24,15 @@
           SourcePath=/etc/fstab
 
           [Mount]
-          What=/dev/disk/by-uuid/029d8364-b165-4b7e-a7b3-5202f2a3e21a
-          Where=/mnt/nextcloud
+          What=/dev/disk/by-uuid/{{ cold_storage_disk_uuid }}
+          Where={{ cold_storage_disk_mount_point }}
           Type=ext4
           Options=defaults,noatime,nofail
 
           [Install]
           WantedBy=multi-user.target
-      dest: /etc/systemd/system/mnt-nextcloud.mount
+      dest: /etc/systemd/system/{{ cold_storage_disk_systemd_service_name }}.mount
       mode: "0644"
-
-- name: Nextcloud | Mount Disk | Enable systemd mount unit
-  ansible.builtin.systemd:
-      name: mnt-nextcloud.mount
-      enabled: true
-      state: started
-      daemon_reload: true
 
 - name: Nextcloud | Mount Disk | Create systemd automount unit
   ansible.builtin.copy:
@@ -58,36 +43,48 @@
           SourcePath=/etc/fstab
 
           [Automount]
-          Where=/mnt/nextcloud
+          Where={{ cold_storage_disk_mount_point }}
 
           [Install]
           WantedBy=multi-user.target
-      dest: /etc/systemd/system/mnt-nextcloud.automount
+      dest: /etc/systemd/system/{{ cold_storage_disk_systemd_service_name }}.automount
       mode: "0644"
 
 - name: Nextcloud | Mount Disk | Enable systemd automount unit
   ansible.builtin.systemd:
-      name: mnt-nextcloud.automount
+      name: "{{ cold_storage_disk_systemd_service_name }}.automount"
       enabled: true
       state: started
       daemon_reload: true
 
-- name: Nextcloud | Mount Disk | Gather facts
-  ansible.builtin.setup:
+- name: Nextcloud | Mount Disk | Enable systemd mount unit
+  ansible.builtin.systemd:
+      name: "{{ cold_storage_disk_systemd_service_name }}.mount"
+      enabled: true
+      state: started
+      daemon_reload: true
 
-- name: Nextcloud | Mount Disk | Fail if volume not mounted
-  ansible.builtin.assert:
-      that:
-          - ansible_mounts | community.general.json_query('[?mount==`/mnt/nextcloud`].uuid') is defined
-          - ansible_mounts | community.general.json_query('[?mount==`/mnt/nextcloud`].uuid') | length > 0
-          - ansible_mounts | community.general.json_query('[?mount==`/mnt/nextcloud`].uuid') | first
-            == "029d8364-b165-4b7e-a7b3-5202f2a3e21a"
-      fail_msg: "Nextcloud volume not mounted"
-      success_msg: "Nextcloud volume mounted"
-
-- name: Nextcloud | Mount Disk
-      | Check for self uuid file /mnt/nextcloud/029d8364-b165-4b7e-a7b3-5202f2a3e21a file should exist
+- name: "Nextcloud | Mount Disk | Check for self uuid file
+      {{ cold_storage_disk_mount_point + '/' + cold_storage_disk_uuid }}"
   ansible.builtin.stat:
-      path: /mnt/nextcloud/029d8364-b165-4b7e-a7b3-5202f2a3e21a
+      path: "{{ cold_storage_disk_mount_point }}/{{ cold_storage_disk_uuid }}"
   register: nextcloud_uuid_file
   failed_when: not nextcloud_uuid_file.stat.exists
+
+- name: Nextcloud | Mount Disk | Create backup and ops directory
+  ansible.builtin.file:
+      path: "{{ item.path }}"
+      state: directory
+      mode: "0755"
+      owner: "{{ item.owner | default('root') }}"
+      group: "{{ item.group | default('root') }}"
+  with_items:
+      - path: "{{ cold_storage_disk_mount_point }}/backup"
+        owner: www-data
+        group: www-data
+      - path: "{{ cold_storage_disk_mount_point }}/ops"
+        owner: www-data
+        group: www-data
+      - path: "{{ cold_storage_disk_mount_point }}/nextcloud"
+        owner: www-data
+        group: www-data
