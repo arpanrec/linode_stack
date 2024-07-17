@@ -33,7 +33,7 @@
 
 - name: Database | Redis | Wait for service to start
   community.docker.docker_container_exec:
-      container: main-redis
+      container: redis-main
       command: redis-cli -a "{{ cs_redis_password }}" -p "{{ cs_redis_port }}" --no-auth-warning ping
   register: redis_ping
   retries: 30
