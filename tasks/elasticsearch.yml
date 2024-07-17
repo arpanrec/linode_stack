@@ -5,28 +5,24 @@
       state: absent
       force_kill: true
 
-- name: Database | Elasticsearch | Get Service user details
-  ansible.builtin.getent:
-      database: passwd
-      key: "{{ cs_vm_ssh_service_user_id }}"
-
 - name: Database | Elasticsearch | Create Data Directory
   ansible.builtin.file:
       path: "{{ cs_elasticsearch_data_dir }}"
       state: directory
       mode: "0755"
-      owner: "{{ cs_vm_ssh_service_user_id }}"
+      owner: 1000
+      group: 0
 
 - name: Database | Elasticsearch | Start Container
   community.docker.docker_container:
       name: elasticsearch-main
       image: "docker.io/nextcloud/aio-fulltextsearch:latest"
-      user: "{{ getent_passwd[cs_vm_ssh_service_user_id].1 }}"
+      user: 1000:0
       volumes:
           - "{{ cs_elasticsearch_data_dir }}:/usr/share/elasticsearch/data:rw"
       ports:
           - "{{ cs_elasticsearch_servlet_port }}:{{ cs_elasticsearch_servlet_port }}"
-          - "{{ cs_elasticsearch_transport_port }}:9300"
+          - "{{ cs_elasticsearch_transport_port }}:{{ cs_elasticsearch_transport_port }}"
       state: started
       restart_policy: unless-stopped
       env:
@@ -39,6 +35,7 @@
           "http.port": "{{ cs_elasticsearch_servlet_port | string }}"
           "xpack.license.self_generated.type": basic
           "xpack.security.enabled": "false"
+          "ransport.port": "{{ cs_elasticsearch_transport_port | string }}"
           "logger.org.elasticsearch.discovery": WARN
           ELASTIC_CONTAINER: "true"
           FULLTEXTSEARCH_PASSWORD: "{{ cs_elasticsearch_password }}"

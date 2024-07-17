@@ -33,12 +33,18 @@
   ansible.builtin.file:
       path: "{{ cs_postgres_data_dir }}"
       state: directory
-      mode: "0755"
+      mode: "0700"
+      owner: 999
+      # https://github.com/docker-library/postgres/blob/66da3846b40396249936938ee17e9684e6968a57/16/bookworm/Dockerfile#L11C25-L11C28
+      group: 999
+      # https://github.com/docker-library/postgres/blob/66da3846b40396249936938ee17e9684e6968a57/16/bookworm/Dockerfile#L11C25-L11C28
 
 - name: Database | Postgres | Start Container
   community.docker.docker_container:
       name: postgres-main
       image: docker.io/library/postgres:16.3
+      user: 999:999
+      # https://github.com/docker-library/postgres/blob/66da3846b40396249936938ee17e9684e6968a57/16/bookworm/Dockerfile#L11C25-L11C28
       restart_policy: unless-stopped
       networks:
           - name: postgres-net
