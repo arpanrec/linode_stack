@@ -74,3 +74,95 @@
       - path: "{{ cs_nc_external_drive_mount_path }}/nextcloud"
         owner: www-data
         group: www-data
+
+- name: Nextcloud | Mount Disk | Get all the groups
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_mount_groups
+
+- name: Nextcloud | Mount Disk | Create group
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:add '{{ cs_nc_files_external_mount_group_name }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  when: cs_nc_files_external_mount_group_name not in nextcloud_mount_groups.stdout | from_json
+
+- name: Nextcloud | Mount Disk | Get all storage
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ files_external:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_mount_storages
+
+- name: Nextcloud | Mount Disk | Set fact for existing storage
+  ansible.builtin.set_fact:
+      existing_storage_mount: "{{ nextcloud_mount_storages.stdout | from_json
+          | community.general.json_query('[?mount_point==`/' + cs_nc_files_external_mount_folder_name + '`]') }}"
+
+- name: Nextcloud | Mount Disk | Fail if multiple storage found
+  ansible.builtin.fail:
+      msg: "Multiple storage found with same name"
+  when: existing_storage_mount | length > 1
+
+- name: Nextcloud | Mount Disk | Test Basic config
+  when: existing_storage_mount | length == 1
+  ansible.builtin.assert:
+      that:
+          - existing_storage_mount[0].storage == "\\OC\\Files\\Storage\\Local"
+          - existing_storage_mount[0].configuration.datadir == cs_nc_external_drive_mount_path + "/nextcloud"
+      fail_msg: "Storage type should be \\OC\\Files\\Storage\\Local
+          and configuration.datadir should be {{ cs_nc_external_drive_mount_path }}/nextcloud"
+      success_msg: "Storage type is \\OC\\Files\\Storage\\Local
+          and configuration.datadir is {{ cs_nc_external_drive_mount_path }}/nextcloud"
+
+- name: Nextcloud | Mount Disk | Create storage
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ files_external:create '{{ cs_nc_files_external_mount_folder_name }}' local null::null
+          --config datadir='{{ cs_nc_external_drive_mount_path }}/nextcloud'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  when: existing_storage_mount | length == 0
+
+- name: Nextcloud | Mount Disk | Repopulate nextcloud_mount_storages
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ files_external:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_mount_storages
+
+- name: Nextcloud | Mount Disk | Set Mount ID
+  ansible.builtin.set_fact:
+      existing_storage_mount_id: "{{ nextcloud_mount_storages.stdout
+          | from_json
+          | community.general.json_query('[?mount_point==`/'
+          + cs_nc_files_external_mount_folder_name + '`].mount_id') | first }}"
+
+- name: Nextcloud | Mount Disk | Set Config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: php occ {{ item }}
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - files_external:applicable --remove-all {{ existing_storage_mount_id }}
+      - "files_external:applicable --add-group={{ cs_nc_files_external_mount_group_name }} \
+        {{ existing_storage_mount_id }}"
+      - files_external:option {{ existing_storage_mount_id }} enable_sharing true
+      - files_external:option {{ existing_storage_mount_id }} previews true
+      - files_external:option {{ existing_storage_mount_id }} filesystem_check_changes 1
+      - files_external:option {{ existing_storage_mount_id }} encoding_compatibility false
+      - files_external:option {{ existing_storage_mount_id }} readonly false
+      - files_external:option {{ existing_storage_mount_id }} encrypt true
