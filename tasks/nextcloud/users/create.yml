@@ -12,12 +12,20 @@
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ user:add --display-name='{{ item.value.display_name | default(item.key) }}' --generate-password
-          --email='{{ item.value.email }}' '{{ item.key }}'"
+      cmd: "php occ user:add --generate-password '{{ item.key }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   with_items: "{{ cs_nc_users | dict2items }}"
   when: item.key not in cs_nc_user_list_all_users.stdout | from_json
+
+- name: Nextcloud | Users | Create | Repolute all users list from Nextcloud
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  register: cs_nc_user_list_all_users
+  changed_when: false
 
 - name: Nextcloud | Users | Create | Set Users properties
   become: true
@@ -31,14 +39,17 @@
   changed_when: true
   with_items: "{{ cs_nc_users | dict2items }}"
 
-- name: Nextcloud | Users | Create | Repolute all users list from Nextcloud
+- name: Nextcloud | Users | Create | Reset Password
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ user:list --output=json"
+      cmd: "php occ user:resetpassword {{ item.key }} --password-from-env"
       chdir: "{{ cs_nc_web_root_dir }}"
-  register: cs_nc_user_list_all_users
-  changed_when: false
+  changed_when: true
+  with_items: "{{ cs_nc_users | dict2items }}"
+  environment:
+      OC_PASS: "{{ cs_nc_admin_password }}"
+  when: item.value.password is defined and item.value.password | length > 0
 
 - name: Nextcloud | Users | Create | All users dict from Nextcloud
   ansible.builtin.set_fact:
