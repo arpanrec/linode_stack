@@ -291,8 +291,9 @@
 
             [Service]
             User=www-data
-            ExecCondition=php -f {{ cs_nc_web_root_dir }}/occ status -e
+            ExecCondition=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ status -e
             ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/cron.php
+            WorkingDirectory={{ cs_nc_web_root_dir }}
             KillMode=process
 
       - dest: /etc/systemd/system/nextcloudcron.timer
