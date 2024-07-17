@@ -79,7 +79,7 @@
 
 - name: OnlyOffice | Enable example document server
   community.docker.docker_container_exec:
-      container: main-onlyoffice
+      container: onlyoffice-main
       command: sudo supervisorctl start ds:example
   register: onlyoffice_example
   changed_when: true
@@ -90,7 +90,7 @@
 
 - name: OnlyOffice | Add to auto start
   community.docker.docker_container_exec:
-      container: main-onlyoffice
+      container: onlyoffice-main
       command: sudo sed 's,autostart=false,autostart=true,' -i /etc/supervisor/conf.d/ds-example.conf
   register: onlyoffice_autostart
 
