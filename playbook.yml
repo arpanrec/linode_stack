@@ -162,7 +162,6 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/hub_bundle.yml
 
-
       - name: Nextcloud | Post Install
         become: true
         become_user: root

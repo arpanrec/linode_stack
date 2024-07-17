@@ -228,14 +228,6 @@
       - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
       - "config:system:set htaccess.RewriteBase --value /"
 
-- name: Nextcloud | Install | Maintenance Update htaccess
-  become: true
-  become_user: www-data
-  ansible.builtin.command:
-      cmd: "php occ maintenance:update:htaccess"
-      chdir: "{{ cs_nc_web_root_dir }}"
-  changed_when: true
-
 - name: Nextcloud | Install | Remove default skeleton and template directories
   become: true
   become_user: www-data
@@ -277,6 +269,14 @@
         --value 'https://play.google.com/store/apps/details?id=com.nextcloud.client'"
       - "config:app:set theming iOSClientUrl --value 'https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8'"
       - "config:app:set theming iTunesAppId --value '1125420102'"
+
+- name: Nextcloud | Install | Maintenance Update htaccess
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ maintenance:update:htaccess"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
 
 - name: Nextcloud | Install | Create systemd unit files for nextcloud cron
   ansible.builtin.copy:
