@@ -1,73 +1,59 @@
 ---
-- name: Nextcloud | Mount Disk | Set facts
-  ansible.builtin.set_fact:
-      cold_storage_disk_uuid: 029d8364-b165-4b7e-a7b3-5202f2a3e21a
-      cold_storage_disk_mount_point: /mnt/coldstorage
+- name: Nextcloud | Mount Disk | Install cryptsetup
+  ansible.builtin.package:
+      name: cryptsetup
+      state: present
 
-- name: Nextcloud | Mount Disk | Set facts systemd service name
-  ansible.builtin.set_fact:
-      cold_storage_disk_systemd_service_name: "{{ cold_storage_disk_mount_point
-          | regex_replace('^/', '') | regex_replace('/', '-') }}"
+- name: Nextcloud | Mount Disk | Copy key file
+  ansible.builtin.copy:
+      content: "{{ cs_nc_external_drive_luks_key_file_b64 | b64decode }}"
+      dest: /root/.nextcloud-luks-key
+      mode: "0000"
 
 - name: Nextcloud | Mount Disk | Create mount point
   ansible.builtin.file:
-      path: "{{ cold_storage_disk_mount_point }}"
+      path: "{{ cs_nc_external_drive_mount_path }}"
       state: directory
       mode: "0755"
 
-- name: Nextcloud | Mount Disk | Create systemd mount unit
-  ansible.builtin.copy:
-      content: |+
-          [Unit]
-          Description=Nextcloud Disk
-          After=network.target
-          SourcePath=/etc/fstab
+- name: Nextcloud | Mount Disk | Add luks key
+  community.crypto.luks_device:
+      state: opened
+      name: nextcloud
+      uuid: "{{ cs_nc_external_drive_uuid }}"
+      # keyfile: /root/.nextcloud-luks-key
+      passphrase: "{{ cs_nc_external_drive_luks_password }}"
+      new_keyfile: /root/.nextcloud-luks-key
 
-          [Mount]
-          What=/dev/disk/by-uuid/{{ cold_storage_disk_uuid }}
-          Where={{ cold_storage_disk_mount_point }}
-          Type=ext4
-          Options=defaults,noatime,nofail
-
-          [Install]
-          WantedBy=multi-user.target
-      dest: /etc/systemd/system/{{ cold_storage_disk_systemd_service_name }}.mount
+- name: Nextcloud | Mount Disk | Add to crypttab
+  ansible.builtin.lineinfile:
+      path: /etc/crypttab
+      line: "nextcloud UUID={{ cs_nc_external_drive_uuid }} /root/.nextcloud-luks-key luks"
+      create: true
       mode: "0644"
+      owner: root
+      group: root
+      regexp: "^nextcloud"
 
-- name: Nextcloud | Mount Disk | Create systemd automount unit
-  ansible.builtin.copy:
-      content: |+
-          [Unit]
-          Description=Nextcloud Disk Automount
-          After=network.target
-          SourcePath=/etc/fstab
+- name: Nextcloud | Mount Disk | Mount
+  ansible.posix.mount:
+      src: /dev/mapper/nextcloud
+      path: "{{ cs_nc_external_drive_mount_path }}"
+      fstype: ext4
+      state: mounted
+      boot: true
+      opts: defaults,noatime,nofail
+      dump: 0
+      passno: 2
 
-          [Automount]
-          Where={{ cold_storage_disk_mount_point }}
-
-          [Install]
-          WantedBy=multi-user.target
-      dest: /etc/systemd/system/{{ cold_storage_disk_systemd_service_name }}.automount
-      mode: "0644"
-
-- name: Nextcloud | Mount Disk | Enable systemd automount unit
+- name: Nextcloud | Mount Disk | Perform systemd daemon-reload
   ansible.builtin.systemd:
-      name: "{{ cold_storage_disk_systemd_service_name }}.automount"
-      enabled: true
-      state: started
-      daemon_reload: true
-
-- name: Nextcloud | Mount Disk | Enable systemd mount unit
-  ansible.builtin.systemd:
-      name: "{{ cold_storage_disk_systemd_service_name }}.mount"
-      enabled: true
-      state: started
       daemon_reload: true
 
 - name: "Nextcloud | Mount Disk | Check for self uuid file
-      {{ cold_storage_disk_mount_point + '/' + cold_storage_disk_uuid }}"
+      {{ cs_nc_external_drive_mount_path + '/' + cs_nc_external_drive_uuid }}"
   ansible.builtin.stat:
-      path: "{{ cold_storage_disk_mount_point }}/{{ cold_storage_disk_uuid }}"
+      path: "{{ cs_nc_external_drive_mount_path }}/{{ cs_nc_external_drive_uuid }}"
   register: nextcloud_uuid_file
   failed_when: not nextcloud_uuid_file.stat.exists
 
@@ -79,12 +65,12 @@
       owner: "{{ item.owner | default('root') }}"
       group: "{{ item.group | default('root') }}"
   with_items:
-      - path: "{{ cold_storage_disk_mount_point }}/backup"
+      - path: "{{ cs_nc_external_drive_mount_path }}/backup"
         owner: www-data
         group: www-data
-      - path: "{{ cold_storage_disk_mount_point }}/ops"
+      - path: "{{ cs_nc_external_drive_mount_path }}/ops"
         owner: www-data
         group: www-data
-      - path: "{{ cold_storage_disk_mount_point }}/nextcloud"
+      - path: "{{ cs_nc_external_drive_mount_path }}/nextcloud"
         owner: www-data
         group: www-data
