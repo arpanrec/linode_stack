@@ -15,3 +15,7 @@ cs_nc_fail2ban_log_file: "{{ cs_nc_data_dir }}/fail2ban.log"
 cs_nc_php_version: 8.3
 
 cs_nc_redis_timeout: 0.5
+
+cs_nc_external_drive_mount_path: /mnt/nextcloud
+cs_nc_files_external_mount_folder_name: local_mnt_nextcloud_nextcloud
+cs_nc_files_external_mount_group_name: local_mnt_nextcloud_nextcloud

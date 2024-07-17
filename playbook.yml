@@ -106,13 +106,6 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/prepare.yml
 
-      - name: Nextcloud | Mount Disk
-        become: true
-        become_user: root
-        tags: never,nextcloud,nextcloud_mount
-        ansible.builtin.import_tasks:
-            file: tasks/nextcloud/mount.yml
-
       - name: Nextcloud | Install
         become: true
         become_user: root
@@ -161,6 +154,13 @@
         tags: never,nextcloud,nextcloud_hub_bundle
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/hub_bundle.yml
+
+      - name: Nextcloud | Mount Disk
+        become: true
+        become_user: root
+        tags: never,nextcloud,nextcloud_mount
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/mount.yml
 
       - name: Nextcloud | Post Install
         become: true
