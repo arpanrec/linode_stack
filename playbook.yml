@@ -127,6 +127,13 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/cache.yml
 
+      - name: Nextcloud | Mount Disk
+        become: true
+        become_user: root
+        tags: never,nextcloud,nextcloud_mount
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/mount.yml
+
       - name: Nextcloud | Imaginary
         become: true
         become_user: root
@@ -160,14 +167,7 @@
         become_user: root
         tags: never,nextcloud,nextcloud_users
         ansible.builtin.import_tasks:
-            file: tasks/nextcloud/users.yml
-
-      - name: Nextcloud | Mount Disk
-        become: true
-        become_user: root
-        tags: never,nextcloud,nextcloud_mount
-        ansible.builtin.import_tasks:
-            file: tasks/nextcloud/mount.yml
+            file: tasks/nextcloud/users/main.yml
 
       - name: Nextcloud | Post Install
         become: true
@@ -181,19 +181,25 @@
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
+  tags: never,delete_all
   tasks:
       - name: Delete all
         become: true
         become_user: root
-        tags: never,delete_all
         ansible.builtin.shell:
             cmd: |+
                 docker rm -v -f $(docker ps -qa)
-                docker system prune -af --volumes
                 apt-get clean
                 apt-get autoremove -y
                 apt autopurge -y apache2* php*
                 rm -rf /app /etc/php /etc/apache2 /run/apache2 /run/php
+                systemctl disable --now nextcloudcron.timer || true
+                systemctl disable --now nextcloudcron.service || true
+                systemctl disable --now nextcloud-fulltext-elasticsearch-worker.service || true
+                systemctl disable --now nextcloudscanfiles.timer || true
+                systemctl disable --now nextcloudscanfiles.service || true
+                sudo rm -rf /etc/systemd/system/nextcloud*
+            executable: /bin/bash
         changed_when: true
         register: delete_all
 

@@ -1,5 +1,5 @@
 ---
-- name: Nextcloud | Users | Get all users
+- name: Nextcloud | Users | Create | Get all users
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -8,7 +8,7 @@
   register: cs_nc_user_list_all_users
   changed_when: false
 
-- name: Nextcloud | Users | Create Users
+- name: Nextcloud | Users | Create | Create Users
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -19,7 +19,7 @@
   with_items: "{{ cs_nc_users | dict2items }}"
   when: item.key not in cs_nc_user_list_all_users.stdout | from_json
 
-- name: Nextcloud | Users | Set Users properties
+- name: Nextcloud | Users | Create | Set Users properties
   become: true
   become_user: www-data
   ansible.builtin.shell:
@@ -31,7 +31,7 @@
   changed_when: true
   with_items: "{{ cs_nc_users | dict2items }}"
 
-- name: Nextcloud | Users | Repolute all users
+- name: Nextcloud | Users | Create | Repolute all users
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -40,11 +40,11 @@
   register: cs_nc_user_list_all_users
   changed_when: false
 
-- name: Nextcloud | Users | all users dict
+- name: Nextcloud | Users | Create | all users dict
   ansible.builtin.set_fact:
       cs_nc_user_list_all_users_dict: "{{ cs_nc_user_list_all_users.stdout | from_json }}"
 
-- name: Nextcloud | Users | Set Display Name
+- name: Nextcloud | Users | Create | Set Display Name
   become: true
   become_user: www-data
   changed_when: true
@@ -56,3 +56,27 @@
   when: current_user_display_name != item.value.display_name | default(item.key)
   vars:
       current_user_display_name: "{{ cs_nc_user_list_all_users_dict[item.key] }}"
+
+- name: Nextcloud | Users | Create | Set all groups list
+  ansible.builtin.set_fact:
+      all_user_groups: "{{ all_user_groups | default([]) + (item | flatten | unique) }}"
+  loop: "{{ cs_nc_users | community.general.json_query('*.groups') | flatten | unique }}"
+
+- name: Nextcloud | Users | Create | all existing groups
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_all_existing_groups
+
+- name: Nextcloud | Users | Create | Create group
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:add '{{ item }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  loop: "{{ all_user_groups }}"
+  when: item not in nextcloud_all_existing_groups.stdout | from_json

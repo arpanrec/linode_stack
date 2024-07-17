@@ -1,0 +1,12 @@
+---
+- name: Nextcloud | Users | Create
+  ansible.builtin.import_tasks:
+      file: tasks/nextcloud/users/create.yml
+
+- name: Nextcloud | Users | Groups Manage
+  ansible.builtin.include_tasks:
+      file: tasks/nextcloud/users/groups_manage.yml
+  with_items: "{{ cs_nc_users | dict2items }}"
+  vars:
+      cs_nc_user_name: "{{ item.key }}"
+      cs_nc_user_details: "{{ item.value }}"

@@ -1,0 +1,9 @@
+---
+- name: Nextcloud | Users | Groups Manage | Get User info
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ user:info '{{ cs_nc_user_name }}' --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_user_info
