@@ -1,73 +1,59 @@
 ---
-- name: Nextcloud | Mount Disk | Set facts
-  ansible.builtin.set_fact:
-      cold_storage_disk_uuid: 029d8364-b165-4b7e-a7b3-5202f2a3e21a
-      cold_storage_disk_mount_point: /mnt/coldstorage
+- name: Nextcloud | Mount Disk | Install cryptsetup
+  ansible.builtin.package:
+      name: cryptsetup
+      state: present
 
-- name: Nextcloud | Mount Disk | Set facts systemd service name
-  ansible.builtin.set_fact:
-      cold_storage_disk_systemd_service_name: "{{ cold_storage_disk_mount_point
-          | regex_replace('^/', '') | regex_replace('/', '-') }}"
+- name: Nextcloud | Mount Disk | Copy key file
+  ansible.builtin.copy:
+      content: "{{ cs_nc_external_drive_luks_key_file_b64 | b64decode }}"
+      dest: /root/.nextcloud-luks-key
+      mode: "0000"
 
 - name: Nextcloud | Mount Disk | Create mount point
   ansible.builtin.file:
-      path: "{{ cold_storage_disk_mount_point }}"
+      path: "{{ cs_nc_external_drive_mount_path }}"
       state: directory
       mode: "0755"
 
-- name: Nextcloud | Mount Disk | Create systemd mount unit
-  ansible.builtin.copy:
-      content: |+
-          [Unit]
-          Description=Nextcloud Disk
-          After=network.target
-          SourcePath=/etc/fstab
+- name: Nextcloud | Mount Disk | Add luks key
+  community.crypto.luks_device:
+      state: opened
+      name: nextcloud
+      uuid: "{{ cs_nc_external_drive_uuid }}"
+      # keyfile: /root/.nextcloud-luks-key
+      passphrase: "{{ cs_nc_external_drive_luks_password }}"
+      new_keyfile: /root/.nextcloud-luks-key
 
-          [Mount]
-          What=/dev/disk/by-uuid/{{ cold_storage_disk_uuid }}
-          Where={{ cold_storage_disk_mount_point }}
-          Type=ext4
-          Options=defaults,noatime,nofail
-
-          [Install]
-          WantedBy=multi-user.target
-      dest: /etc/systemd/system/{{ cold_storage_disk_systemd_service_name }}.mount
+- name: Nextcloud | Mount Disk | Add to crypttab
+  ansible.builtin.lineinfile:
+      path: /etc/crypttab
+      line: "nextcloud UUID={{ cs_nc_external_drive_uuid }} /root/.nextcloud-luks-key luks"
+      create: true
       mode: "0644"
+      owner: root
+      group: root
+      regexp: "^nextcloud"
 
-- name: Nextcloud | Mount Disk | Create systemd automount unit
-  ansible.builtin.copy:
-      content: |+
-          [Unit]
-          Description=Nextcloud Disk Automount
-          After=network.target
-          SourcePath=/etc/fstab
+- name: Nextcloud | Mount Disk | Mount
+  ansible.posix.mount:
+      src: /dev/mapper/nextcloud
+      path: "{{ cs_nc_external_drive_mount_path }}"
+      fstype: ext4
+      state: mounted
+      boot: true
+      opts: defaults,noatime,nofail
+      dump: 0
+      passno: 2
 
-          [Automount]
-          Where={{ cold_storage_disk_mount_point }}
-
-          [Install]
-          WantedBy=multi-user.target
-      dest: /etc/systemd/system/{{ cold_storage_disk_systemd_service_name }}.automount
-      mode: "0644"
-
-- name: Nextcloud | Mount Disk | Enable systemd automount unit
-  ansible.builtin.systemd:
-      name: "{{ cold_storage_disk_systemd_service_name }}.automount"
-      enabled: true
-      state: started
-      daemon_reload: true
-
-- name: Nextcloud | Mount Disk | Enable systemd mount unit
-  ansible.builtin.systemd:
-      name: "{{ cold_storage_disk_systemd_service_name }}.mount"
-      enabled: true
-      state: started
+- name: Nextcloud | Mount Disk | Perform systemd daemon-reload
+  ansible.builtin.systemd_service:
       daemon_reload: true
 
 - name: "Nextcloud | Mount Disk | Check for self uuid file
-      {{ cold_storage_disk_mount_point + '/' + cold_storage_disk_uuid }}"
+      {{ cs_nc_external_drive_mount_path + '/' + cs_nc_external_drive_uuid }}"
   ansible.builtin.stat:
-      path: "{{ cold_storage_disk_mount_point }}/{{ cold_storage_disk_uuid }}"
+      path: "{{ cs_nc_external_drive_mount_path }}/{{ cs_nc_external_drive_uuid }}"
   register: nextcloud_uuid_file
   failed_when: not nextcloud_uuid_file.stat.exists
 
@@ -79,12 +65,104 @@
       owner: "{{ item.owner | default('root') }}"
       group: "{{ item.group | default('root') }}"
   with_items:
-      - path: "{{ cold_storage_disk_mount_point }}/backup"
+      - path: "{{ cs_nc_external_drive_mount_path }}/backup"
         owner: www-data
         group: www-data
-      - path: "{{ cold_storage_disk_mount_point }}/ops"
+      - path: "{{ cs_nc_external_drive_mount_path }}/ops"
         owner: www-data
         group: www-data
-      - path: "{{ cold_storage_disk_mount_point }}/nextcloud"
+      - path: "{{ cs_nc_external_drive_mount_path }}/nextcloud"
         owner: www-data
         group: www-data
+
+- name: Nextcloud | Mount Disk | Get all the groups
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_mount_groups
+
+- name: Nextcloud | Mount Disk | Create group
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:add '{{ cs_nc_files_external_mount_group_name }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  when: cs_nc_files_external_mount_group_name not in nextcloud_mount_groups.stdout | from_json
+
+- name: Nextcloud | Mount Disk | Get all storage
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ files_external:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_mount_storages
+
+- name: Nextcloud | Mount Disk | Set fact for existing storage
+  ansible.builtin.set_fact:
+      existing_storage_mount: "{{ nextcloud_mount_storages.stdout | from_json
+          | community.general.json_query('[?mount_point==`/' + cs_nc_files_external_mount_folder_name + '`]') }}"
+
+- name: Nextcloud | Mount Disk | Fail if multiple storage found
+  ansible.builtin.fail:
+      msg: "Multiple storage found with same name"
+  when: existing_storage_mount | length > 1
+
+- name: Nextcloud | Mount Disk | Test Basic config
+  when: existing_storage_mount | length == 1
+  ansible.builtin.assert:
+      that:
+          - existing_storage_mount[0].storage == "\\OC\\Files\\Storage\\Local"
+          - existing_storage_mount[0].configuration.datadir == cs_nc_external_drive_mount_path + "/nextcloud"
+      fail_msg: "Storage type should be \\OC\\Files\\Storage\\Local
+          and configuration.datadir should be {{ cs_nc_external_drive_mount_path }}/nextcloud"
+      success_msg: "Storage type is \\OC\\Files\\Storage\\Local
+          and configuration.datadir is {{ cs_nc_external_drive_mount_path }}/nextcloud"
+
+- name: Nextcloud | Mount Disk | Create storage
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ files_external:create '{{ cs_nc_files_external_mount_folder_name }}' local null::null
+          --config datadir='{{ cs_nc_external_drive_mount_path }}/nextcloud'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  when: existing_storage_mount | length == 0
+
+- name: Nextcloud | Mount Disk | Repopulate nextcloud_mount_storages
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ files_external:list --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nextcloud_mount_storages
+
+- name: Nextcloud | Mount Disk | Set Mount ID
+  ansible.builtin.set_fact:
+      existing_storage_mount_id: "{{ nextcloud_mount_storages.stdout
+          | from_json
+          | community.general.json_query('[?mount_point==`/'
+          + cs_nc_files_external_mount_folder_name + '`].mount_id') | first }}"
+
+- name: Nextcloud | Mount Disk | Set Config
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: php occ {{ item }}
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  with_items:
+      - files_external:applicable --remove-all {{ existing_storage_mount_id }}
+      - "files_external:applicable --add-group={{ cs_nc_files_external_mount_group_name }} \
+        {{ existing_storage_mount_id }}"
+      - files_external:option {{ existing_storage_mount_id }} enable_sharing true
+      - files_external:option {{ existing_storage_mount_id }} previews true
+      - files_external:option {{ existing_storage_mount_id }} filesystem_check_changes 1
+      - files_external:option {{ existing_storage_mount_id }} encoding_compatibility false
+      - files_external:option {{ existing_storage_mount_id }} readonly false
+      - files_external:option {{ existing_storage_mount_id }} encrypt true
