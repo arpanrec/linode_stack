@@ -1,7 +1,9 @@
 ---
 - name: Database | Postgres | Install python3-psycopg2
   ansible.builtin.apt:
-      name: python3-psycopg2
+      name:
+          - python3-psycopg2
+          - python3-mysqldb
 
 - name: Database | Postgres | Stop old containers
   community.docker.docker_container:
