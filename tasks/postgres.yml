@@ -3,7 +3,7 @@
   ansible.builtin.apt:
       name: python3-psycopg2
 
-- name: Database | Postgres | Stop old dependency containers
+- name: Database | Postgres | Stop old containers
   community.docker.docker_container:
       name: "{{ item }}"
       state: absent
@@ -27,13 +27,13 @@
       - "{{ cs_postgres_port }}"
       - "{{ cs_pg_admin_port }}"
 
-- name: Database | Postgres | Create postgres data directory
+- name: Database | Postgres | Create data directory
   ansible.builtin.file:
       path: "{{ cs_postgres_data_dir }}"
       state: directory
       mode: "0755"
 
-- name: Database | Postgres | Run postgres docker
+- name: Database | Postgres | Start Container
   community.docker.docker_container:
       name: postgres-main
       image: docker.io/library/postgres:16.3
@@ -51,7 +51,7 @@
           POSTGRES_USER: "{{ cs_postgres_user }}"
           POSTGRES_DB: "{{ cs_postgres_db }}"
 
-- name: Database | Postgres | Wait for postgres to start
+- name: Database | Postgres | Wait for service to start
   community.postgresql.postgresql_ping:
       login_host: "{{ cs_postgres_host }}"
       login_password: "{{ cs_postgres_password }}"
@@ -63,7 +63,7 @@
   retries: 30
   delay: 3
 
-- name: Database | Postgres | Create postgres user
+- name: Database | Postgres | Create users
   community.postgresql.postgresql_user:
       name: "{{ item.value.user }}"
       password: "{{ item.value.password }}"
@@ -75,7 +75,7 @@
       login_db: "{{ cs_postgres_db }}"
   with_items: "{{ cs_postgres_apps | dict2items }}"
 
-- name: Database | Postgres | Create postgres database
+- name: Database | Postgres | Create databases
   community.postgresql.postgresql_db:
       name: "{{ item.value.database }}"
       state: "present"
@@ -86,7 +86,7 @@
       login_port: "{{ cs_postgres_port }}"
   with_items: "{{ cs_postgres_apps | dict2items }}"
 
-- name: Database | Postgres | Create pgadmin directory
+- name: Database | Postgres | pgAdmin | Create directories
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
@@ -97,7 +97,7 @@
       - "{{ cs_pg_admin_dir }}"
       - "/etc/ssl/{{ cs_pg_admin_domain }}"
 
-- name: Database | Postgres | Write pgpassfile # TODO: Not working
+- name: Database | Postgres | pgAdmin | Write pgpassfile # TODO: Not working
   ansible.builtin.copy:
       content: |+
           postgres-main:{{ cs_postgres_port }}:{{ cs_postgres_db }}:{{ cs_postgres_user }}:{{
@@ -107,7 +107,7 @@
       owner: "5050"
       group: "5050"
 
-- name: Database | Postgres | Set Server json fact
+- name: Database | Postgres | pgAdmin | Set Server json fact
   ansible.builtin.set_fact:
       cs_pg_admin_servers:
           Servers:
@@ -121,7 +121,7 @@
                   SSLMode: "prefer"
                   PassFile: "/pgadmin4/pgpassfile"
 
-- name: Database | Postgres | Write pgadmin servers.json
+- name: Database | Postgres | pgAdmin | Write pgadmin servers.json
   ansible.builtin.copy:
       content: "{{ cs_pg_admin_servers | to_nice_json }}"
       dest: "{{ cs_pg_admin_dir }}/servers.json"
@@ -129,7 +129,7 @@
       owner: "5050"
       group: "5050"
 
-- name: Database | Postgres | Write SSL certificate and key
+- name: Database | Postgres | pgAdmin | Write SSL certificate and key
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "/etc/ssl/{{ cs_pg_admin_domain }}/{{ item.dest }}"
@@ -140,7 +140,7 @@
       - dest: privkey.pem
         content: "{{ cs_pg_admin_ssl_key_b64 | b64decode }}"
 
-- name: Database | Postgres | Run pgadmin docker
+- name: Database | Postgres | pgAdmin | Start Container
   community.docker.docker_container:
       name: pgadmin-main
       image: docker.io/dpage/pgadmin4:8.9
@@ -162,7 +162,7 @@
           - "{{ cs_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
           - "{{ cs_pg_admin_dir }}/pgpassfile:/pgadmin4/pgpassfile:ro"
 
-- name: Database | Postgres | Wait for pgadmin
+- name: Database | Postgres | pgAdmin | Wait for service to start
   ansible.builtin.uri:
       url: https://{{ cs_pg_admin_domain }}:{{ cs_pg_admin_port }}/misc/ping
       return_content: true
