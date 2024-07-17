@@ -12,7 +12,7 @@
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ user:add --display-name='{{ item.value.display_name | default(item.key) }}'
+      cmd: "php occ user:add --display-name='{{ item.value.display_name | default(item.key) }}' --generate-password
           --email='{{ item.value.email }}' '{{ item.key }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
