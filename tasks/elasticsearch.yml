@@ -1,5 +1,5 @@
 ---
-- name: Database | Elasticsearch | Stop old dependency containers
+- name: Database | Elasticsearch | Stop old container
   community.docker.docker_container:
       name: elasticsearch-main
       state: absent
@@ -10,14 +10,14 @@
       database: passwd
       key: "{{ cs_vm_ssh_service_user_id }}"
 
-- name: Database | Elasticsearch | Create elasticsearch Data Directory
+- name: Database | Elasticsearch | Create Data Directory
   ansible.builtin.file:
       path: "{{ cs_elasticsearch_data_dir }}"
       state: directory
       mode: "0755"
       owner: "{{ cs_vm_ssh_service_user_id }}"
 
-- name: Database | Elasticsearch | Create elasticsearch Container
+- name: Database | Elasticsearch | Start Container
   community.docker.docker_container:
       name: elasticsearch-main
       image: "docker.io/nextcloud/aio-fulltextsearch:latest"
@@ -54,7 +54,7 @@
       - "{{ cs_elasticsearch_servlet_port }}"
       - "{{ cs_elasticsearch_transport_port }}"
 
-- name: Database | Elasticsearch | Wait for elasticsearch to start
+- name: Database | Elasticsearch | Wait for service to start
   ansible.builtin.uri:
       url: "http://elastic:{{ cs_elasticsearch_password }}@{{ cs_elasticsearch_host }}:{{
           cs_elasticsearch_servlet_port }}"
