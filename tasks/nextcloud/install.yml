@@ -60,11 +60,14 @@
 - name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
       cmd: |+
+          set -euo pipefail
+
           find {{ cs_nc_web_root_dir }}/ -type d -exec chmod 750 {} \;
-          find {{ cs_nc_data_dir }}/ -type d -exec chmod 750 {} \;
           find {{ cs_nc_web_root_dir }}/ -type f -exec chmod 640 {} \;
-          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
           chown -R www-data:www-data {{ cs_nc_web_root_dir }};
+
+          find {{ cs_nc_data_dir }}/ -type d -exec chmod 750 {} \;
+          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
           chown -R www-data:www-data {{ cs_nc_data_dir }};
   changed_when: true
 
