@@ -42,3 +42,7 @@
   vars:
       cs_nc_user_name: "{{ item.key }}"
       cs_nc_user_details: "{{ item.value }}"
+
+- name: Nextcloud | Users | Disable
+  ansible.builtin.import_tasks:
+      file: tasks/nextcloud/users/disable.yml
