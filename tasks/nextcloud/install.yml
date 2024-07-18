@@ -122,6 +122,26 @@
 - name: Nextcloud | Install | Gather facts
   ansible.builtin.setup:
 
+- name: Nextcloud | Install | Get Status
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ status --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nc_status
+
+- name: Nextcloud | Install | Test if Nextcloud is installed correctly
+  ansible.builtin.assert:
+      that:
+          - nc_current_status.installed
+          - nc_current_status.versionstring == cs_nc_version
+          - nc_current_status.needsDbUpgrade
+      fail_msg: "Nextcloud is not installed correctly"
+      success_msg: "Nextcloud is installed"
+  vars:
+      nc_current_status: "{{ nc_status.stdout | from_json }}"
+
 - name: Nextcloud | Install | Set Trusted Domains
   become: true
   become_user: www-data
