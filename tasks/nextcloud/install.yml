@@ -69,6 +69,7 @@
           find {{ cs_nc_data_dir }}/ -type d -exec chmod 750 {} \;
           find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
           chown -R www-data:www-data {{ cs_nc_data_dir }};
+      executable: /bin/bash
   changed_when: true
 
 - name: Nextcloud | Install | Create data directory
