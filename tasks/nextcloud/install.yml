@@ -49,6 +49,14 @@
       cmd: truncate -s 0 {{ cs_nc_web_root_dir }}/apps/settings/templates/settings/personal/development.notice.php
   changed_when: true
 
+- name: Nextcloud | Install | Create Data Directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_data_dir }}"
+      state: directory
+      owner: www-data
+      group: www-data
+      mode: "0750"
+
 - name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
       cmd: |+
@@ -128,7 +136,7 @@
   ansible.builtin.command:
       cmd: "php occ config:system:set upgrade.disable-web --value true --type boolean"
       chdir: "{{ cs_nc_web_root_dir }}"
-  changed_when: false
+  changed_when: true
 
 - name: Nextcloud | Install | Set release channel to stable
   become: true
