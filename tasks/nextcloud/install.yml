@@ -50,12 +50,15 @@
   changed_when: true
 
 - name: Nextcloud | Install | change ownership
-  ansible.builtin.file:
-      path: "{{ cs_nc_web_root_dir }}"
-      owner: www-data
-      group: www-data
-      mode: "0755"
-      recurse: true
+  ansible.builtin.shell:
+      cmd: |+
+          find {{ cs_nc_web_root_dir }}/ -type d -exec chmod 750 {} \;
+          find {{ cs_nc_data_dir }}/ -type d -exec chmod 750 {} \;
+          find {{ cs_nc_web_root_dir }}/ -type f -exec chmod 640 {} \;
+          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
+          chown -R www-data:www-data {{ cs_nc_web_root_dir }}
+          chown -R www-data:www-data {{ cs_nc_data_dir }}
+  changed_when: true
 
 - name: Nextcloud | Install | Create data directory
   ansible.builtin.file:
@@ -119,8 +122,14 @@
       - "encryption:enable"
       - "encryption:enable-master-key"
 
-- name: Nextcloud | Install | Gather facts
-  ansible.builtin.setup:
+- name: Nextcloud | Install | Disable web update
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ config:system:set upgrade.disable-web --value true --type boolean"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nc_status
 
 - name: Nextcloud | Install | Get Status
   become: true
@@ -141,6 +150,9 @@
       success_msg: "Nextcloud is installed"
   vars:
       nc_current_status: "{{ nc_status.stdout | from_json }}"
+
+- name: Nextcloud | Install | Gather facts
+  ansible.builtin.setup:
 
 - name: Nextcloud | Install | Set Trusted Domains
   become: true
