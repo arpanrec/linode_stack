@@ -16,7 +16,19 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   loop: "{{ cs_nc_user_details['groups'] | dict2items }}"
-  when: user_group_details['key'] not in nextcloud_user_info.stdout | from_json
-      | community.general.json_query('groups') | flatten
+  when: user_group_details['key'] not in (nextcloud_user_info.stdout | from_json
+      | community.general.json_query('groups'))
   loop_control:
       loop_var: user_group_details
+
+- name: Nextcloud | Users | Groups Manage | Remove user from groups
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ group:removeuser '{{ group_name }}' '{{ cs_nc_user_name }}'"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: true
+  loop: "{{ nextcloud_user_info.stdout | from_json | community.general.json_query('groups') }}"
+  when: group_name not in cs_nc_user_details['groups']
+  loop_control:
+      loop_var: group_name
