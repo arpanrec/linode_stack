@@ -1,20 +1,7 @@
 ---
-- name: Nextcloud | Users | Make sure cs_nc_admin_user is not in users
-  ansible.builtin.assert:
-      that: cs_nc_admin_user not in cs_nc_users
-      fail_msg: "{{ cs_nc_admin_user }} should not be in {{ cs_nc_users }}"
-      success_msg: "{{ cs_nc_admin_user }} is not in {{ cs_nc_users }}"
-
-- name: Nextcloud | Users | Make sure all the users have valid email addresses
-  ansible.builtin.assert:
-      that:
-          - cs_nc_user.value.email is defined
-          - cs_nc_user.value.email is regex(cs_nc_email_regex)
-      fail_msg: "Email address '{{ cs_nc_user.value }}' is not valid for user '{{ cs_nc_user.key }}'"
-      success_msg: "Email address '{{ cs_nc_user.value }}' is valid for user '{{ cs_nc_user.key }}'"
-  loop: "{{ cs_nc_users | dict2items }}"
-  loop_control:
-      loop_var: cs_nc_user
+- name: Nextcloud | Users | Test
+  ansible.builtin.import_tasks:
+      file: tasks/nextcloud/users/test.yml
 
 - name: Nextcloud | Users | Create
   ansible.builtin.import_tasks:
@@ -32,6 +19,7 @@
       cmd: "php occ group:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: false
+  when: all_user_groups is defined and all_user_groups | length > 0
   register: nextcloud_all_existing_groups
 
 - name: Nextcloud | Users | Create groups if not exists
@@ -42,11 +30,14 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   loop: "{{ all_user_groups }}"
-  when: item not in nextcloud_all_existing_groups.stdout | from_json
+  when: >
+      all_user_groups is defined and all_user_groups | length > 0
+      and
+      item not in nextcloud_all_existing_groups.stdout | from_json
 
 - name: Nextcloud | Users | Groups Manage
   ansible.builtin.include_tasks:
-      file: tasks/nextcloud/users/groups_manage.yml
+      file: tasks/nextcloud/users/groups.yml
   with_items: "{{ cs_nc_users | dict2items }}"
   vars:
       cs_nc_user_name: "{{ item.key }}"

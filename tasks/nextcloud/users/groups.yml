@@ -16,8 +16,11 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   loop: "{{ cs_nc_user_details['groups'] | dict2items }}"
-  when: user_group_details['key'] not in (nextcloud_user_info.stdout | from_json
-      | community.general.json_query('groups'))
+  when: >
+      cs_nc_user_details['groups'] is defined and cs_nc_user_details['groups'] | length > 0
+      and
+      user_group_details['key'] not in (nextcloud_user_info.stdout | from_json
+        | community.general.json_query('groups'))
   loop_control:
       loop_var: user_group_details
 
@@ -29,6 +32,9 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   loop: "{{ nextcloud_user_info.stdout | from_json | community.general.json_query('groups') }}"
-  when: group_name not in cs_nc_user_details['groups']
+  when: >
+      (cs_nc_user_details['groups'] is not defined or cs_nc_user_details['groups'] | length == 0)
+      or
+      group_name not in cs_nc_user_details['groups']
   loop_control:
       loop_var: group_name
