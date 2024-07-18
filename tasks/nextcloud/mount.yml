@@ -145,8 +145,7 @@
 - name: Nextcloud | Mount Disk | Set Mount ID
   ansible.builtin.set_fact:
       existing_storage_mount_id: "{{ nextcloud_mount_storages.stdout
-          | from_json
-          | community.general.json_query('[?mount_point==`/'
+          | from_json | community.general.json_query('[?mount_point==`/'
           + cs_nc_files_external_mount_folder_name + '`].mount_id') | first }}"
 
 - name: Nextcloud | Mount Disk | Set Config
@@ -165,7 +164,7 @@
       - files_external:option {{ existing_storage_mount_id }} filesystem_check_changes 1
       - files_external:option {{ existing_storage_mount_id }} encoding_compatibility false
       - files_external:option {{ existing_storage_mount_id }} readonly false
-      - files_external:option {{ existing_storage_mount_id }} encrypt true
+      - files_external:option {{ existing_storage_mount_id }} encrypt false
 
 - name: Nextcloud | Mount Disk | Create systemd unit files for nextcloud scan files
   ansible.builtin.copy:
