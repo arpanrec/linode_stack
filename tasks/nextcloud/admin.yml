@@ -23,7 +23,7 @@
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ user:add --password-from-env --group='admin' --display-name='nc-admin-{{ cs_nc_admin_user }}'
+      cmd: "php occ user:add --password-from-env --group='admin' --display-name='{{ cs_nc_admin_user }}'
           --email='{{ cs_nc_mail_smtpname }}' '{{ cs_nc_admin_user }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
   environment:
@@ -86,10 +86,10 @@
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ user:setting {{ cs_nc_admin_user }} settings display_name 'nc-admin-{{ cs_nc_admin_user }}'"
+      cmd: "php occ user:setting {{ cs_nc_admin_user }} settings display_name '{{ cs_nc_admin_user }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
-  when: "'nc-admin-'+cs_nc_admin_user != cs_nc_admin_info.stdout | from_json
+  when: "cs_nc_admin_user != cs_nc_admin_info.stdout | from_json
       | community.general.json_query('display_name')"
 
 - name: Nextcloud | Admin | Add user to admin group
