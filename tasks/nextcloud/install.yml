@@ -49,15 +49,15 @@
       cmd: truncate -s 0 {{ cs_nc_web_root_dir }}/apps/settings/templates/settings/personal/development.notice.php
   changed_when: true
 
-- name: Nextcloud | Install | change ownership
+- name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
       cmd: |+
           find {{ cs_nc_web_root_dir }}/ -type d -exec chmod 750 {} \;
           find {{ cs_nc_data_dir }}/ -type d -exec chmod 750 {} \;
           find {{ cs_nc_web_root_dir }}/ -type f -exec chmod 640 {} \;
           find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
-          chown -R www-data:www-data {{ cs_nc_web_root_dir }}
-          chown -R www-data:www-data {{ cs_nc_data_dir }}
+          chown -R www-data:www-data {{ cs_nc_web_root_dir }};
+          chown -R www-data:www-data {{ cs_nc_data_dir }};
   changed_when: true
 
 - name: Nextcloud | Install | Create data directory
@@ -129,7 +129,14 @@
       cmd: "php occ config:system:set upgrade.disable-web --value true --type boolean"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: false
-  register: nc_status
+
+- name: Nextcloud | Install | Set release channel to stable
+  become: true
+  become_user: www-data
+  ansible.builtin.command:
+      cmd: "php occ config:system:set updater.release.channel --value stable"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
 
 - name: Nextcloud | Install | Get Status
   become: true
@@ -138,18 +145,18 @@
       cmd: "php occ status --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: false
-  register: nc_status
+  register: nc_status_installed
 
 - name: Nextcloud | Install | Test if Nextcloud is installed correctly
   ansible.builtin.assert:
       that:
           - nc_current_status.installed
           - nc_current_status.versionstring == cs_nc_version
-          - nc_current_status.needsDbUpgrade
+          - not nc_current_status.needsDbUpgrade
       fail_msg: "Nextcloud is not installed correctly"
       success_msg: "Nextcloud is installed"
   vars:
-      nc_current_status: "{{ nc_status.stdout | from_json }}"
+      nc_current_status: "{{ nc_status_installed.stdout | from_json }}"
 
 - name: Nextcloud | Install | Gather facts
   ansible.builtin.setup:
