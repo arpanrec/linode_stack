@@ -50,21 +50,21 @@
         become_user: root
         tags: never,database,postgres
         ansible.builtin.import_tasks:
-            file: tasks/postgres.yml
+            file: tasks/database/postgres.yml
 
       - name: Database | Redis
         become: true
         become_user: root
         tags: never,database,redis
         ansible.builtin.import_tasks:
-            file: tasks/redis.yml
+            file: tasks/database/redis.yml
 
       - name: Database | Elasticsearch
         become: true
         become_user: root
         tags: never,database,elasticsearch
         ansible.builtin.import_tasks:
-            file: tasks/elasticsearch.yml
+            file: tasks/database/elasticsearch.yml
 
 - name: OnlyOffice
   hosts: rb4-m2
@@ -161,6 +161,13 @@
         tags: never,nextcloud,nextcloud_hub_bundle
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/hub_bundle.yml
+
+      - name: Nextcloud | Users
+        become: true
+        become_user: root
+        tags: never,nextcloud,nextcloud_users
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/users/main.yml
 
       - name: Nextcloud | Post Install
         become: true
