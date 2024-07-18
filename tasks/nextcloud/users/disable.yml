@@ -8,7 +8,7 @@
   register: cs_nc_user_list_all_users
   changed_when: false
 
-- name: Nextcloud | Users | Disable | Create Users if not exists
+- name: Nextcloud | Users | Disable | Disable Users if not in list
   become: true
   become_user: www-data
   ansible.builtin.command:
@@ -16,7 +16,4 @@
       chdir: "{{ cs_nc_web_root_dir }}"
   changed_when: true
   with_items: "{{ cs_nc_user_list_all_users.stdout | from_json | dict2items }}"
-  when: >
-      item.key not in cs_nc_users | dict2items
-      and
-      item.key != cs_nc_admin_user
+  when: item.key not in cs_nc_users and item.key != cs_nc_admin_user
