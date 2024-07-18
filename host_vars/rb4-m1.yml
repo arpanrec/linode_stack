@@ -3,6 +3,8 @@ ansible_python_interpreter: /usr/bin/python3
 
 cs_postgres_data_dir: "/app/postgres"
 
+cs_mysql_data_dir: "/app/mysql"
+
 cs_pg_admin_dir: "/app/pgadmin"
 
 cs_redis_data_dir: "/app/redis"
