@@ -90,10 +90,10 @@
   become: true
   become_user: www-data
   ansible.builtin.command:
-      cmd: "php occ maintenance:install --database 'pgsql' \
-          --database-name '{{ cs_nc_postgres_database }}' --database-user '{{ cs_nc_postgres_user }}' \
-          --database-pass '{{ cs_nc_postgres_password }}' \
-          --database-host '{{ cs_nc_postgres_host }}:{{ cs_nc_postgres_port }}' \
+      cmd: "php occ maintenance:install --database '{{ cs_nc_db_type }}' \
+          --database-name '{{ cs_nc_db_database }}' --database-user '{{ cs_nc_db_user }}' \
+          --database-pass '{{ cs_nc_db_password }}' \
+          --database-host '{{ cs_nc_db_host }}:{{ cs_nc_db_port }}' \
           --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}' \
           --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -147,7 +147,7 @@
       - "config:system:set dbtype --value pgsql"
       - "config:system:set dbname --value nextcloud"
       - "config:system:set dbuser --value nextcloud"
-      - "config:system:set dbpassword --value {{ cs_nc_postgres_password }}"
+      - "config:system:set dbpassword --value {{ cs_nc_db_password }}"
       - "config:system:set dbhost --value 127.0.0.1:5432"
 
 - name: Nextcloud | Install | Add missing indices

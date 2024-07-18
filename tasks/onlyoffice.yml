@@ -50,12 +50,12 @@
           REDIS_SERVER_HOST: "{{ cs_onlyoffice_redis_host }}"
           REDIS_SERVER_PORT: "{{ cs_onlyoffice_redis_port | string }}"
           REDIS_SERVER_PASS: "{{ cs_onlyoffice_redis_password }}"
-          DB_TYPE: "postgres"
-          DB_HOST: "{{ cs_onlyoffice_postgres_host }}"
-          DB_PORT: "{{ cs_onlyoffice_postgres_port | string }}"
-          DB_NAME: "{{ cs_onlyoffice_postgres_database }}"
-          DB_USER: "{{ cs_onlyoffice_postgres_user }}"
-          DB_PWD: "{{ cs_onlyoffice_postgres_password }}"
+          DB_TYPE: "{{ cs_onlyoffice_db_type }}"
+          DB_HOST: "{{ cs_onlyoffice_db_host }}"
+          DB_PORT: "{{ cs_onlyoffice_db_port | string }}"
+          DB_NAME: "{{ cs_onlyoffice_db_database }}"
+          DB_USER: "{{ cs_onlyoffice_db_user }}"
+          DB_PWD: "{{ cs_onlyoffice_db_password }}"
           WOPI_ENABLED: "true"
 
 - name: OnlyOffice | Enable UFW port
