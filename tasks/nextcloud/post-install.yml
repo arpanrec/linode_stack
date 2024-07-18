@@ -68,7 +68,7 @@
       that:
           - nc_current_status.installed
           - nc_current_status.versionstring == cs_nc_version
-          - nc_current_status.needsDbUpgrade
+          - not nc_current_status.needsDbUpgrade
       fail_msg: "Nextcloud is not installed correctly"
       success_msg: "Nextcloud is installed"
   vars:
