@@ -1,7 +1,7 @@
 ---
 - name: Nextcloud | Full Text Search | List all apps
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -10,7 +10,7 @@
 
 - name: Nextcloud | Full Text Search | Install apps
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:install {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -36,8 +36,8 @@
           After=network.target
 
           [Service]
-          User=www-data
-          Group=www-data
+          User={{ cs_nc_run_user }}
+          Group={{ cs_nc_run_group }}
           Type=simple
           WorkingDirectory={{ cs_nc_web_root_dir }}
           ExecStartPre=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:index
@@ -87,7 +87,7 @@
 
 - name: Nextcloud | Full Text Search | Import Apps Config
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ config:import /tmp/nc-apps-config.json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -102,7 +102,7 @@
 
 - name: Nextcloud | Full Text Search | Stop fulltextsearch
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ fulltextsearch:stop"
       chdir: "{{ cs_nc_web_root_dir }}"

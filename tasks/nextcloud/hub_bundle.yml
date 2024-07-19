@@ -27,7 +27,7 @@
 
 - name: Nextcloud | Hub Bundle | List all apps
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -36,7 +36,7 @@
 
 - name: Nextcloud | Hub Bundle | Install apps
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:install {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"

@@ -1,7 +1,7 @@
 ---
 - name: Nextcloud | Admin | Disable twofactorauth for admin group
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -12,7 +12,7 @@
 
 - name: Nextcloud | Admin | Get all users
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -21,7 +21,7 @@
 
 - name: Nextcloud | Admin | Create Admin User if not exists
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:add --password-from-env --group='admin' --display-name='{{ cs_nc_admin_user }}'
           --email='{{ cs_nc_mail_smtpname }}' '{{ cs_nc_admin_user }}'"
@@ -33,7 +33,7 @@
 
 - name: Nextcloud | Admin | Get all users in admin group
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -42,7 +42,7 @@
 
 - name: Nextcloud | Admin | Disable all admin users
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:disable {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -51,7 +51,7 @@
 
 - name: Nextcloud | Admin | Set admin user properties
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -65,7 +65,7 @@
 
 - name: Nextcloud | Admin | Reset admin user password
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:resetpassword {{ cs_nc_admin_user }} --password-from-env"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -75,7 +75,7 @@
 
 - name: Nextcloud | Admin | Get admin user info
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:info {{ cs_nc_admin_user }} --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -84,7 +84,7 @@
 
 - name: Nextcloud | Admin | Set admin user display_name
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:setting {{ cs_nc_admin_user }} settings display_name '{{ cs_nc_admin_user }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -94,7 +94,7 @@
 
 - name: Nextcloud | Admin | Add user to admin group
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:adduser admin {{ cs_nc_admin_user }}"
       chdir: "{{ cs_nc_web_root_dir }}"
