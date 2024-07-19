@@ -62,13 +62,14 @@
       cmd: |+
           set -euo pipefail;
 
-          find {{ cs_nc_web_root_dir }}/ -type d -exec chmod 750 {} \;
+          find {{ cs_nc_data_dir }}/ -type d -exec chmod 0750 {} \;
+          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
+          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
+
+          find {{ cs_nc_web_root_dir }}/ -type d -exec chmod 0750 {} \;
           find {{ cs_nc_web_root_dir }}/ -type f -exec chmod 640 {} \;
           chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_root_dir }};
 
-          find {{ cs_nc_data_dir }}/ -type d -exec chmod 750 {} \;
-          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
-          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
       executable: /bin/bash
   changed_when: true
 
