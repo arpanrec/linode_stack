@@ -14,7 +14,7 @@
 
 - name: Nextcloud | Users | Get all existing groups in Nextcloud
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -24,7 +24,7 @@
 
 - name: Nextcloud | Users | Create groups if not exists
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:add '{{ item }}'"
       chdir: "{{ cs_nc_web_root_dir }}"

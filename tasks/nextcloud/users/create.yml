@@ -1,7 +1,7 @@
 ---
 - name: Nextcloud | Users | Create | Get all users in Nextcloud
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -10,7 +10,7 @@
 
 - name: Nextcloud | Users | Create | Create Users if not exists
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:add --generate-password '{{ item.key }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -20,7 +20,7 @@
 
 - name: Nextcloud | Users | Create | Repolute all users list from Nextcloud
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -29,7 +29,7 @@
 
 - name: Nextcloud | Users | Create | Set Users properties
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.shell:
       cmd: |+
           php occ user:setting {{ item.key }} settings email {{ item.value.email }}
@@ -45,7 +45,7 @@
 
 - name: Nextcloud | Users | Create | Set Display Name
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   changed_when: true
   ansible.builtin.command:
       cmd: "php occ user:setting {{ item.key }}

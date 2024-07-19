@@ -21,7 +21,7 @@
 
 - name: Nextcloud | Imaginary | Set Imaginary as Preview Provider
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
       chdir: "{{ cs_nc_web_root_dir }}"

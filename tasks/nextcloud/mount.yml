@@ -66,18 +66,18 @@
       group: "{{ item.group | default('root') }}"
   with_items:
       - path: "{{ cs_nc_external_drive_mount_path }}/backup"
-        owner: www-data
-        group: www-data
+        owner: "{{ cs_nc_run_user }}"
+        group: "{{ cs_nc_run_group }}"
       - path: "{{ cs_nc_external_drive_mount_path }}/ops"
-        owner: www-data
-        group: www-data
+        owner: "{{ cs_nc_run_user }}"
+        group: "{{ cs_nc_run_group }}"
       - path: "{{ cs_nc_external_drive_mount_path }}/nextcloud"
-        owner: www-data
-        group: www-data
+        owner: "{{ cs_nc_run_user }}"
+        group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Mount Disk | Unencrypted | Get all the groups
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -86,7 +86,7 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Create group
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:add '{{ cs_nc_files_external_mount_group_name }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -95,7 +95,7 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Get all storage
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ files_external:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -125,7 +125,7 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Create storage
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ files_external:create '{{ cs_nc_files_external_mount_folder_name }}' local null::null
           --config datadir='{{ cs_nc_external_drive_mount_path }}/nextcloud'"
@@ -135,7 +135,7 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Repopulate nextcloud_mount_storages
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ files_external:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -150,7 +150,7 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Set Config
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: php occ {{ item }}
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -178,7 +178,7 @@
             Description=Nextcloud scan files
 
             [Service]
-            User=www-data
+            User="{{ cs_nc_run_user }}"
             ExecCondition=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ status -e
             ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ files:scan --all
             WorkingDirectory={{ cs_nc_web_root_dir }}

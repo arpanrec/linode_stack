@@ -1,7 +1,7 @@
 ---
 - name: Nextcloud | Users | Disable | Get all users in Nextcloud
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:list --output=json"
       chdir: "{{ cs_nc_web_root_dir }}"
@@ -10,7 +10,7 @@
 
 - name: Nextcloud | Users | Disable | Disable Users if not in list
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:disable '{{ item.key }}'"
       chdir: "{{ cs_nc_web_root_dir }}"
