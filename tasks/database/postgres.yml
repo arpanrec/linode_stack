@@ -32,13 +32,12 @@
       state: directory
       mode: "0700"
       owner: 999
-      # https://github.com/docker-library/postgres/blob/66da3846b40396249936938ee17e9684e6968a57/16/bookworm/Dockerfile#L11C25-L11C28
       group: 999
   with_items:
       - "{{ cs_postgres_dir }}"
       - "{{ cs_postgres_dir }}/data"
 
-- name: Database | Postgres | Create SSL certificate and key
+- name: Database | Postgres | Create SSL Private key
   community.crypto.openssl_privatekey:
       path: "{{ cs_postgres_dir }}/server.key"
       size: 4096
@@ -88,7 +87,7 @@
 - name: Database | Postgres | Write Full chain
   ansible.builtin.copy:
       content: |+
-          {{ cs_postgres_ssl_cert.certificate }}
+          {{ cs_postgres_ssl_cert.certificate | trim }}
           {{ cs_root_ca_cert_b64 | b64decode }}
       dest: "{{ cs_postgres_dir }}/fullchain.pem"
       mode: "0644"
@@ -130,7 +129,6 @@
       name: "{{ cs_postgres_container_name }}"
       image: docker.io/library/postgres:16.3
       user: 999:999
-      # https://github.com/docker-library/postgres/blob/66da3846b40396249936938ee17e9684e6968a57/16/bookworm/Dockerfile#L11C25-L11C28
       restart_policy: unless-stopped
       networks:
           - name: "{{ cs_postgres_network_name }}"
@@ -153,15 +151,14 @@
           POSTGRES_PASSWORD: "{{ cs_postgres_password }}"
           POSTGRES_USER: "{{ cs_postgres_user }}"
           POSTGRES_DB: "{{ cs_postgres_db }}"
-          POSTGRES_HOST_AUTH_METHOD: "scram-sha-256 clientcert=verify-full"
 
-- name: Database | Postgres | Client | Create SSL certificate and key
+- name: Database | Postgres | Client | Create SSL Private key
   community.crypto.openssl_privatekey:
       path: "{{ cs_postgres_dir }}/client.key"
       size: 4096
       mode: "0600"
-      owner: 999
-      group: 999
+      owner: 5050
+      group: 5050
 
 - name: Database | Postgres | Client | Create SSL CSR
   community.crypto.openssl_csr:
@@ -185,8 +182,8 @@
           - "clientAuth"
       create_subject_key_identifier: true
       mode: "0644"
-      owner: 999
-      group: 999
+      owner: 5050
+      group: 5050
 
 - name: Database | Postgres | Client | Sign SSL CSR
   community.crypto.x509_certificate:
@@ -197,28 +194,28 @@
       ownca_privatekey_passphrase: "{{ cs_root_ca_key_passphrase }}"
       ownca_content: "{{ cs_root_ca_cert_b64 | b64decode }}"
       mode: "0644"
-      owner: 999
-      group: 999
+      owner: 5050
+      group: 5050
       return_content: true
   register: cs_postgres_client_ssl_cert
 
 - name: Database | Postgres | Client | Write Full chain
   ansible.builtin.copy:
       content: |+
-          {{ cs_postgres_client_ssl_cert.certificate }}
+          {{ cs_postgres_client_ssl_cert.certificate | trim }}
           {{ cs_root_ca_cert_b64 | b64decode }}
       dest: "{{ cs_postgres_dir }}/client-fullchain.pem"
       mode: "0644"
-      owner: 999
-      group: 999
+      owner: 5050
+      group: 5050
 
 - name: Database | Postgres | Client | Write CA certificate
   ansible.builtin.copy:
       content: "{{ cs_root_ca_cert_b64 | b64decode }}"
       dest: "{{ cs_postgres_dir }}/client-ca.pem"
       mode: "0644"
-      owner: 999
-      group: 999
+      owner: 5050
+      group: 5050
 
 - name: Database | Postgres | Wait for service to start
   community.postgresql.postgresql_ping:
@@ -307,7 +304,7 @@
                   SSLCert: /client-fullchain.pem
                   SSLKey: /client.key
                   SSLRootCert: /client-ca.pem
-                  PassFile: "/pgadmin4/pgpassfile"
+                  PassFile: "/pgpassfile"
 
 - name: Database | Postgres | pgAdmin | Write pgadmin servers.json
   ansible.builtin.copy:
@@ -328,6 +325,19 @@
       - dest: privkey.pem
         content: "{{ cs_postgres_pg_admin_ssl_key_b64 | b64decode }}"
 
+- name: Database | Postgres | pgAdmin | File copy entrypoint.sh
+  ansible.builtin.copy:
+      content: |+
+          #!/bin/sh
+          mkdir -p /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/;
+          cp -r /tmp-var/* /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/;
+          chmod 600 /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/pgpassfile
+          /entrypoint.sh
+      dest: "{{ cs_postgres_pg_admin_dir }}/file-entrypoint.sh"
+      mode: "0755"
+      owner: "5050"
+      group: "5050"
+
 - name: Database | Postgres | pgAdmin | Start Container
   community.docker.docker_container:
       name: pgadmin-main
@@ -339,6 +349,8 @@
       state: started
       ports:
           - "{{ cs_postgres_pg_admin_port }}:{{ cs_postgres_pg_admin_port }}"
+      entrypoint:
+          - /file-entrypoint.sh
       env:
           PGADMIN_DEFAULT_EMAIL: "{{ cs_postgres_pg_admin_email }}"
           PGADMIN_DEFAULT_PASSWORD: "{{ cs_postgres_pg_admin_password }}"
@@ -347,11 +359,12 @@
       volumes:
           - "/etc/ssl/{{ cs_postgres_pg_admin_domain }}/fullchain.pem:/certs/server.cert:ro"
           - "/etc/ssl/{{ cs_postgres_pg_admin_domain }}/privkey.pem:/certs/server.key:ro"
+          - "{{ cs_postgres_pg_admin_dir }}/file-entrypoint.sh:/file-entrypoint.sh"
           - "{{ cs_postgres_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
-          - "{{ cs_postgres_pg_admin_dir }}/pgpassfile:/pgadmin4/pgpassfile:ro"
-          - "{{ cs_postgres_dir }}/client-ca.pem:/client-ca.pem:ro"
-          - "{{ cs_postgres_dir }}/client-fullchain.pem:/client-fullchain.pem:ro"
-          - "{{ cs_postgres_dir }}/client.key:/client.key:ro"
+          - "{{ cs_postgres_pg_admin_dir }}/pgpassfile:/tmp-var/pgpassfile"
+          - "{{ cs_postgres_dir }}/client-ca.pem:/tmp-var/client-ca.pem"
+          - "{{ cs_postgres_dir }}/client-fullchain.pem:/tmp-var/client-fullchain.pem"
+          - "{{ cs_postgres_dir }}/client.key:/tmp-var/client.key"
 
 - name: Database | Postgres | pgAdmin | Wait for service to start
   ansible.builtin.uri:
