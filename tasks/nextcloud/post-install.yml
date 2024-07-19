@@ -22,16 +22,16 @@
       path: "{{ cs_nc_fail2ban_log_file | dirname }}"
       state: directory
       mode: "0755"
-      owner: www-data
-      group: www-data
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Post Install | Touch log file
   ansible.builtin.file:
       path: "{{ cs_nc_fail2ban_log_file }}"
       state: touch
       mode: "0777"
-      owner: www-data
-      group: www-data
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Post Install | Add fail2ban filter
   ansible.builtin.copy:
@@ -54,9 +54,29 @@
       - fail2ban
       - sendmail
 
+- name: Nextcloud | Post Install | Get Status
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ status --output=json"
+      chdir: "{{ cs_nc_web_root_dir }}"
+  changed_when: false
+  register: nc_status
+
+- name: Nextcloud | Post Install | Test if Nextcloud is installed correctly
+  ansible.builtin.assert:
+      that:
+          - nc_current_status.installed
+          - nc_current_status.versionstring == cs_nc_version
+          - not nc_current_status.needsDbUpgrade
+      fail_msg: "Nextcloud is not installed correctly"
+      success_msg: "Nextcloud is installed"
+  vars:
+      nc_current_status: "{{ nc_status.stdout | from_json }}"
+
 - name: Nextcloud | Post Install | Add missing indices
   become: true
-  become_user: www-data
+  become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ db:add-missing-indices"
       chdir: "{{ cs_nc_web_root_dir }}"

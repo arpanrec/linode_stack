@@ -232,7 +232,7 @@
       content: |+
           [Service]
           ExecStartPre=/bin/bash -c 'mkdir -p /run/php'
-          ExecStartPre=/bin/bash -c 'chown -R www-data:www-data /run/php'
+          ExecStartPre=/bin/bash -c 'chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} /run/php'
       dest: "/etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d/override.conf"
       mode: "0644"
 
