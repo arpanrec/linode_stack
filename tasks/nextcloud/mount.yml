@@ -178,7 +178,8 @@
             Description=Nextcloud scan files
 
             [Service]
-            User="{{ cs_nc_run_user }}"
+            User={{ cs_nc_run_user }}
+            Group={{ cs_nc_run_group }}
             ExecCondition=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ status -e
             ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ files:scan --all
             WorkingDirectory={{ cs_nc_web_root_dir }}
