@@ -1,4 +1,2 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
-
-cs_onlyoffice_dir: "/app/onlyoffice/DocumentServer"
