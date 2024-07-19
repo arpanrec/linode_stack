@@ -152,9 +152,17 @@
           POSTGRES_USER: "{{ cs_postgres_user }}"
           POSTGRES_DB: "{{ cs_postgres_db }}"
 
+- name: Database | Postgres | Client | Create client certs directory
+  ansible.builtin.file:
+      path: "{{ cs_postgres_dir }}/client-certs"
+      state: directory
+      mode: "0700"
+      owner: 5050
+      group: 5050
+
 - name: Database | Postgres | Client | Create SSL Private key
   community.crypto.openssl_privatekey:
-      path: "{{ cs_postgres_dir }}/client.key"
+      path: "{{ cs_postgres_dir }}/client-certs/client.key"
       size: 4096
       mode: "0600"
       owner: 5050
@@ -162,18 +170,9 @@
 
 - name: Database | Postgres | Client | Create SSL CSR
   community.crypto.openssl_csr:
-      path: "{{ cs_postgres_dir }}/client.csr"
-      privatekey_path: "{{ cs_postgres_dir }}/client.key"
-      common_name: "{{ cs_postgres_user }}"
-      subject_alt_name:
-          - "IP:{{ cs_postgres_host_public_ip }}"
-          - "DNS:{{ cs_postgres_host_public_domain }}"
-          - "DNS:{{ cs_postgres_host_private_domain }}"
-          - "IP:{{ cs_postgres_host_private_ip }}"
-          - "DNS:localhost"
-          - "IP:127.0.0.1"
-          - "DNS:{{ cs_postgres_user }}"
-          - "DNS:{{ cs_postgres_container_name }}"
+      path: "{{ cs_postgres_dir }}/client-certs/client-{{ item.value.user }}.csr"
+      privatekey_path: "{{ cs_postgres_dir }}/client-certs/client.key"
+      common_name: "{{ item.value.user }}"
       key_usage:
           - "digitalSignature"
           - "keyEncipherment"
@@ -184,11 +183,13 @@
       mode: "0644"
       owner: 5050
       group: 5050
+  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Sign SSL CSR
   community.crypto.x509_certificate:
-      path: "{{ cs_postgres_dir }}/client.crt"
-      csr_path: "{{ cs_postgres_dir }}/client.csr"
+      path: "{{ cs_postgres_dir }}/client-certs/client-{{ item.value.user }}.crt"
+      csr_path: "{{ cs_postgres_dir }}/client-certs/client-{{ item.value.user }}.csr"
       provider: ownca
       ownca_privatekey_content: "{{ cs_root_ca_key_b64 | b64decode }}"
       ownca_privatekey_passphrase: "{{ cs_root_ca_key_passphrase }}"
@@ -198,21 +199,24 @@
       group: 5050
       return_content: true
   register: cs_postgres_client_ssl_cert
+  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Write Full chain
   ansible.builtin.copy:
       content: |+
-          {{ cs_postgres_client_ssl_cert.certificate | trim }}
+          {{ item.certificate | trim }}
           {{ cs_root_ca_cert_b64 | b64decode }}
-      dest: "{{ cs_postgres_dir }}/client-fullchain.pem"
+      dest: "{{ cs_postgres_dir }}/client-certs/client-fullchain-{{ item.item.value.user }}.pem"
       mode: "0644"
       owner: 5050
       group: 5050
+  with_items: "{{ cs_postgres_client_ssl_cert['results'] }}"
 
 - name: Database | Postgres | Client | Write CA certificate
   ansible.builtin.copy:
       content: "{{ cs_root_ca_cert_b64 | b64decode }}"
-      dest: "{{ cs_postgres_dir }}/client-ca.pem"
+      dest: "{{ cs_postgres_dir }}/client-certs/client-ca.pem"
       mode: "0644"
       owner: 5050
       group: 5050
@@ -225,9 +229,9 @@
       login_port: "{{ cs_postgres_port }}"
       login_db: "{{ cs_postgres_db }}"
       ssl_mode: verify-full
-      ssl_rootcert: "{{ cs_postgres_dir }}/client-ca.pem"
-      ssl_cert: "{{ cs_postgres_dir }}/client-fullchain.pem"
-      ssl_key: "{{ cs_postgres_dir }}/client.key"
+      ssl_rootcert: "{{ cs_postgres_dir }}/client-certs/client-ca.pem"
+      ssl_cert: "{{ cs_postgres_dir }}/client-certs/client-fullchain-{{ cs_postgres_user }}.pem"
+      ssl_key: "{{ cs_postgres_dir }}/client-certs/client.key"
   register: is_postgres_up
   until: is_postgres_up.is_available
   retries: 30
@@ -244,9 +248,9 @@
       login_port: "{{ cs_postgres_port }}"
       login_db: "{{ cs_postgres_db }}"
       ssl_mode: verify-full
-      ssl_rootcert: "{{ cs_postgres_dir }}/client-ca.pem"
-      ssl_cert: "{{ cs_postgres_dir }}/client-fullchain.pem"
-      ssl_key: "{{ cs_postgres_dir }}/client.key"
+      ssl_rootcert: "{{ cs_postgres_dir }}/client-certs/client-ca.pem"
+      ssl_cert: "{{ cs_postgres_dir }}/client-certs/client-fullchain-{{ cs_postgres_user }}.pem"
+      ssl_key: "{{ cs_postgres_dir }}/client-certs/client.key"
   with_items: "{{ cs_postgres_apps | dict2items }}"
 
 - name: Database | Postgres | Create databases
@@ -261,9 +265,9 @@
       login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
       ssl_mode: verify-full
-      ssl_rootcert: "{{ cs_postgres_dir }}/client-ca.pem"
-      ssl_cert: "{{ cs_postgres_dir }}/client-fullchain.pem"
-      ssl_key: "{{ cs_postgres_dir }}/client.key"
+      ssl_rootcert: "{{ cs_postgres_dir }}/client-certs/client-ca.pem"
+      ssl_cert: "{{ cs_postgres_dir }}/client-certs/client-fullchain-{{ cs_postgres_user }}.pem"
+      ssl_key: "{{ cs_postgres_dir }}/client-certs/client.key"
   with_items: "{{ cs_postgres_apps | dict2items }}"
 
 - name: Database | Postgres | pgAdmin | Create directories
@@ -277,38 +281,47 @@
       - "{{ cs_postgres_pg_admin_dir }}"
       - "/etc/ssl/{{ cs_postgres_pg_admin_domain }}"
 
-- name: Database | Postgres | pgAdmin | Write pgpassfile # TODO: Not working
-  ansible.builtin.copy:
-      content: "{{ cs_postgres_container_name }}\
+- name: Database | Postgres | pgAdmin | Write pgpassfile
+  ansible.builtin.lineinfile:
+      line: "{{ cs_postgres_container_name }}\
           :{{ cs_postgres_port }}\
-          :{{ cs_postgres_db }}\
-          :{{ cs_postgres_user }}\
-          :{{ cs_postgres_password | regex_escape() }}"
-      dest: "{{ cs_postgres_pg_admin_dir }}/pgpassfile"
+          :{{ item.value.database }}\
+          :{{ item.value.user }}\
+          :{{ item.value.password | regex_escape() }}"
+      regexp: "^{{ cs_postgres_container_name }}:{{ cs_postgres_port }}:\
+          {{ item.value.database }}:{{ item.value.user }}:"
+      path: "{{ cs_postgres_pg_admin_dir }}/pgpassfile"
+      create: true
       mode: "0600"
       owner: "5050"
       group: "5050"
+  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
 
 - name: Database | Postgres | pgAdmin | Set Server json fact
+  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
+  loop_control:
+      index_var: index
+  vars:
+      server_index: "{{ index + 1 }}"
   ansible.builtin.set_fact:
-      cs_pg_admin_servers:
-          Servers:
-              1:
-                  Name: "PG-Main"
-                  Group: "Servers"
-                  Host: "{{ cs_postgres_container_name }}"
-                  Port: "{{ cs_postgres_port }}"
-                  MaintenanceDB: "{{ cs_postgres_db }}"
-                  Username: "{{ cs_postgres_user }}"
-                  SSLMode: "verify-full"
-                  SSLCert: /client-fullchain.pem
-                  SSLKey: /client.key
-                  SSLRootCert: /client-ca.pem
-                  PassFile: "/pgpassfile"
+      cs_pg_admin_servers: "{{ cs_pg_admin_servers | default({}) |
+          combine({server_index: {'Name': item.key,
+          'Group': 'Servers',
+          'Host': cs_postgres_container_name,
+          'Port': cs_postgres_port,
+          'SSLMode': 'verify-full',
+          'SSLCert': '/client-fullchain-' + item.value.user + '.pem',
+          'SSLKey': '/client.key',
+          'SSLRootCert': '/client-ca.pem',
+          'MaintenanceDB': item.value.database,
+          'PassFile': '/pgpassfile',
+          'Username': item.value.user}}) }}"
 
 - name: Database | Postgres | pgAdmin | Write pgadmin servers.json
   ansible.builtin.copy:
-      content: "{{ cs_pg_admin_servers | to_nice_json }}"
+      content: "{{ {'Servers': cs_pg_admin_servers} | to_nice_json }}"
       dest: "{{ cs_postgres_pg_admin_dir }}/servers.json"
       mode: "0644"
       owner: "5050"
@@ -330,8 +343,9 @@
       content: |+
           #!/bin/sh
           mkdir -p /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/;
-          cp -r /tmp-var/* /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/;
+          cp /pgpassfile /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/pgpassfile
           chmod 600 /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/pgpassfile
+          cp -r /client-certs/* /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_', '') }}/
           /entrypoint.sh
       dest: "{{ cs_postgres_pg_admin_dir }}/file-entrypoint.sh"
       mode: "0755"
@@ -361,10 +375,8 @@
           - "/etc/ssl/{{ cs_postgres_pg_admin_domain }}/privkey.pem:/certs/server.key:ro"
           - "{{ cs_postgres_pg_admin_dir }}/file-entrypoint.sh:/file-entrypoint.sh"
           - "{{ cs_postgres_pg_admin_dir }}/servers.json:/pgadmin4/servers.json"
-          - "{{ cs_postgres_pg_admin_dir }}/pgpassfile:/tmp-var/pgpassfile"
-          - "{{ cs_postgres_dir }}/client-ca.pem:/tmp-var/client-ca.pem"
-          - "{{ cs_postgres_dir }}/client-fullchain.pem:/tmp-var/client-fullchain.pem"
-          - "{{ cs_postgres_dir }}/client.key:/tmp-var/client.key"
+          - "{{ cs_postgres_pg_admin_dir }}/pgpassfile:/pgpassfile"
+          - "{{ cs_postgres_dir }}/client-certs:/client-certs"
 
 - name: Database | Postgres | pgAdmin | Wait for service to start
   ansible.builtin.uri:
