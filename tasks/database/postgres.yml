@@ -58,7 +58,7 @@
 
 - name: Database | Postgres | Wait for service to start
   community.postgresql.postgresql_ping:
-      login_host: "{{ cs_postgres_host }}"
+      login_host: "{{ cs_postgres_host_ip }}"
       login_password: "{{ cs_postgres_password }}"
       login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
@@ -73,7 +73,7 @@
       name: "{{ item.value.user }}"
       password: "{{ item.value.password }}"
       state: "present"
-      login_host: "{{ cs_postgres_host }}"
+      login_host: "{{ cs_postgres_host_ip }}"
       login_password: "{{ cs_postgres_password }}"
       login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
@@ -85,7 +85,7 @@
       name: "{{ item.value.database }}"
       state: "present"
       owner: "{{ item.value.user }}"
-      login_host: "{{ cs_postgres_host }}"
+      login_host: "{{ cs_postgres_host_ip }}"
       login_password: "{{ cs_postgres_password }}"
       login_user: "{{ cs_postgres_user }}"
       login_port: "{{ cs_postgres_port }}"
