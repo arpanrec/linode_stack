@@ -152,6 +152,7 @@
           POSTGRES_PASSWORD: "{{ cs_postgres_password }}"
           POSTGRES_USER: "{{ cs_postgres_user }}"
           POSTGRES_DB: "{{ cs_postgres_db }}"
+          TZ: Asia/Kolkata
 
 - name: Database | Postgres | Client | Create client certs directory
   ansible.builtin.file:
@@ -371,6 +372,7 @@
           PGADMIN_DEFAULT_PASSWORD: "{{ cs_postgres_pg_admin_password }}"
           PGADMIN_LISTEN_PORT: "{{ cs_postgres_pg_admin_port | string }}"
           PGADMIN_ENABLE_TLS: "True"
+          TZ: Asia/Kolkata
       volumes:
           - "/etc/ssl/{{ cs_postgres_pg_admin_domain }}/fullchain.pem:/certs/server.cert:ro"
           - "/etc/ssl/{{ cs_postgres_pg_admin_domain }}/privkey.pem:/certs/server.key:ro"
