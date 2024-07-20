@@ -118,6 +118,7 @@
           host    replication     all             ::1/128                 trust
 
           hostssl all all all scram-sha-256 clientcert=verify-full
+          # host   pg-onlyoffice pg-onlyoffice 192.168.0.1/8 scram-sha-256
 
       dest: "{{ cs_postgres_dir }}/pg_hba.conf"
       mode: "0644"
