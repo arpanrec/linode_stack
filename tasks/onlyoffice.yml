@@ -19,14 +19,15 @@
 
 - name: OnlyOffice | Write SSL certificate and key
   ansible.builtin.copy:
-      content: "{{ item.content }}"
+      src: "{{ item.src }}"
       dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/{{ item.dest }}"
       mode: "0644"
+      remote_src: false
   with_items:
       - dest: fullchain.pem
-        content: "{{ cs_onlyoffice_full_chain_b64 | b64decode }}"
+        src: "{{ cs_onlyoffice_fullchain_pem_file }}"
       - dest: privkey.pem
-        content: "{{ cs_onlyoffice_priv_key_b64 | b64decode }}"
+        src: "{{ cs_onlyoffice_privkey_pem_file }}"
 
 - name: OnlyOffice | Create SSL Postgresql Private key
   community.crypto.openssl_privatekey:
