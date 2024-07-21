@@ -28,6 +28,57 @@
       - dest: privkey.pem
         content: "{{ cs_onlyoffice_priv_key_b64 | b64decode }}"
 
+- name: OnlyOffice | Create SSL Postgresql Private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_onlyoffice_dir }}/pg_key.pem"
+      size: 4096
+      mode: "0600"
+      return_content: true
+  register: cs_onlyoffice_db_key
+
+- name: OnlyOffice | Create SSL Postgresql CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_onlyoffice_dir }}/postgresql.csr"
+      privatekey_path: "{{ cs_onlyoffice_dir }}/pg_key.pem"
+      common_name: "{{ cs_onlyoffice_db_user }}"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "clientAuth"
+      create_subject_key_identifier: true
+      mode: "0644"
+
+- name: OnlyOffice | Create SSL Postgresql Certificate
+  community.crypto.x509_certificate:
+      path: "{{ cs_onlyoffice_dir }}/pg_cert.pem"
+      csr_path: "{{ cs_onlyoffice_dir }}/postgresql.csr"
+      provider: ownca
+      ownca_privatekey_content: "{{ cs_root_ca_key_b64 | b64decode }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_key_passphrase }}"
+      ownca_content: "{{ cs_root_ca_cert_b64 | b64decode }}"
+      mode: "0644"
+      return_content: true
+  register: cs_onlyoffice_db_cert
+
+- name: OnlyOffice | Write SSL Postgresql CA Certificate
+  ansible.builtin.copy:
+      content: "{{ cs_root_ca_cert_b64 | b64decode }}"
+      dest: "{{ cs_onlyoffice_dir }}/pg_ca.pem"
+      mode: "0644"
+
+- name: OnlyOffice | Write Docker entrypoint
+  ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: "0755"
+  with_items:
+      - src: "files/onlyoffice/docker_ep.sh"
+        dest: "{{ cs_onlyoffice_dir }}/docker_ep.sh"
+      - src: "files/onlyoffice/pg_cert_updater.py"
+        dest: "{{ cs_onlyoffice_dir }}/pg_cert_updater.py"
+
 - name: OnlyOffice | Start Container
   community.docker.docker_container:
       name: onlyoffice-main
@@ -39,6 +90,13 @@
           - "{{ cs_onlyoffice_dir }}/db:/var/lib/postgresql"
           - "/etc/ssl/{{ cs_onlyoffice_domain }}/fullchain.pem:/cert.pem:ro"
           - "/etc/ssl/{{ cs_onlyoffice_domain }}/privkey.pem:/priv.key:ro"
+          - "{{ cs_onlyoffice_dir }}/pg_key.pem:/tmp/pg_key.pem"
+          - "{{ cs_onlyoffice_dir }}/pg_cert.pem:/tmp/pg_cert.pem"
+          - "{{ cs_onlyoffice_dir }}/pg_ca.pem:/tmp/pg_ca.pem"
+          - "{{ cs_onlyoffice_dir }}/docker_ep.sh:/docker_ep.sh"
+          - "{{ cs_onlyoffice_dir }}/pg_cert_updater.py:/pg_cert_updater.py"
+      entrypoint:
+          - "/docker_ep.sh"
       state: started
       ports:
           - "{{ cs_onlyoffice_port }}:443"
@@ -47,9 +105,6 @@
           JWT_SECRET: "{{ cs_onlyoffice_jwt_secret }}"
           SSL_KEY_PATH: "/priv.key"
           SSL_CERTIFICATE_PATH: "/cert.pem"
-          REDIS_SERVER_HOST: "{{ cs_onlyoffice_redis_host }}"
-          REDIS_SERVER_PORT: "{{ cs_onlyoffice_redis_port | string }}"
-          REDIS_SERVER_PASS: "{{ cs_onlyoffice_redis_password }}"
           DB_TYPE: "{{ cs_onlyoffice_db_type }}"
           DB_HOST: "{{ cs_onlyoffice_db_host }}"
           DB_PORT: "{{ cs_onlyoffice_db_port | string }}"
@@ -57,6 +112,7 @@
           DB_USER: "{{ cs_onlyoffice_db_user }}"
           DB_PWD: "{{ cs_onlyoffice_db_password }}"
           WOPI_ENABLED: "true"
+          GENERATE_FONTS: "false"
 
 - name: OnlyOffice | Enable UFW port
   community.general.ufw:
@@ -65,6 +121,39 @@
       state: enabled
   with_items:
       - "{{ cs_onlyoffice_port }}"
+
+# - name: OnlyOffice | Fetch default configuration
+#   community.docker.docker_container_exec:
+#       container: onlyoffice-main
+#       command: cat /etc/onlyoffice/documentserver/default.json
+#   register: onlyoffice_config
+
+# - name: OnlyOffice | Set Write configuration
+#   community.docker.docker_container_copy_into:
+#       container: onlyoffice-main
+#       container_path: /etc/onlyoffice/documentserver/default.json
+#       mode: "0644"
+#       content: "{{ onlyoffice_config.stdout | from_json |
+#           onlyoffice_default_json_builder(cs_onlyoffice_db_cert.certificate,
+#           cs_onlyoffice_db_key.privatekey, (cs_root_ca_cert_b64 | b64decode)) | to_json }}"
+
+# - name: OnlyOffice | Enable config mutations
+#   with_items:
+#       - /etc/supervisor/conf.d/ds-converter.conf
+#       - /etc/supervisor/conf.d/ds-docservice.conf
+#   community.docker.docker_container_exec:
+#       container: onlyoffice-main
+#       command: |+
+#           /bin/bash -c "if grep -Fxq 'ALLOW_CONFIG_MUTATIONS=true' {{ item }};
+#               then echo 'All good'; else echo 'ALLOW_CONFIG_MUTATIONS=true' >> {{ item }}; fi"
+
+# - name: OnlyOffice | Restart supervisor
+#   community.docker.docker_container_exec:
+#       container: onlyoffice-main
+#       command: supervisorctl restart all
+#   register: onlyoffice_restart_supervisor
+#   retries: 30
+#   delay: 3
 
 - name: OnlyOffice | Wait for service to start
   ansible.builtin.uri:
