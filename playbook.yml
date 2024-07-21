@@ -8,7 +8,7 @@
   tasks:
       - name: Access Key | Write SSH Private Key
         ansible.builtin.copy:
-            content: "{{ lookup('ansible.builtin.file', cs_vm_ssh_priv_id_ecdsa_file)
+            content: "{{ lookup('ansible.builtin.file', cs_vm_ssh_priv_id_ecdsa_file, lstrip=false, rstrip=false)
                 | get_unencrypted_id_ecdsa(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
             mode: "0600"
             dest: "{{ cs_vm_ssh_local_key_file }}"
@@ -74,7 +74,7 @@
       - name: Calculate Nextcloud Protocol cs_nc_protocol
         tags: never,nextcloud,nextcloud_prepare,nextcloud_install,nextcloud_hub_bundle
         ansible.builtin.set_fact:
-            cs_nc_protocol: "{{ (cs_nc_full_chain_b64 is defined and cs_nc_priv_key_b64 is defined)
+            cs_nc_protocol: "{{ (cs_nc_fullchain_pem_file is defined and cs_nc_privkey_pem_file is defined)
                 | ternary('https', 'http') }}"
 
       - name: Nextcloud | Test cs_nc_protocol

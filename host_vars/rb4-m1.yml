@@ -1,2 +1,28 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
+
+cs_postgres_dir: /app/postgres
+cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties', 'cs_postgres_password') }}"
+cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties', 'cs_postgres_user') }}"
+cs_postgres_container_name: postgres-main
+cs_postgres_network_name: postgres-main-net
+cs_postgres_db: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties', 'cs_postgres_db') }}"
+cs_postgres_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties', 'cs_postgres_port') }}"
+cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
+cs_postgres_host_public_ip: "127.0.0.1"
+cs_postgres_host_public_domain: "localhost"
+cs_postgres_host_private_domain: "localhost"
+cs_postgres_apps: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties', 'cs_postgres_apps')
+    | from_yaml }}"
+
+cs_postgres_pg_admin_dir: "{{ cs_postgres_dir }}/pgadmin"
+cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
+cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties',
+    'cs_postgres_pg_admin_password') }}"
+cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INV', 'custom_properties',
+    'cs_postgres_pg_admin_port') }}"
+cs_postgres_pg_admin_domain: "{{ cs_dns_mapping }}"
+cs_postgres_pg_admin_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'letsencrypt_certs', 'attachments',
+    cs_postgres_pg_admin_domain + '.fullchain.pem') }}"
+cs_postgres_pg_admin_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'letsencrypt_certs', 'attachments',
+    cs_postgres_pg_admin_domain + '.privkey.pem') }}"
