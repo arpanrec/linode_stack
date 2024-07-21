@@ -32,4 +32,6 @@ cs_redis_data_dir: "{{ cs_redis_dir }}/data"
 cs_redis_certs_dir: "{{ cs_redis_dir }}/certs"
 cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_password') }}"
 cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_tls_port') }}"
+cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
+    'cs_redis_tls_privkey_pass') }}"
 cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"

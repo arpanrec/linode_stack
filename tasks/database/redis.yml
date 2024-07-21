@@ -26,11 +26,14 @@
       path: "{{ cs_redis_certs_dir }}/server.key"
       size: 4096
       mode: "0644"
+      cipher: auto
+      passphrase: "{{ cs_redis_tls_privkey_pass }}"
 
 - name: Database | Redis | Create SSL CSR
   community.crypto.openssl_csr:
       path: "{{ cs_redis_certs_dir }}/server.csr"
       privatekey_path: "{{ cs_redis_certs_dir }}/server.key"
+      privatekey_passphrase: "{{ cs_redis_tls_privkey_pass }}"
       common_name: "{{ cs_redis_private_ip }}"
       version: 1
       subject_alt_name:
@@ -82,6 +85,7 @@
           --requirepass "{{ cs_redis_password }}" --port 0
           --tls-port "{{ cs_redis_tls_port }}" --tls-cert-file /certs/server.crt --tls-auth-clients yes
           --tls-key-file /certs/server.key --tls-ca-cert-file /certs/ca.crt
+          --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
 
 - name: Database | Redis | Temp Private CA Key File
   ansible.builtin.tempfile:
