@@ -1,9 +1,13 @@
 ---
 - name: Database | Redis | Create data directory
   ansible.builtin.file:
-      path: "{{ cs_redis_data_dir }}"
+      path: "{{ item }}"
       state: directory
       mode: "0755"
+  with_items:
+      - "{{ cs_redis_data_dir }}"
+      - "{{ cs_redis_dir }}"
+      - "{{ cs_redis_certs_dir }}"
 
 - name: Database | Redis | Stop old container
   community.docker.docker_container:
@@ -14,8 +18,54 @@
 - name: Database | Redis | Enable UFW port
   community.general.ufw:
       rule: allow
-      port: "{{ cs_redis_port }}"
+      port: "{{ cs_redis_tls_port }}"
       state: enabled
+
+- name: Database | Redis | Create SSL Private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_redis_certs_dir }}/server.key"
+      size: 4096
+      mode: "0644"
+
+- name: Database | Redis | Create SSL CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_redis_certs_dir }}/server.csr"
+      privatekey_path: "{{ cs_redis_certs_dir }}/server.key"
+      common_name: "{{ cs_redis_private_ip }}"
+      version: 1
+      subject_alt_name:
+          - "IP:{{ cs_redis_private_ip }}"
+          - "IP:127.0.0.1"
+          - "DNS:localhost"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "serverAuth"
+          - "clientAuth"
+      create_subject_key_identifier: true
+      mode: "0644"
+
+- name: Database | Redis | Sign SSL CSR
+  community.crypto.x509_certificate:
+      path: "{{ cs_redis_certs_dir }}/server.crt"
+      csr_path: "{{ cs_redis_certs_dir }}/server.csr"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      return_content: true
+
+- name: Database | Redis | Write CA certificate
+  ansible.builtin.copy:
+      content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
+      dest: "{{ cs_redis_certs_dir }}/ca.crt"
+      mode: "0644"
 
 - name: Database | Redis | Start container
   community.docker.docker_container:
@@ -25,16 +75,55 @@
       restart_policy: unless-stopped
       volumes:
           - "{{ cs_redis_data_dir }}:/data"
+          - "{{ cs_redis_certs_dir }}:/certs"
       ports:
-          - "{{ cs_redis_port }}:{{ cs_redis_port }}"
+          - "{{ cs_redis_tls_port }}:{{ cs_redis_tls_port }}"
       command: redis-server --save 20 1 --loglevel warning
-          --requirepass "{{ cs_redis_password }}"
-          --port "{{ cs_redis_port }}"
+          --requirepass "{{ cs_redis_password }}" --port 0
+          --tls-port "{{ cs_redis_tls_port }}" --tls-cert-file /certs/server.crt --tls-auth-clients yes
+          --tls-key-file /certs/server.key --tls-ca-cert-file /certs/ca.crt
+
+- name: Database | Redis | Temp Private CA Key File
+  ansible.builtin.tempfile:
+      state: file
+      suffix: ".key"
+  register: redis_ca_key_temp
+
+- name: Database | Redis | Install Redis Tools
+  ansible.builtin.apt:
+      name: redis-tools
+      state: present
+
+- name: Database | Redis | Test | Create client key
+  community.crypto.openssl_privatekey:
+      path: "/tmp/client.key"
+      size: 4096
+      mode: "0600"
+
+- name: Database | Redis | Test | Create client CSR
+  community.crypto.openssl_csr:
+      path: "/tmp/client.csr"
+      privatekey_path: "/tmp/client.key"
+
+- name: Database | Redis | Test | Sign client CSR
+  community.crypto.x509_certificate:
+      path: "/tmp/client.crt"
+      csr_path: "/tmp/client.csr"
+      provider: ownca
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
 
 - name: Database | Redis | Wait for service to start
-  community.docker.docker_container_exec:
-      container: redis-main
-      command: redis-cli -a "{{ cs_redis_password }}" -p "{{ cs_redis_port }}" --no-auth-warning ping
+  ansible.builtin.command:
+      cmd: "redis-cli -a {{ cs_redis_password }} -p {{ cs_redis_tls_port }} --no-auth-warning  \
+          --tls --cert /tmp/client.crt --key /tmp/client.key --cacert {{ cs_redis_certs_dir }}/ca.crt ping"
+  changed_when: false
+  timeout: 3
+
   register: redis_ping
   retries: 30
   delay: 5
