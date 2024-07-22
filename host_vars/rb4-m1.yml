@@ -2,7 +2,8 @@
 ansible_python_interpreter: /usr/bin/python3
 
 cs_postgres_dir: /app/postgres
-cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_password') }}"
+cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
+    'cs_postgres_password') }}"
 cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_user') }}"
 cs_postgres_container_name: postgres-main
 cs_postgres_network_name: postgres-main-net
