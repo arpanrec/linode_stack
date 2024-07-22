@@ -127,7 +127,6 @@
           --tls --cert /tmp/client.crt --key /tmp/client.key --cacert {{ cs_redis_certs_dir }}/ca.crt ping"
   changed_when: false
   timeout: 3
-
   register: redis_ping
   retries: 30
   delay: 5
