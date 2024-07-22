@@ -6,9 +6,10 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Copy key file
   ansible.builtin.copy:
-      content: "{{ cs_nc_external_drive_luks_key_file_b64 | b64decode }}"
+      src: "{{ cs_nc_external_drive_luks_key_file }}"
       dest: /root/.nextcloud-luks-key
       mode: "0000"
+      remote_src: false
 
 - name: Nextcloud | Mount Disk | Unencrypted | Create mount point
   ansible.builtin.file:
