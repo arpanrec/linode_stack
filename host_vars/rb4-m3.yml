@@ -1,9 +1,11 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
 
-cs_nc_app_data_root_dir: /app/nextcloud
-cs_nc_web_root_dir: "{{ cs_nc_app_data_root_dir }}/www"
-cs_nc_data_dir: "{{ cs_nc_app_data_root_dir }}/data"
+cs_nc_root_dir: /app/nextcloud
+cs_nc_web_dir: "{{ cs_nc_root_dir }}/www"
+cs_nc_data_dir: "{{ cs_nc_root_dir }}/data"
+cs_nc_cert_dir: "{{ cs_nc_root_dir }}/certs"
+
 cs_nc_version: 29.0.4
 cs_nc_run_user: www-data
 cs_nc_run_group: www-data

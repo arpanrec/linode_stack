@@ -81,7 +81,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   register: nextcloud_mount_groups
 
@@ -90,7 +90,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:add '{{ cs_nc_files_external_mount_group_name }}'"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   when: cs_nc_files_external_mount_group_name not in nextcloud_mount_groups.stdout | from_json
 
@@ -99,7 +99,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ files_external:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   register: nextcloud_mount_storages
 
@@ -130,7 +130,7 @@
   ansible.builtin.command:
       cmd: "php occ files_external:create '{{ cs_nc_files_external_mount_folder_name }}' local null::null
           --config datadir='{{ cs_nc_external_drive_mount_path }}/nextcloud'"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   when: existing_storage_mount | length == 0
 
@@ -139,7 +139,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ files_external:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   register: nextcloud_mount_storages
 
@@ -154,7 +154,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: php occ {{ item }}
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - files_external:applicable --remove-all {{ existing_storage_mount_id }}
@@ -181,9 +181,9 @@
             [Service]
             User={{ cs_nc_run_user }}
             Group={{ cs_nc_run_group }}
-            ExecCondition=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ status -e
-            ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ files:scan --all
-            WorkingDirectory={{ cs_nc_web_root_dir }}
+            ExecCondition=/usr/bin/php -f {{ cs_nc_web_dir }}/occ status -e
+            ExecStart=/usr/bin/php -f {{ cs_nc_web_dir }}/occ files:scan --all
+            WorkingDirectory={{ cs_nc_web_dir }}
             KillMode=process
 
       - dest: /etc/systemd/system/nextcloudscanfiles.timer

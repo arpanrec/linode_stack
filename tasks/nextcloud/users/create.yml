@@ -4,7 +4,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   register: cs_nc_user_list_all_users
   changed_when: false
 
@@ -13,7 +13,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:add --generate-password '{{ item.key }}'"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items: "{{ cs_nc_users_dict | dict2items }}"
   when: item.key not in cs_nc_user_list_all_users.stdout | from_json
@@ -23,7 +23,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ user:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   register: cs_nc_user_list_all_users
   changed_when: false
 
@@ -35,7 +35,7 @@
           php occ user:setting {{ item.key }} settings email {{ item.value.email }}
           php occ twofactorauth:enable {{ item.key }} totp
           php occ user:enable {{ item.key }}
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items: "{{ cs_nc_users_dict | dict2items }}"
 
@@ -50,7 +50,7 @@
   ansible.builtin.command:
       cmd: "php occ user:setting {{ item.key }}
           settings display_name '{{ item.value.display_name | default(item.key) }}'"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   with_items: "{{ cs_nc_users_dict | dict2items }}"
   when: current_user_display_name != item.value.display_name | default(item.key)
   vars:

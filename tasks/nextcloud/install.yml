@@ -21,24 +21,28 @@
 
 - name: Nextcloud | Install | Download New | Create Nextcloud directory
   ansible.builtin.file:
-      path: "{{ cs_nc_web_root_dir }}"
+      path: "{{ item }}"
       state: directory
-      mode: "0750"
+      mode: "0755"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
+  with_items:
+      - "{{ cs_nc_web_dir }}"
+      - "{{ cs_nc_data_dir }}"
+      - "{{ cs_nc_cert_dir }}"
 
 - name: Nextcloud | Install | Check if Nextcloud is installed
   ansible.builtin.stat:
-      path: "{{ cs_nc_web_root_dir }}"
+      path: "{{ cs_nc_web_dir }}"
   register: is_nc_installed
 
 - name: Nextcloud | Install | Download New
   when: not is_nc_installed.stat.exists
   block:
-      - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_root_dir }}
+      - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_dir }}
         ansible.builtin.copy:
             src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"
-            dest: "{{ cs_nc_web_root_dir }}"
+            dest: "{{ cs_nc_web_dir }}"
             remote_src: true
             owner: "{{ cs_nc_run_user }}"
             group: "{{ cs_nc_run_group }}"
@@ -46,16 +50,8 @@
 
 - name: Nextcloud | Install | Remove AD
   ansible.builtin.command:
-      cmd: truncate -s 0 {{ cs_nc_web_root_dir }}/apps/settings/templates/settings/personal/development.notice.php
+      cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
   changed_when: true
-
-- name: Nextcloud | Install | Create Data Directory
-  ansible.builtin.file:
-      path: "{{ cs_nc_data_dir }}"
-      state: directory
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-      mode: "0750"
 
 - name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
@@ -66,9 +62,9 @@
           find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
           chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
 
-          find {{ cs_nc_web_root_dir }}/ -type d -exec chmod 0750 {} \;
-          find {{ cs_nc_web_root_dir }}/ -type f -exec chmod 640 {} \;
-          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_root_dir }};
+          find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
+          find {{ cs_nc_web_dir }}/ -type f -exec chmod 640 {} \;
+          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
 
       executable: /bin/bash
   changed_when: true
@@ -98,7 +94,7 @@
 
 - name: Nextcloud | Install | Check if Nextcloud is installed
   ansible.builtin.stat:
-      path: "{{ cs_nc_web_root_dir }}/config/CAN_INSTALL"
+      path: "{{ cs_nc_web_dir }}/config/CAN_INSTALL"
   register: is_nc_occ_installed
 
 - name: Nextcloud | Install | Install Nextcloud for the first time
@@ -112,7 +108,7 @@
           --database-host '{{ cs_nc_db_host }}:{{ cs_nc_db_port }}' \
           --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}' \
           --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Install | Enable Featured Apps
@@ -121,7 +117,7 @@
   ansible.builtin.command:
       cmd: "php occ app:enable encryption admin_audit bruteforcesettings files_external suspicious_login
           twofactor_totp user_ldap"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Install | Enable encryption
@@ -129,7 +125,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "encryption:enable"
@@ -140,7 +136,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ config:system:set upgrade.disable-web --value true --type boolean"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Install | Set release channel to stable
@@ -148,7 +144,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ config:system:set updater.release.channel --value stable"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
 
 - name: Nextcloud | Install | Get Status
@@ -156,7 +152,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ status --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   register: nc_status_installed
 
@@ -179,7 +175,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set trusted_domains 0 --value={{ cs_nc_domain }}"
@@ -193,7 +189,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set dbtype --value pgsql"
@@ -207,7 +203,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ db:add-missing-indices"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Install | Set log config
@@ -215,7 +211,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set log_type --value file"
@@ -232,7 +228,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set logtimezone --value '{{ cs_nc_logtimezone }}'"
@@ -245,7 +241,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set mail_smtpmode --value {{ cs_nc_mail_smtpmode }}"
@@ -264,7 +260,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ config:system:set maintenance_window_start --type=integer --value=3"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Install | Set nextcloud url
@@ -272,7 +268,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
@@ -285,7 +281,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:set skeletondirectory --value ''"
@@ -296,7 +292,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "theming:config name 'Home Server'"
@@ -314,7 +310,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:app:set theming AndroidClientUrl
@@ -327,7 +323,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ maintenance:update:htaccess"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Install | Create systemd unit files for nextcloud cron
@@ -344,9 +340,9 @@
             [Service]
             User={{ cs_nc_run_user }}
             Group={{ cs_nc_run_group }}
-            ExecCondition=/usr/bin/php -f {{ cs_nc_web_root_dir }}/occ status -e
-            ExecStart=/usr/bin/php -f {{ cs_nc_web_root_dir }}/cron.php
-            WorkingDirectory={{ cs_nc_web_root_dir }}
+            ExecCondition=/usr/bin/php -f {{ cs_nc_web_dir }}/occ status -e
+            ExecStart=/usr/bin/php -f {{ cs_nc_web_dir }}/cron.php
+            WorkingDirectory={{ cs_nc_web_dir }}
             KillMode=process
 
       - dest: /etc/systemd/system/nextcloudcron.timer

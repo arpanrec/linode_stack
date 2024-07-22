@@ -1,6 +1,6 @@
 Listen {{ cs_nc_port }}
 <VirtualHost *:{{ cs_nc_port }}>
-    DocumentRoot {{ cs_nc_web_root_dir }}/
+    DocumentRoot {{ cs_nc_web_dir }}/
     ServerName {{ cs_nc_domain }}
     <IfModule mod_headers.c>
         Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
@@ -10,7 +10,7 @@ Listen {{ cs_nc_port }}
         Header always set X-Frame-Options "SAMEORIGIN"
         Header always set Referrer-Policy "no-referrer"
     </IfModule>
-    <Directory {{ cs_nc_web_root_dir }}/>
+    <Directory {{ cs_nc_web_dir }}/>
         Require all granted
         AllowOverride All
         Options FollowSymLinks MultiViews
