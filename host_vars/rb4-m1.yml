@@ -35,3 +35,11 @@ cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custo
 cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
     'cs_redis_tls_privkey_pass') }}"
 cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
+
+cs_elasticsearch_data_dir: /app/elasticsearch
+cs_elasticsearch_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_elasticsearch_password') }}"
+cs_elasticsearch_servlet_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
+    'cs_elasticsearch_servlet_port') }}"
+cs_elasticsearch_transport_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
+    'cs_elasticsearch_transport_port') }}"
+cs_elasticsearch_host: "{{ cs_rb4_m1_ip }}"

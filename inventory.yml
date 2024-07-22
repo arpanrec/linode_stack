@@ -4,6 +4,7 @@ all:
         keepass_dbx: "{{ lookup('file', '/home/arpan/.cache/codespace.loc') }}"
         keepass_psw: "{{ lookup('file', '/home/arpan/.cache/codespace.key') }}"
         keepass_key: /home/arpan/.cache/codespace.keyx
+        keepass_ttl: 5
 
     children:
         patchservers:
