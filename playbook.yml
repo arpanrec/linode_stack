@@ -25,6 +25,19 @@
         ansible.builtin.import_tasks:
             file: tasks/patch.yml
 
+- name: NFS Server
+  hosts: rb4-m3
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: NFS Server | Mount Disk
+        become: true
+        become_user: root
+        tags: never,nfs-server
+        ansible.builtin.import_tasks:
+            file: tasks/nfs-server.yml
+
 - name: Database
   hosts: rb4-m1
   become: false
