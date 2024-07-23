@@ -318,7 +318,7 @@
           combine({server_index: {'Name': item.key,
           'Group': 'Servers',
           'Host': cs_postgres_container_name,
-          'Port': cs_postgres_port,
+          'Port': (cs_postgres_port | int),
           'SSLMode': 'verify-full',
           'SSLCert': '/client-fullchain-' + item.value.user + '.pem',
           'SSLKey': '/client.key',
