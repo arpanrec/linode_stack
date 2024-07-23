@@ -1,0 +1,78 @@
+---
+cs_nc_root_dir: /app/nextcloud
+cs_nc_web_dir: "{{ cs_nc_root_dir }}/www"
+cs_nc_data_dir: "{{ cs_nc_root_dir }}/data"
+cs_nc_cert_dir: "{{ cs_nc_root_dir }}/certs"
+
+cs_nc_version: 29.0.4
+cs_nc_run_user: www-data
+cs_nc_run_group: www-data
+cs_nc_log_file: "{{ cs_nc_data_dir }}/nextcloud.log"
+cs_nc_logtimezone: Asia/Kolkata
+cs_nc_default_phone_region: IN
+cs_nc_fail2ban_log_file: "{{ cs_nc_data_dir }}/fail2ban.log"
+cs_nc_php_version: 8.3
+cs_nc_redis_timeout: 0.5
+cs_nc_external_drive_mount_path: /mnt/nextcloud
+cs_nc_files_external_mount_folder_name: local_mnt_nextcloud_nextcloud
+cs_nc_files_external_mount_group_name: local_mnt_nextcloud_nextcloud
+cs_nc_email_regex: (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
+
+cs_nc_domain: "{{ cs_dns_mapping }}"
+cs_nc_port: 8477
+
+cs_nc_db_type: pgsql
+
+cs_nc_db_fullchain_pem_file: "{{ cs_nc_cert_dir }}/fullchain.pem"
+cs_nc_db_privkey_pem_file: "{{ cs_nc_cert_dir }}/privkey.pem"
+cs_nc_db_ca_pem_file: "{{ cs_nc_cert_dir }}/ca.pem"
+
+cs_nc_db_user: "{{ cs_postgres_apps.nextcloud.user }}"
+cs_nc_db_password: "{{ cs_postgres_apps.nextcloud.password }}"
+cs_nc_db_database: "{{ cs_postgres_apps.nextcloud.db }}"
+cs_nc_db_host: "{{ cs_postgres_host_private_ip }}"
+cs_nc_db_port: "{{ cs_postgres_port }}"
+
+cs_nc_admin_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_admin_user') }}"
+cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
+    'cs_nc_admin_password') }}"
+
+cs_nc_mail_smtpmode: "{{ cs_mail_smtpmode }}"
+cs_nc_mail_sendmailmode: "{{ cs_mail_sendmailmode }}"
+cs_nc_mail_smtpport: "{{ cs_mail_smtpport }}"
+cs_nc_mail_from_address: "{{ cs_mail_from_address }}"
+cs_nc_mail_domain: "{{ cs_mail_domain }}"
+cs_nc_mail_smtpsecure: "{{ cs_mail_smtpsecure }}"
+cs_nc_mail_smtpauth: "{{ cs_mail_smtpauth }}"
+cs_nc_mail_smtphost: "{{ cs_mail_smtphost }}"
+cs_nc_mail_smtpname: "{{ cs_mail_smtpname }}"
+cs_nc_mail_smtppassword: "{{ cs_mail_smtppassword }}"
+
+cs_nc_redis_host: "{{ cs_redis_private_ip }}"
+cs_nc_redis_port: "{{ cs_redis_tls_port }}"
+cs_nc_redis_password: "{{ cs_redis_password }}"
+
+cs_nc_imaginary_key: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_imaginary_key') }}"
+cs_nc_imaginary_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_imaginary_port') }}"
+cs_nc_imaginary_domain: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_imaginary_domain') }}"
+
+cs_nc_elasticsearch_password: "{{ cs_elasticsearch_password }}"
+cs_nc_elasticsearch_servlet_port: "{{ cs_elasticsearch_servlet_port }}"
+cs_nc_elasticsearch_host: "{{ cs_elasticsearch_host }}"
+cs_nc_elasticsearch_index_name: nextcloud-fulltextsearch
+
+cs_nc_onlyoffice_port: "{{ cs_onlyoffice_port }}"
+cs_nc_onlyoffice_domain: "{{ cs_onlyoffice_domain }}"
+cs_nc_onlyoffice_jwt_secret: "{{ cs_onlyoffice_jwt_secret }}"
+cs_nc_users_dict:
+    arpan:
+        email: arpan.rec@gmail.com
+        display_name: Arpan Mandal
+        groups:
+            local_mnt_nextcloud_nextcloud: {}
+cs_nc_external_drive_uuid: 0f5205e1-c864-4e33-87b5-0a69c91d86c4
+cs_nc_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_nc_domain + '.fullchain.pem') }}"
+cs_nc_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_nc_domain + '.privkey.pem') }}"
+
+cs_nc_external_drive_luks_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_external_drive_luks_password') }}"
+cs_nc_external_drive_luks_key_file: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'attachments', 'cs_nc_external_drive_luks_key_file') }}"
