@@ -13,9 +13,11 @@ collections:
     - name: linode.cloud
       version: 0.27.0
     - name: arpanrec.nebula
-      # type: dir
-      # source: /home/arpan/workspace/arpanrec.nebula
       source: https://github.com/arpanrec/arpanrec.nebula.git
+      type: git
+    - name: viczem.keepass
+      source: https://github.com/viczem/ansible-keepass.git
+      version: v0.7.5
       type: git
 roles:
     - name: geerlingguy.docker

@@ -1,0 +1,26 @@
+---
+all:
+    vars:
+        keepass_dbx: "{{ lookup('file', '/home/arpan/.cache/codespace.loc') }}"
+        keepass_psw: "{{ lookup('file', '/home/arpan/.cache/codespace.key') }}"
+        keepass_key: /home/arpan/.cache/codespace.keyx
+        keepass_ttl: 5
+
+    children:
+        patchservers:
+            hosts:
+                rb4-m1:
+                rb4-m2:
+                rb4-m3:
+    hosts:
+        localhost:
+        rb4-m1:
+            ansible_host: "{{ cs_rb4_m1_ip }}"
+            # ansible_user: root
+            # ansible_ssh_password: password
+            # ansible_become_method: su
+            # ansible_become_password: root
+        rb4-m2:
+            ansible_host: "{{ cs_rb4_m2_ip }}"
+        rb4-m3:
+            ansible_host: "{{ cs_rb4_m3_ip }}"

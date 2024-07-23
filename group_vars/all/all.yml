@@ -1,0 +1,32 @@
+---
+cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
+cs_no_log: "{{ not cs_env_debug }}"
+
+cs_vm_ssh_priv_id_ecdsa_file: "{{ lookup('viczem.keepass.keepass', 'OPENSSH_ID_ECDSA', 'attachments', 'id_ecdsa') }}"
+cs_vm_ssh_priv_id_ecdsa_password: "{{ lookup('viczem.keepass.keepass', 'OPENSSH_ID_ECDSA', 'password') }}"
+
+cs_root_ca_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY', 'attachments', 'privkey.pem') }}"
+cs_root_ca_privkey_pass_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY', 'attachments', 'privkey.pass') }}"
+cs_root_ca_cert_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY', 'attachments', 'cert.pem') }}"
+
+cs_rb4_m1_ip: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_rb4_m1_ip') }}"
+cs_rb4_m2_ip: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_rb4_m2_ip') }}"
+cs_rb4_m3_ip: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_rb4_m3_ip') }}"
+cs_dns_mapping: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_dns_mapping') }}"
+
+cs_mail_smtpmode: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpmode') }}"
+cs_mail_sendmailmode: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties','sendmailmode') }}"
+cs_mail_smtpport: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpport') }}"
+cs_mail_from_address: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'from_address') }}"
+cs_mail_domain: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'domain') }}"
+cs_mail_smtpsecure: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpsecure') }}"
+cs_mail_smtpauth: 1
+cs_mail_smtphost: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtphost') }}"
+cs_mail_smtpname: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpname') }}"
+cs_mail_smtppassword: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtppassword') }}"
+
+cs_vm_ssh_service_user_id: "svc_admin"
+cs_vm_ssh_local_key_file: "/tmp/nextcloud.pem"
+
+ansible_user: "{{ cs_vm_ssh_service_user_id }}"
+ansible_ssh_private_key_file: "{{ cs_vm_ssh_local_key_file }}"

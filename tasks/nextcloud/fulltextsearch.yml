@@ -4,7 +4,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   register: cs_nc_app_list
 
@@ -13,7 +13,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:install {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "fulltextsearch"
@@ -39,10 +39,10 @@
           User={{ cs_nc_run_user }}
           Group={{ cs_nc_run_group }}
           Type=simple
-          WorkingDirectory={{ cs_nc_web_root_dir }}
-          ExecStartPre=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:index
-          ExecStart=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:live -q
-          ExecStop=/usr/bin/php {{ cs_nc_web_root_dir }}/occ fulltextsearch:stop
+          WorkingDirectory={{ cs_nc_web_dir }}
+          ExecStartPre=/usr/bin/php {{ cs_nc_web_dir }}/occ fulltextsearch:index
+          ExecStart=/usr/bin/php {{ cs_nc_web_dir }}/occ fulltextsearch:live -q
+          ExecStop=/usr/bin/php {{ cs_nc_web_dir }}/occ fulltextsearch:stop
           Nice=19
           Restart=always
 
@@ -90,7 +90,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ config:import /tmp/nc-apps-config.json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Full Text Search | Stop nextcloud-fulltext-elasticsearch-worker
@@ -105,7 +105,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ fulltextsearch:stop"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
 - name: Nextcloud | Full Text Search | Start nextcloud-fulltext-elasticsearch-worker
