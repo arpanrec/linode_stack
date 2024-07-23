@@ -1,17 +1,90 @@
 ---
+- name: Nextcloud | Cache | Redis | Client Certificate | Create SSL Private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_nc_redis_privkey_file }}"
+      size: 4096
+      mode: "0600"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Create SSL CSR
+  community.crypto.openssl_csr:
+      path: "/tmp/nc_redis_client.csr"
+      privatekey_path: "{{ cs_nc_redis_privkey_file }}"
+      common_name: "redis"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "clientAuth"
+      create_subject_key_identifier: true
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Sign SSL CSR
+  community.crypto.x509_certificate:
+      path: "/tmp/nc_redis_client.crt"
+      csr_path: "/tmp/nc_redis_client.csr"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      return_content: true
+  register: cs_nc_redis_client_ssl_cert
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Write Full chain
+  ansible.builtin.copy:
+      content: |+
+          {{ cs_nc_redis_client_ssl_cert.certificate | trim }}
+          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
+      dest: "{{ cs_nc_redis_cert_file }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Write CA certificate
+  ansible.builtin.copy:
+      content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
+      dest: "{{ cs_nc_redis_ca_file }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Write temp config
+  ansible.builtin.copy:
+      content: "{{ cs_nc_redis_cache_config | to_json }}"
+      dest: "/tmp/nc_redis_cache_config.json"
+      mode: "0644"
+  vars:
+      cs_nc_redis_cache_config:
+          system:
+              redis:
+                  host: "{{ cs_nc_redis_host }}"
+                  port: "{{ cs_nc_redis_port }}"
+                  timeout: "{{ cs_nc_redis_timeout }}"
+                  password: "{{ cs_nc_redis_password }}"
+                  ssl_context:
+                      local_cert: "{{ cs_nc_redis_cert_file }}"
+                      local_pk: "{{ cs_nc_redis_privkey_file }}"
+                      cafile: "{{ cs_nc_redis_ca_file }}"
+                      verify_peer_name: false
+              memcache:
+                  local: "\\OC\\Memcache\\APCu"
+                  distributed: "\\OC\\Memcache\\Redis"
+                  locking: "\\OC\\Memcache\\Redis"
+
 - name: Nextcloud | Cache | Set nextcloud config
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
-      cmd: "php occ {{ item }}"
+      cmd: "php occ config:import /tmp/nc_redis_cache_config.json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
-  with_items:
-      - "config:system:set redis host --value {{ cs_nc_redis_host }}"
-      - "config:system:set redis port --value {{ cs_nc_redis_port }}"
-      - "config:system:set redis timeout --value {{ cs_nc_redis_timeout }}"
-      - "config:system:set redis password --value {{ cs_nc_redis_password }}"
-
-      - "config:system:set memcache.local --value '\\OC\\Memcache\\APCu'"
-      - "config:system:set memcache.distributed --value '\\OC\\Memcache\\Redis'"
-      - "config:system:set memcache.locking --value '\\OC\\Memcache\\Redis'"

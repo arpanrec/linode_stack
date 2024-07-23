@@ -24,7 +24,6 @@ cs_nc_port: 8477
 cs_nc_db_fullchain_pem_file: "{{ cs_nc_cert_dir }}/fullchain.pem"
 cs_nc_db_privkey_pem_file: "{{ cs_nc_cert_dir }}/privkey.pem"
 cs_nc_db_ca_pem_file: "{{ cs_nc_cert_dir }}/ca.pem"
-
 cs_nc_db_type: pgsql
 cs_nc_db_user: "{{ cs_postgres_apps.nextcloud.user }}"
 cs_nc_db_password: "{{ cs_postgres_apps.nextcloud.password }}"
@@ -46,6 +45,9 @@ cs_nc_mail_smtphost: "{{ cs_mail_smtphost }}"
 cs_nc_mail_smtpname: "{{ cs_mail_smtpname }}"
 cs_nc_mail_smtppassword: "{{ cs_mail_smtppassword }}"
 
+cs_nc_redis_privkey_file: "{{ cs_nc_cert_dir }}/redis.key"
+cs_nc_redis_cert_file: "{{ cs_nc_cert_dir }}/redis.crt"
+cs_nc_redis_ca_file: "{{ cs_nc_cert_dir }}/redis.ca"
 cs_nc_redis_host: "{{ cs_redis_private_ip }}"
 cs_nc_redis_port: "{{ cs_redis_tls_port }}"
 cs_nc_redis_password: "{{ cs_redis_password }}"
