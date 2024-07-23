@@ -1,153 +1,153 @@
 ---
-# - name: Nextcloud | Install | Download Nextcloud {{ cs_nc_version }}
-#   ansible.builtin.get_url:
-#       url: "https://download.nextcloud.com/server/releases/nextcloud-{{ cs_nc_version }}.zip"
-#       dest: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
-#       mode: "0644"
+- name: Nextcloud | Install | Download Nextcloud {{ cs_nc_version }}
+  ansible.builtin.get_url:
+      url: "https://download.nextcloud.com/server/releases/nextcloud-{{ cs_nc_version }}.zip"
+      dest: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+      mode: "0644"
 
-# - name: Nextcloud | Install | Create unzip directory
-#   ansible.builtin.file:
-#       path: /tmp/nextcloud-{{ cs_nc_version }}
-#       state: directory
-#       mode: "0755"
+- name: Nextcloud | Install | Create unzip directory
+  ansible.builtin.file:
+      path: /tmp/nextcloud-{{ cs_nc_version }}
+      state: directory
+      mode: "0755"
 
-# - name: Nextcloud | Install | Unzip Nextcloud
-#   ansible.builtin.unarchive:
-#       src: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
-#       dest: "/tmp/nextcloud-{{ cs_nc_version }}"
-#       remote_src: true
-#       creates: "/tmp/nextcloud-{{ cs_nc_version }}/index.php"
-#       mode: "0644"
+- name: Nextcloud | Install | Unzip Nextcloud
+  ansible.builtin.unarchive:
+      src: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+      dest: "/tmp/nextcloud-{{ cs_nc_version }}"
+      remote_src: true
+      creates: "/tmp/nextcloud-{{ cs_nc_version }}/index.php"
+      mode: "0644"
 
-# - name: Nextcloud | Install | Download New | Create Nextcloud directory
-#   ansible.builtin.file:
-#       path: "{{ item }}"
-#       state: directory
-#       mode: "0755"
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
-#   with_items:
-#       - "{{ cs_nc_data_dir }}"
-#       - "{{ cs_nc_cert_dir }}"
+- name: Nextcloud | Install | Download New | Create Nextcloud directory
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+  with_items:
+      - "{{ cs_nc_data_dir }}"
+      - "{{ cs_nc_cert_dir }}"
 
-# - name: Nextcloud | Install | Check if Nextcloud is installed
-#   ansible.builtin.stat:
-#       path: "{{ cs_nc_web_dir }}"
-#   register: is_nc_installed
+- name: Nextcloud | Install | Check if Nextcloud is installed
+  ansible.builtin.stat:
+      path: "{{ cs_nc_web_dir }}"
+  register: is_nc_installed
 
-# - name: Nextcloud | Install | Download New
-#   when: not is_nc_installed.stat.exists
-#   block:
-#       - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_dir }}
-#         ansible.builtin.copy:
-#             src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"
-#             dest: "{{ cs_nc_web_dir }}"
-#             remote_src: true
-#             owner: "{{ cs_nc_run_user }}"
-#             group: "{{ cs_nc_run_group }}"
-#             mode: "0755"
+- name: Nextcloud | Install | Download New
+  when: not is_nc_installed.stat.exists
+  block:
+      - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_dir }}
+        ansible.builtin.copy:
+            src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"
+            dest: "{{ cs_nc_web_dir }}"
+            remote_src: true
+            owner: "{{ cs_nc_run_user }}"
+            group: "{{ cs_nc_run_group }}"
+            mode: "0755"
 
-# - name: Nextcloud | Install | Remove AD
-#   ansible.builtin.command:
-#       cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
-#   changed_when: true
+- name: Nextcloud | Install | Remove AD
+  ansible.builtin.command:
+      cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
+  changed_when: true
 
-# - name: Nextcloud | Install | Create data directory
-#   ansible.builtin.file:
-#       path: "{{ cs_nc_data_dir }}"
-#       state: directory
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
-#       mode: "0755"
+- name: Nextcloud | Install | Create data directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_data_dir }}"
+      state: directory
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      mode: "0755"
 
-# - name: Nextcloud | Install | Copy icons
-#   ansible.builtin.copy:
-#       src: "{{ item.src }}"
-#       dest: "{{ item.dest }}"
-#       mode: "0644"
-#   with_items:
-#       - src: files/nc/favicon.svg
-#         dest: /tmp/nc-favicon.ico
-#       - src: files/nc/logo.png
-#         dest: /tmp/nc-logo.png
-#       - src: files/nc/logoheader.png
-#         dest: /tmp/nc-logoheader.png
-#       - src: files/nc/background.jpg
-#         dest: /tmp/nc-background.jpg
+- name: Nextcloud | Install | Copy icons
+  ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: "0644"
+  with_items:
+      - src: files/nc/favicon.svg
+        dest: /tmp/nc-favicon.ico
+      - src: files/nc/logo.png
+        dest: /tmp/nc-logo.png
+      - src: files/nc/logoheader.png
+        dest: /tmp/nc-logoheader.png
+      - src: files/nc/background.jpg
+        dest: /tmp/nc-background.jpg
 
-# - name: Nextcloud | Install | Databse Client Certificate | Create SSL Private key
-#   community.crypto.openssl_privatekey:
-#       path: "{{ cs_nc_db_privkey_pem_file }}"
-#       size: 4096
-#       mode: "0600"
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
+- name: Nextcloud | Install | Databse Client Certificate | Create SSL Private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_nc_db_privkey_pem_file }}"
+      size: 4096
+      mode: "0600"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
-# - name: Nextcloud | Install | Databse Client Certificate | Create SSL CSR
-#   community.crypto.openssl_csr:
-#       path: "/tmp/nc_db_client.csr"
-#       privatekey_path: "{{ cs_nc_db_privkey_pem_file }}"
-#       common_name: "{{ cs_nc_db_user }}"
-#       key_usage:
-#           - "digitalSignature"
-#           - "keyEncipherment"
-#           - "keyAgreement"
-#       extended_key_usage:
-#           - "clientAuth"
-#       create_subject_key_identifier: true
-#       mode: "0644"
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
+- name: Nextcloud | Install | Databse Client Certificate | Create SSL CSR
+  community.crypto.openssl_csr:
+      path: "/tmp/nc_db_client.csr"
+      privatekey_path: "{{ cs_nc_db_privkey_pem_file }}"
+      common_name: "{{ cs_nc_db_user }}"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "clientAuth"
+      create_subject_key_identifier: true
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
-# - name: Nextcloud | Install | Databse Client Certificate | Sign SSL CSR
-#   community.crypto.x509_certificate:
-#       path: "/tmp/nc_db_client.crt"
-#       csr_path: "/tmp/nc_db_client.csr"
-#       provider: ownca
-#       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-#           lstrip=false, rstrip=false) }}"
-#       ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-#           lstrip=false, rstrip=false) }}"
-#       ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-#           lstrip=false, rstrip=false) }}"
-#       mode: "0644"
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
-#       return_content: true
-#   register: cs_postgres_client_ssl_cert
+- name: Nextcloud | Install | Databse Client Certificate | Sign SSL CSR
+  community.crypto.x509_certificate:
+      path: "/tmp/nc_db_client.crt"
+      csr_path: "/tmp/nc_db_client.csr"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      return_content: true
+  register: cs_postgres_client_ssl_cert
 
-# - name: Nextcloud | Install | Databse Client Certificate | Write Full chain
-#   ansible.builtin.copy:
-#       content: |+
-#           {{ cs_postgres_client_ssl_cert.certificate | trim }}
-#           {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
-#       dest: "{{ cs_nc_db_fullchain_pem_file }}"
-#       mode: "0644"
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
+- name: Nextcloud | Install | Databse Client Certificate | Write Full chain
+  ansible.builtin.copy:
+      content: |+
+          {{ cs_postgres_client_ssl_cert.certificate | trim }}
+          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
+      dest: "{{ cs_nc_db_fullchain_pem_file }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
-# - name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
-#   ansible.builtin.copy:
-#       content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
-#       dest: "{{ cs_nc_db_ca_pem_file }}"
-#       mode: "0644"
-#       owner: "{{ cs_nc_run_user }}"
-#       group: "{{ cs_nc_run_group }}"
+- name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
+  ansible.builtin.copy:
+      content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
+      dest: "{{ cs_nc_db_ca_pem_file }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
-# - name: Nextcloud | Install | Reset permissions and ownership
-#   ansible.builtin.shell:
-#       cmd: |+
-#           set -euo pipefail;
+- name: Nextcloud | Install | Reset permissions and ownership
+  ansible.builtin.shell:
+      cmd: |+
+          set -euo pipefail;
 
-#           find {{ cs_nc_data_dir }}/ -type d -exec chmod 0750 {} \;
-#           find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
-#           chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
+          find {{ cs_nc_data_dir }}/ -type d -exec chmod 0750 {} \;
+          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
+          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
 
-#           find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
-#           find {{ cs_nc_web_dir }}/ -type f -exec chmod 640 {} \;
-#           chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
-#       executable: /bin/bash
-#   changed_when: true
+          find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
+          find {{ cs_nc_web_dir }}/ -type f -exec chmod 640 {} \;
+          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
+      executable: /bin/bash
+  changed_when: true
 
 - name: Nextcloud | Install | Check if Nextcloud is installed
   ansible.builtin.stat:
@@ -161,17 +161,14 @@
   ansible.builtin.command:
       cmd: "php occ maintenance:install --database '{{ cs_nc_db_type }}' --database-name '{{ cs_nc_db_database }}'
           --database-user '{{ cs_nc_db_user }}' --database-pass '{{ cs_nc_db_password }}'
-          --database-host '{{ cs_nc_db_host }}:{{ cs_nc_db_port }};sslmode=verify-full;sslrootcert={{
-          cs_nc_db_ca_pem_file }};sslcert={{ cs_nc_db_fullchain_pem_file }};sslkey={{ cs_nc_db_privkey_pem_file }}'
+          --database-host '{{ cs_nc_db_host }};port={{ cs_nc_db_port }};\
+          sslmode=verify-full;sslrootcert={{ cs_nc_db_ca_pem_file }};sslcert={{ cs_nc_db_fullchain_pem_file }};\
+          sslkey={{ cs_nc_db_privkey_pem_file }}'
           --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}'
           --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
       chdir: "{{ cs_nc_web_dir }}"
   register: nc_install_output
   changed_when: true
-
-- name: Nextcloud | Install | Debug | Show Nextcloud install output
-  ansible.builtin.debug:
-      var: nc_install_output
 
 - name: Nextcloud | Install | Enable Featured Apps
   become: true

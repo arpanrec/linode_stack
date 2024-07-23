@@ -21,21 +21,19 @@ cs_nc_email_regex: (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~
 cs_nc_domain: "{{ cs_dns_mapping }}"
 cs_nc_port: 8477
 
-cs_nc_db_type: pgsql
-
 cs_nc_db_fullchain_pem_file: "{{ cs_nc_cert_dir }}/fullchain.pem"
 cs_nc_db_privkey_pem_file: "{{ cs_nc_cert_dir }}/privkey.pem"
 cs_nc_db_ca_pem_file: "{{ cs_nc_cert_dir }}/ca.pem"
 
+cs_nc_db_type: pgsql
 cs_nc_db_user: "{{ cs_postgres_apps.nextcloud.user }}"
 cs_nc_db_password: "{{ cs_postgres_apps.nextcloud.password }}"
-cs_nc_db_database: "{{ cs_postgres_apps.nextcloud.db }}"
+cs_nc_db_database: "{{ cs_postgres_apps.nextcloud.database }}"
 cs_nc_db_host: "{{ cs_postgres_host_private_ip }}"
 cs_nc_db_port: "{{ cs_postgres_port }}"
 
 cs_nc_admin_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_admin_user') }}"
-cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties',
-    'cs_nc_admin_password') }}"
+cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_admin_password') }}"
 
 cs_nc_mail_smtpmode: "{{ cs_mail_smtpmode }}"
 cs_nc_mail_sendmailmode: "{{ cs_mail_sendmailmode }}"

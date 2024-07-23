@@ -1,40 +1,34 @@
 ---
-cs_postgres_dir: /app/postgres
-
-cs_postgres_container_name: postgres-main
-cs_postgres_network_name: postgres-main-net
-cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_password') }}"
-cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_user') }}"
-cs_postgres_db: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_db') }}"
-cs_postgres_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_port') }}"
-cs_postgres_apps: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_apps') | from_yaml }}"
-
-cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_pg_admin_password') }}"
-cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_pg_admin_port') }}"
-cs_postgres_pg_admin_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_postgres_pg_admin_domain + '.fullchain.pem') }}"
-cs_postgres_pg_admin_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_postgres_pg_admin_domain + '.privkey.pem') }}"
-cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
-cs_postgres_host_public_ip: "127.0.0.1"
-cs_postgres_host_public_domain: "localhost"
-cs_postgres_host_private_domain: "localhost"
-
-cs_postgres_pg_admin_dir: "{{ cs_postgres_dir }}/pgadmin"
-cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
-
-cs_postgres_pg_admin_domain: "{{ cs_dns_mapping }}"
-
-cs_redis_dir: /app/redis
-cs_redis_data_dir: "{{ cs_redis_dir }}/data"
-cs_redis_certs_dir: "{{ cs_redis_dir }}/certs"
-
-cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
-
 cs_elasticsearch_data_dir: /app/elasticsearch
 cs_elasticsearch_host: "{{ cs_rb4_m1_ip }}"
-cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_password') }}"
-cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_tls_port') }}"
-cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_tls_privkey_pass') }}"
-
 cs_elasticsearch_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_elasticsearch_password') }}"
 cs_elasticsearch_servlet_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_elasticsearch_servlet_port') }}"
 cs_elasticsearch_transport_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_elasticsearch_transport_port') }}"
+
+cs_postgres_apps: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_apps') | from_yaml }}"
+cs_postgres_container_name: postgres-main
+cs_postgres_db: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_db') }}"
+cs_postgres_dir: /app/postgres
+cs_postgres_host_private_domain: "localhost"
+cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
+cs_postgres_host_public_domain: "localhost"
+cs_postgres_host_public_ip: "127.0.0.1"
+cs_postgres_network_name: postgres-main-net
+cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_password') }}"
+cs_postgres_pg_admin_dir: "{{ cs_postgres_dir }}/pgadmin"
+cs_postgres_pg_admin_domain: "{{ cs_dns_mapping }}"
+cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
+cs_postgres_pg_admin_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_postgres_pg_admin_domain + '.fullchain.pem') }}"
+cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_pg_admin_password') }}"
+cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_pg_admin_port') }}"
+cs_postgres_pg_admin_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_postgres_pg_admin_domain + '.privkey.pem') }}"
+cs_postgres_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_port') }}"
+cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_postgres_user') }}"
+
+cs_redis_certs_dir: "{{ cs_redis_dir }}/certs"
+cs_redis_data_dir: "{{ cs_redis_dir }}/data"
+cs_redis_dir: /app/redis
+cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_password') }}"
+cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
+cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_tls_port') }}"
+cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_redis_tls_privkey_pass') }}"
