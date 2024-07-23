@@ -9,10 +9,10 @@ cs_root_ca_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_A
 cs_root_ca_privkey_pass_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY', 'attachments', 'privkey.pass') }}"
 cs_root_ca_cert_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY', 'attachments', 'cert.pem') }}"
 
-cs_rb4_m1_ip: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_rb4_m1_ip') }}"
-cs_rb4_m2_ip: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_rb4_m2_ip') }}"
-cs_rb4_m3_ip: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_rb4_m3_ip') }}"
-cs_dns_mapping: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_dns_mapping') }}"
+cs_rb4_m1_ip: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_rb4_m1_ip') }}"
+cs_rb4_m2_ip: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_rb4_m2_ip') }}"
+cs_rb4_m3_ip: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_rb4_m3_ip') }}"
+cs_dns_mapping: "{{ lookup('viczem.keepass.keepass', 'home_inventory/servers', 'custom_properties', 'cs_dns_mapping') }}"
 
 cs_mail_smtpmode: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpmode') }}"
 cs_mail_sendmailmode: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email', 'custom_properties','sendmailmode') }}"

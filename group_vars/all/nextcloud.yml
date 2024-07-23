@@ -32,8 +32,8 @@ cs_nc_db_database: "{{ cs_postgres_apps.nextcloud.database }}"
 cs_nc_db_host: "{{ cs_postgres_host_private_ip }}"
 cs_nc_db_port: "{{ cs_postgres_port }}"
 
-cs_nc_admin_user: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_admin_user') }}"
-cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_admin_password') }}"
+cs_nc_admin_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_admin_user') }}"
+cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_admin_password') }}"
 
 cs_nc_mail_smtpmode: "{{ cs_mail_smtpmode }}"
 cs_nc_mail_sendmailmode: "{{ cs_mail_sendmailmode }}"
@@ -50,9 +50,9 @@ cs_nc_redis_host: "{{ cs_redis_private_ip }}"
 cs_nc_redis_port: "{{ cs_redis_tls_port }}"
 cs_nc_redis_password: "{{ cs_redis_password }}"
 
-cs_nc_imaginary_key: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_imaginary_key') }}"
-cs_nc_imaginary_port: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_imaginary_port') }}"
-cs_nc_imaginary_domain: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_imaginary_domain') }}"
+cs_nc_imaginary_key: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_imaginary_key') }}"
+cs_nc_imaginary_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_imaginary_port') }}"
+cs_nc_imaginary_domain: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_imaginary_domain') }}"
 
 cs_nc_elasticsearch_password: "{{ cs_elasticsearch_password }}"
 cs_nc_elasticsearch_servlet_port: "{{ cs_elasticsearch_servlet_port }}"
@@ -72,5 +72,5 @@ cs_nc_external_drive_uuid: 0f5205e1-c864-4e33-87b5-0a69c91d86c4
 cs_nc_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_nc_domain + '.fullchain.pem') }}"
 cs_nc_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_nc_domain + '.privkey.pem') }}"
 
-cs_nc_external_drive_luks_password: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'custom_properties', 'cs_nc_external_drive_luks_password') }}"
-cs_nc_external_drive_luks_key_file: "{{ lookup('viczem.keepass.keepass', 'HOME_INVENTORY', 'attachments', 'cs_nc_external_drive_luks_key_file') }}"
+cs_nc_external_drive_luks_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_external_drive_luks_password') }}"
+cs_nc_external_drive_luks_key_file: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'attachments', 'cs_nc_external_drive_luks_key_file') }}"
