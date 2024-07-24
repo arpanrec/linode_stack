@@ -98,37 +98,18 @@
       - files_external:option {{ existing_storage_mount_id }} readonly false
       - files_external:option {{ existing_storage_mount_id }} encrypt false
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create systemd unit files for nextcloud scan files
-  ansible.builtin.copy:
-      dest: "{{ item.dest }}"
-      content: "{{ item.content }}"
+- name: Nextcloud | Mount Disk | Unencrypted | Create systemd unit file for nextcloud scan files
+  ansible.builtin.template:
+      dest: /etc/systemd/system/nextcloud-scanfiles.service
+      src: templates/nc/nextcloud-scanfiles.service.j2
       mode: "0644"
-  with_items:
-      - dest: /etc/systemd/system/nextcloud-scanfiles.service
-        content: |+
-            [Unit]
-            Description=Nextcloud scan files
 
-            [Service]
-            User={{ cs_nc_run_user }}
-            Group={{ cs_nc_run_group }}
-            ExecCondition=/usr/bin/php -f {{ cs_nc_web_dir }}/occ status -e
-            ExecStart=/usr/bin/php -f {{ cs_nc_web_dir }}/occ files:scan --all
-            WorkingDirectory={{ cs_nc_web_dir }}
-            KillMode=process
-
-      - dest: /etc/systemd/system/nextcloud-scanfiles.timer
-        content: |
-            [Unit]
-            Description=Run Nextcloud cron every 15 minutes
-
-            [Timer]
-            OnBootSec=1min
-            OnUnitActiveSec=15min
-            Unit=nextcloud-scanfiles.service
-
-            [Install]
-            WantedBy=multi-user.target
+- name: Nextcloud | Mount Disk | Unencrypted | Create systemd timmer file for nextcloud scan files
+  ansible.builtin.copy:
+      dest: /etc/systemd/system/nextcloud-scanfiles.timer
+      src: files/nc/nextcloud-scanfiles.timer
+      mode: "0644"
+      remote_src: false
 
 - name: Nextcloud | Mount Disk | Unencrypted | Enable and start nextcloud-scanfiles.timer
   ansible.builtin.systemd_service:
