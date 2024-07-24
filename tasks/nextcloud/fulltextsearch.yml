@@ -52,11 +52,11 @@
 
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
-      content: "{{ cs_nc_app_config | to_nice_json }}"
+      content: "{{ cs_nc_app_config_fulltextsearch | to_nice_json }}"
       dest: "/tmp/nc-apps-fulltextsearch-config.json"
       mode: "0644"
   vars:
-      cs_nc_app_config:
+      cs_nc_app_config_fulltextsearch:
           apps:
               fulltextsearch:
                   "app_navigation": "1"
