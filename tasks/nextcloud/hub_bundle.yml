@@ -24,6 +24,7 @@
           # Public sector bundle
           # - files_antivirus
           - "forms"
+          - "notes"
 
 - name: Nextcloud | Hub Bundle | List all apps
   become: true
