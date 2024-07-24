@@ -1,5 +1,5 @@
 ---
-cs_nfs_server_ip: "{{ cs_rb4_m1_ip }}"
+cs_nfs_server_ip: "{{ cs_rb4_m3_ip }}"
 cs_nfs_client_ips:
     - "{{ cs_rb4_m1_ip }}"
     - "{{ cs_rb4_m2_ip }}"
