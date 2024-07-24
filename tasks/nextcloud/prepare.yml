@@ -181,13 +181,13 @@
 - name: Nextcloud | Prepare | Copy SSL Certificates
   when: cs_nc_protocol == "https"
   ansible.builtin.copy:
-      content: "{{ item.content | b64decode }}"
+      src: "{{ item.src }}"
       dest: "/etc/ssl/{{ cs_nc_domain }}/{{ item.dest }}"
       mode: "0644"
   with_items:
-      - content: "{{ cs_nc_full_chain_b64 }}"
+      - src: "{{ cs_nc_fullchain_pem_file }}"
         dest: fullchain.pem
-      - content: "{{ cs_nc_priv_key_b64 }}"
+      - src: "{{ cs_nc_privkey_pem_file }}"
         dest: privkey.pem
 
 - name: Nextcloud | Prepare | Create Apache2 config

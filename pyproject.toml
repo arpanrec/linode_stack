@@ -8,27 +8,28 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ansible = "10.1.0"
-linode-api4 = "5.17.0"
-ansible-specdoc = "0.0.14"
+ansible = "10.2.0"
+linode-api4 = "5.18.0"
+ansible-specdoc = "0.0.15"
 godaddypy = "2.5.1"
 configloader = "1.0.1"
 dnspython = "2.6.1"
 bitwarden-sdk = "0.1.0"
-bcrypt = "^4.1.3"
-jmespath = "^1.0.1"
+bcrypt = "4.1.3"
+jmespath = "1.0.1"
+pykeepass = "4.1.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "24.4.2"
 pylint = "3.2.5"
-mypy = "1.10.1"
+mypy = "1.11.0"
 molecule-plugins = "23.5.3"
-molecule = "24.6.0"
+molecule = "24.7.0"
 docker = "7.1.0" # Needed for molecule docker driver
-ansible-lint = { version = "24.6.1", markers = "platform_system != 'Windows'" }
+ansible-lint = { version = "24.7.0", markers = "platform_system != 'Windows'" }
 poetry-plugin-export = "1.8.0"
-pyright = "1.1.370"
-types-requests = "2.32.0.20240622"
+pyright = "1.1.372"
+types-requests = "2.32.0.20240712"
 types-pyyaml = "6.0.12.20240311"
 
 [build-system]

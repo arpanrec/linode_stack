@@ -30,7 +30,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   register: cs_nc_app_list
 
@@ -39,7 +39,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ app:install {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items: "{{ cs_nc_hub_bundle_apps }}"
   when: >

@@ -17,7 +17,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:list --output=json"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
   when: all_user_groups is defined and all_user_groups | length > 0
   register: nextcloud_all_existing_groups
@@ -27,7 +27,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ group:add '{{ item }}'"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   loop: "{{ all_user_groups }}"
   when: >

@@ -24,7 +24,7 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_root_dir }}"
+      chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
       - "config:system:delete enabledPreviewProviders"

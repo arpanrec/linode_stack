@@ -1,0 +1,7 @@
+---
+cs_onlyoffice_dir: /app/onlyoffice/DocumentServer
+cs_onlyoffice_domain: "{{ cs_dns_mapping }}"
+cs_onlyoffice_jwt_secret: "{{ lookup('viczem.keepass.keepass', 'home_inventory/onlyoffice', 'custom_properties', 'cs_onlyoffice_jwt_secret') }}"
+cs_onlyoffice_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/onlyoffice', 'custom_properties', 'cs_onlyoffice_port') }}"
+cs_onlyoffice_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_onlyoffice_domain + '.fullchain.pem') }}"
+cs_onlyoffice_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_onlyoffice_domain + '.privkey.pem') }}"

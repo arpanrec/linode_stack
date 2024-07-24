@@ -19,14 +19,15 @@
 
 - name: OnlyOffice | Write SSL certificate and key
   ansible.builtin.copy:
-      content: "{{ item.content }}"
+      src: "{{ item.src }}"
       dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/{{ item.dest }}"
       mode: "0644"
+      remote_src: false
   with_items:
       - dest: fullchain.pem
-        content: "{{ cs_onlyoffice_full_chain_b64 | b64decode }}"
+        src: "{{ cs_onlyoffice_fullchain_pem_file }}"
       - dest: privkey.pem
-        content: "{{ cs_onlyoffice_priv_key_b64 | b64decode }}"
+        src: "{{ cs_onlyoffice_privkey_pem_file }}"
 
 - name: OnlyOffice | Start Container
   community.docker.docker_container:
@@ -47,16 +48,8 @@
           JWT_SECRET: "{{ cs_onlyoffice_jwt_secret }}"
           SSL_KEY_PATH: "/priv.key"
           SSL_CERTIFICATE_PATH: "/cert.pem"
-          REDIS_SERVER_HOST: "{{ cs_onlyoffice_redis_host }}"
-          REDIS_SERVER_PORT: "{{ cs_onlyoffice_redis_port | string }}"
-          REDIS_SERVER_PASS: "{{ cs_onlyoffice_redis_password }}"
-          DB_TYPE: "{{ cs_onlyoffice_db_type }}"
-          DB_HOST: "{{ cs_onlyoffice_db_host }}"
-          DB_PORT: "{{ cs_onlyoffice_db_port | string }}"
-          DB_NAME: "{{ cs_onlyoffice_db_database }}"
-          DB_USER: "{{ cs_onlyoffice_db_user }}"
-          DB_PWD: "{{ cs_onlyoffice_db_password }}"
           WOPI_ENABLED: "true"
+          GENERATE_FONTS: "true"
 
 - name: OnlyOffice | Enable UFW port
   community.general.ufw:
