@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-backup_id=$(date +%Y%m%d%H%M%S)
+backup_id=$(date +%Y-%m-%d-%H-%M-%S)
 current_dir="{{ cs_nc_external_drive_mount_data_dump_path }}/current"
 
 echo "${backup_id}:: Backup ID: ${backup_id}"
@@ -47,4 +47,9 @@ tar --use-compress-program=zstdmt -cf "{{ cs_nc_external_drive_mount_data_dump_p
 echo "${backup_id}:: Truncating log file"
 truncate -s 0 {{ cs_nc_log_file }}
 
+echo "${backup_id}:: Changing ownership of the dump directory"
+chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_user }} '{{ cs_nc_external_drive_mount_data_dump_path }}'
+
 echo "${backup_id}:: Done"
+
+exit 0

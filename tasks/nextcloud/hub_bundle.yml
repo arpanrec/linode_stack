@@ -1,5 +1,5 @@
 ---
-- name: Nextcloud | Hub Bundle | Set apps
+- name: Nextcloud | Hub Bundle | Set facts for all the apps needs to be installed
   ansible.builtin.set_fact:
       cs_nc_hub_bundle_apps:
           - "calendar"
@@ -26,7 +26,7 @@
           - "forms"
           - "notes"
 
-- name: Nextcloud | Hub Bundle | List all apps
+- name: Nextcloud | Hub Bundle | List all apps currently installed
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
