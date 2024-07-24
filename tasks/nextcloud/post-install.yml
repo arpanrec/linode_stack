@@ -56,14 +56,14 @@
 - name: Nextcloud | Post Install | Add fail2ban filter
   ansible.builtin.copy:
       mode: "0644"
-      dest: /etc/fail2ban/filter.d/100-nextcloud.conf
-      src: files/nc/100-fail2ban-filter.conf
+      dest: /etc/fail2ban/filter.d/nextcloud.conf
+      src: files/nc/fail2ban-filter.conf
 
 - name: Nextcloud | Post Install | Add fail2ban config
   ansible.builtin.template:
       mode: "0644"
-      dest: /etc/fail2ban/jail.d/100-nextcloud.conf
-      src: templates/nc/100-fail2ban.conf.j2
+      dest: /etc/fail2ban/jail.d/nextcloud.conf
+      src: templates/nc/fail2ban-jail.conf.j2
 
 - name: Nextcloud | Post Install | Restart fail2ban
   ansible.builtin.systemd_service:
