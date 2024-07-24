@@ -6,7 +6,7 @@
       cmd: "php occ app:list --output=json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
-  register: cs_nc_app_list
+  register: cs_nc_app_list_fulltextsearch
 
 - name: Nextcloud | Full Text Search | Install apps
   become: true
@@ -22,9 +22,9 @@
   when: >
       not
       (
-        item in cs_nc_app_list.stdout | from_json | community.general.json_query('enabled')
+        item in cs_nc_app_list_fulltextsearch.stdout | from_json | community.general.json_query('enabled')
       or
-        item in cs_nc_app_list.stdout | from_json | community.general.json_query('disabled')
+        item in cs_nc_app_list_fulltextsearch.stdout | from_json | community.general.json_query('disabled')
       )
 
 - name: Nextcloud | Full Text Search | create nextcloud-fulltext-elasticsearch-worker
