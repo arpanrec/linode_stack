@@ -20,7 +20,7 @@
 - name: NFS Server | Mount Disk | Unencrypted | Add luks key
   community.crypto.luks_device:
       state: opened
-      name: nfs-storage
+      name: "{{ cs_nfs_external_drive_crypt_open_name }}"
       uuid: "{{ cs_nfs_external_drive_uuid }}"
       # keyfile: /root/.nfs-luks-key
       passphrase: "{{ cs_nfs_external_drive_luks_password }}"
@@ -29,16 +29,22 @@
 - name: NFS Server | Mount Disk | Unencrypted | Add to crypttab
   ansible.builtin.lineinfile:
       path: /etc/crypttab
-      line: "nfs-storage UUID={{ cs_nfs_external_drive_uuid }} /root/.nfs-luks-key luks"
+      line: "{{ cs_nfs_external_drive_crypt_open_name }} UUID={{ cs_nfs_external_drive_uuid }} /root/.nfs-luks-key luks"
       create: true
       mode: "0644"
       owner: root
       group: root
-      regexp: "^nfs-storage"
+      regexp: "^{{ cs_nfs_external_drive_crypt_open_name }}"
+
+- name: NFS Server | Mount Disk | Unencrypted | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_nfs_external_drive_crypt_open_name }}.*"
+      state: absent
 
 - name: NFS Server | Mount Disk | Unencrypted | Mount
   ansible.posix.mount:
-      src: /dev/mapper/nfs-storage
+      src: /dev/mapper/{{ cs_nfs_external_drive_crypt_open_name }}
       path: "{{ cs_nfs_external_drive_mount_path }}"
       fstype: ext4
       state: mounted
