@@ -219,12 +219,14 @@
                 apt-get autoremove -y
                 apt autopurge -y apache2* php*
                 rm -rf /app /etc/php /etc/apache2 /run/apache2 /run/php
-                systemctl disable --now nextcloudcron.timer || true
-                systemctl disable --now nextcloudcron.service || true
+                systemctl disable --now nextcloud-cron.timer || true
+                systemctl disable --now nextcloud-cron.service || true
                 systemctl disable --now nextcloud-fulltext-elasticsearch-worker.service || true
-                systemctl disable --now nextcloudscanfiles.timer || true
-                systemctl disable --now nextcloudscanfiles.service || true
-                sudo rm -rf /etc/systemd/system/nextcloud*
+                systemctl disable --now nextcloud-scanfiles.timer || true
+                systemctl disable --now nextcloud-scanfiles.service || true
+                systemctl disable --now nextcloud-data-dump.timer || true
+                systemctl disable --now nextcloud-data-dump.service || true
+                rm -rf /etc/systemd/system/nextcloud-*
             executable: /bin/bash
         changed_when: true
         register: delete_all
