@@ -13,11 +13,14 @@
             dest: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
             mode: "0644"
 
-      - name: Nextcloud | Install | Download New | Create unzip directory
+      - name: Nextcloud | Install | Download New | Create unzip directory and web directory
         ansible.builtin.file:
             path: /tmp/nextcloud-{{ cs_nc_version }}
             state: directory
             mode: "0755"
+        with_items:
+            - /tmp/nextcloud-{{ cs_nc_version }}
+            - "{{ cs_nc_web_dir }}"
 
       - name: Nextcloud | Install | Download New | Unzip Nextcloud
         ansible.builtin.unarchive:
@@ -30,7 +33,7 @@
       - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_dir }}
         ansible.builtin.copy:
             src: "/tmp/nextcloud-{{ cs_nc_version }}/nextcloud/"
-            dest: "{{ cs_nc_web_dir }}"
+            dest: "{{ cs_nc_web_dir }}/"
             remote_src: true
             owner: "{{ cs_nc_run_user }}"
             group: "{{ cs_nc_run_group }}"
@@ -162,7 +165,8 @@
   register: nc_install_output
   changed_when: true
 
-- name: Nextcloud | Install | Enable Featured Apps
+- name: Nextcloud | Install | Enable Featured Apps encryption admin_audit bruteforcesettings files_external
+      suspicious_login twofactor_totp user_ldap
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -233,21 +237,6 @@
       - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
       - "config:system:set trusted_domains 2 --value=localhost"
       - "config:system:set trusted_domains 3 --value=127.0.0.1"
-
-- name: Nextcloud | Install | Set Database Password
-  become: true
-  when: false
-  become_user: "{{ cs_nc_run_user }}"
-  ansible.builtin.command:
-      cmd: "php occ {{ item }}"
-      chdir: "{{ cs_nc_web_dir }}"
-  changed_when: true
-  with_items:
-      - "config:system:set dbtype --value pgsql"
-      - "config:system:set dbname --value nextcloud"
-      - "config:system:set dbuser --value nextcloud"
-      - "config:system:set dbpassword --value {{ cs_nc_db_password }}"
-      - "config:system:set dbhost --value 127.0.0.1:5432"
 
 - name: Nextcloud | Install | Add missing indices
   become: true
@@ -377,37 +366,18 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
-- name: Nextcloud | Install | Create systemd unit files for nextcloud cron
-  ansible.builtin.copy:
-      dest: "{{ item.dest }}"
-      content: "{{ item.content }}"
+- name: Nextcloud | Install | Create systemd unit file for nextcloud cron
+  ansible.builtin.template:
+      dest: "/etc/systemd/system/nextcloud-cron.service"
+      src: "templates/nc/nextcloud-cron.service.j2"
       mode: "0644"
-  with_items:
-      - dest: /etc/systemd/system/nextcloud-cron.service
-        content: |+
-            [Unit]
-            Description=Nextcloud cron.php job
 
-            [Service]
-            User={{ cs_nc_run_user }}
-            Group={{ cs_nc_run_group }}
-            ExecCondition=/usr/bin/php -f {{ cs_nc_web_dir }}/occ status -e
-            ExecStart=/usr/bin/php -f {{ cs_nc_web_dir }}/cron.php
-            WorkingDirectory={{ cs_nc_web_dir }}
-            KillMode=process
-
-      - dest: /etc/systemd/system/nextcloud-cron.timer
-        content: |
-            [Unit]
-            Description=Run Nextcloud cron every 15 minutes
-
-            [Timer]
-            OnBootSec=1min
-            OnUnitActiveSec=15min
-            Unit=nextcloud-cron.service
-
-            [Install]
-            WantedBy=multi-user.target
+- name: Nextcloud | Install | Create systemd timmer file for nextcloud cron
+  ansible.builtin.copy:
+      dest: "/etc/systemd/system/nextcloud-cron.timer"
+      src: files/nc/nextcloud-cron.timer
+      mode: "0644"
+      remote_src: false
 
 - name: Nextcloud | Install | Enable systemd timmer for nextcloud cron
   ansible.builtin.systemd_service:

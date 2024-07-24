@@ -28,26 +28,9 @@
       )
 
 - name: Nextcloud | Full Text Search | create nextcloud-fulltext-elasticsearch-worker
-  ansible.builtin.copy:
+  ansible.builtin.template:
       dest: /etc/systemd/system/nextcloud-fulltext-elasticsearch-worker.service
-      content: |+
-          [Unit]
-          Description=Elasticsearch Worker for Nextcloud Fulltext Search
-          After=network.target
-
-          [Service]
-          User={{ cs_nc_run_user }}
-          Group={{ cs_nc_run_group }}
-          Type=simple
-          WorkingDirectory={{ cs_nc_web_dir }}
-          ExecStartPre=/usr/bin/php {{ cs_nc_web_dir }}/occ fulltextsearch:index
-          ExecStart=/usr/bin/php {{ cs_nc_web_dir }}/occ fulltextsearch:live -q
-          ExecStop=/usr/bin/php {{ cs_nc_web_dir }}/occ fulltextsearch:stop
-          Nice=19
-          Restart=always
-
-          [Install]
-          WantedBy=multi-user.target
+      src: templates/nc/nextcloud-fulltext-elasticsearch-worker.service.j2
       mode: "0644"
 
 - name: Nextcloud | Full Text Search | Write Apps Config

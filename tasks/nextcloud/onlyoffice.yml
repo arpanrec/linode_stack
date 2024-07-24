@@ -25,7 +25,7 @@
         item in cs_nc_app_list_onlyoffice.stdout | from_json | community.general.json_query('disabled')
       )
 
-- name: Nextcloud | Onlyoffice | Write
+- name: Nextcloud | Onlyoffice | Write Apps Config to File /tmp/nc-apps-onlyoffice-config.json
   ansible.builtin.copy:
       content: "{{ cs_nc_onlyoffice_config | to_nice_json }}"
       dest: "/tmp/nc-apps-onlyoffice-config.json"

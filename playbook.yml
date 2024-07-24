@@ -104,14 +104,8 @@
   gather_facts: false
   no_log: "{{ cs_no_log }}"
   tasks:
-      - name: Calculate Nextcloud Protocol cs_nc_protocol
-        tags: never,nextcloud,nextcloud_prepare,nextcloud_install,nextcloud_hub_bundle
-        ansible.builtin.set_fact:
-            cs_nc_protocol: "{{ (cs_nc_fullchain_pem_file is defined and cs_nc_privkey_pem_file is defined)
-                | ternary('https', 'http') }}"
-
       - name: Nextcloud | Test cs_nc_protocol
-        tags: never,nextcloud,nextcloud_prepare,nextcloud_install,nextcloud_hub_bundle
+        tags: always
         ansible.builtin.assert:
             that:
                 - "cs_nc_protocol in ['http', 'https']"
@@ -214,11 +208,9 @@
         become_user: root
         ansible.builtin.shell:
             cmd: |+
-                docker rm -v -f $(docker ps -qa)
+                docker rm -f postgres-main pgadmin-main redis-main elasticsearch-main nextcloud-imaginary
                 apt-get clean
                 apt-get autoremove -y
-                apt autopurge -y apache2* php*
-                rm -rf /app /etc/php /etc/apache2 /run/apache2 /run/php
                 systemctl disable --now nextcloud-cron.timer || true
                 systemctl disable --now nextcloud-cron.service || true
                 systemctl disable --now nextcloud-fulltext-elasticsearch-worker.service || true
@@ -227,6 +219,10 @@
                 systemctl disable --now nextcloud-data-dump.timer || true
                 systemctl disable --now nextcloud-data-dump.service || true
                 rm -rf /etc/systemd/system/nextcloud-*
+                rm -rf /app/elasticsearch
+                rm -rf /app/postgres
+                rm -rf /app/redis
+                rm -rf /app/nextcloud
             executable: /bin/bash
         changed_when: true
         register: delete_all
