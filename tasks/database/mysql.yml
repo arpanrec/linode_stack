@@ -5,19 +5,9 @@
 
 - name: Database | MySQL | Stop old containers
   community.docker.docker_container:
-      name: "{{ item }}"
+      name: "mysql-main"
       state: absent
       force_kill: true
-  with_items:
-      - mysql-main
-
-- name: Database | MySQL | Enable UFW port
-  community.general.ufw:
-      rule: allow
-      port: "{{ item }}"
-      state: enabled
-  with_items:
-      - "{{ cs_mysql_port }}"
 
 - name: Database | MySQL | Create data directory
   ansible.builtin.file:
@@ -30,13 +20,15 @@
 - name: Database | MySQL | Start Container
   community.docker.docker_container:
       name: mysql-main
-      image: docker.io/library/mysql:8.0
+      hostname: "mysql-main"
+      image: docker.io/library/mysql:9.0.1
       user: 999:999
       restart_policy: unless-stopped
       volumes:
           - "{{ cs_mysql_data_dir }}:/var/lib/mysql"
       state: started
-      command: --port={{ cs_mysql_port }}
+      command: "--port={{ cs_mysql_port }} --character-set-server=utf8mb4
+          --collation-server=utf8mb4_unicode_ci --general-log=1"
       ports:
           - "{{ cs_mysql_port }}:{{ cs_mysql_port }}"
       env:
@@ -44,10 +36,23 @@
           MYSQL_USER: "{{ cs_mysql_user }}"
           MYSQL_PASSWORD: "{{ cs_mysql_password }}"
           MYSQL_DATABASE: "{{ cs_mysql_db }}"
+          TZ: Asia/Kolkata
+
+- name: Database | MySQL | Enable UFW port
+  community.general.ufw:
+      rule: allow
+      port: "{{ item }}"
+      state: enabled
+  with_items:
+      - "{{ cs_mysql_port }}"
+
+- ansible.builtin.pause:
+      prompt: "Waiting for MySQL to start"
+      echo: true
 
 - name: Database | MySQL | Wait for service to start
   community.mysql.mysql_info:
-      login_user: "{{ cs_mysql_user }}"
+      login_user: "root"
       login_password: "{{ cs_mysql_password }}"
       login_host: "{{ cs_mysql_host }}"
       login_port: "{{ cs_mysql_port }}"
