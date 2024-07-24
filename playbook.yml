@@ -195,6 +195,13 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/post-install.yml
 
+      - name: Nextcloud | Dump
+        become: true
+        become_user: root
+        tags: never,nextcloud,nextcloud_dump
+        ansible.builtin.import_tasks:
+            file: tasks/nextcloud/dump.yml
+
 - name: Delete all
   hosts: patchservers
   become: false

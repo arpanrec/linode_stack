@@ -1,21 +1,11 @@
 ---
 - name: Nextcloud | Mount Disk | Unencrypted | Create backup and ops directory
   ansible.builtin.file:
-      path: "{{ item.path }}"
+      path: "{{ cs_nc_external_drive_mount_web_path }}"
       state: directory
       mode: "0755"
-      owner: "{{ item.owner | default('root') }}"
-      group: "{{ item.group | default('root') }}"
-  with_items:
-      - path: "{{ cs_nc_external_drive_mount_path }}/backup"
-        owner: "{{ cs_nc_run_user }}"
-        group: "{{ cs_nc_run_group }}"
-      - path: "{{ cs_nc_external_drive_mount_path }}/ops"
-        owner: "{{ cs_nc_run_user }}"
-        group: "{{ cs_nc_run_group }}"
-      - path: "{{ cs_nc_external_drive_mount_path }}/nextcloud"
-        owner: "{{ cs_nc_run_user }}"
-        group: "{{ cs_nc_run_group }}"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Mount Disk | Unencrypted | Get all the groups
   become: true
@@ -59,18 +49,18 @@
   ansible.builtin.assert:
       that:
           - existing_storage_mount[0].storage == "\\OC\\Files\\Storage\\Local"
-          - existing_storage_mount[0].configuration.datadir == cs_nc_external_drive_mount_path + "/nextcloud"
+          - existing_storage_mount[0].configuration.datadir == cs_nc_external_drive_mount_web_path
       fail_msg: "Storage type should be \\OC\\Files\\Storage\\Local
-          and configuration.datadir should be {{ cs_nc_external_drive_mount_path }}/nextcloud"
+          and configuration.datadir should be {{ cs_nc_external_drive_mount_web_path }}"
       success_msg: "Storage type is \\OC\\Files\\Storage\\Local
-          and configuration.datadir is {{ cs_nc_external_drive_mount_path }}/nextcloud"
+          and configuration.datadir is {{ cs_nc_external_drive_mount_web_path }}"
 
 - name: Nextcloud | Mount Disk | Unencrypted | Create storage
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ files_external:create '{{ cs_nc_files_external_mount_folder_name }}' local null::null
-          --config datadir='{{ cs_nc_external_drive_mount_path }}/nextcloud'"
+          --config datadir='{{ cs_nc_external_drive_mount_web_path }}'"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   when: existing_storage_mount | length == 0

@@ -15,6 +15,8 @@ cs_nc_php_version: 8.3
 cs_nc_redis_timeout: 0.5
 
 cs_nc_external_drive_mount_path: "{{ cs_nfs_external_drive_mount_path }}/nextcloud"
+cs_nc_external_drive_mount_web_path: "{{ cs_nc_external_drive_mount_path }}/nextcloud"
+cs_nc_external_drive_mount_data_dump_path: "{{ cs_nc_external_drive_mount_path }}/backup"
 cs_nc_files_external_mount_folder_name: local_mnt_nextcloud_nextcloud
 cs_nc_files_external_mount_group_name: local_mnt_nextcloud_nextcloud
 

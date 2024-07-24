@@ -9,7 +9,7 @@
   ansible.builtin.assert:
       that:
           - cs_nc_user.value.display_name is defined
-          - cs_nc_user.value.display_name | type_debug == 'str'
+          - cs_nc_user.value.display_name | type_debug in ['AnsibleUnsafeText', 'str']
           - cs_nc_user.value.display_name | length > 0
       fail_msg: "Email address '{{ cs_nc_user.value }}' is not valid for user '{{ cs_nc_user.key }}'"
       success_msg: "Email address '{{ cs_nc_user.value }}' is valid for user '{{ cs_nc_user.key }}'"
@@ -22,7 +22,7 @@
   ansible.builtin.assert:
       that:
           - cs_nc_user.value.email is defined
-          - cs_nc_user.value.email | type_debug == 'str'
+          - cs_nc_user.value.email | type_debug in ['AnsibleUnsafeText', 'str']
           - cs_nc_user.value.email | length > 0
           - cs_nc_user.value.email is regex(cs_nc_email_regex)
       fail_msg: "Email address '{{ cs_nc_user.value }}' is not valid for user '{{ cs_nc_user.key }}'"

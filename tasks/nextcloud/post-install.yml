@@ -81,3 +81,11 @@
       cmd: "php occ db:add-missing-indices"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
+
+- name: Nextcloud | Post Install | Disable admin user
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ user:disable {{ cs_nc_admin_user }}"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
