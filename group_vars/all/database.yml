@@ -25,10 +25,17 @@ cs_postgres_pg_admin_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LET
 cs_postgres_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_port') }}"
 cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_user') }}"
 
+cs_redis_dir: /app/redis
 cs_redis_certs_dir: "{{ cs_redis_dir }}/certs"
 cs_redis_data_dir: "{{ cs_redis_dir }}/data"
-cs_redis_dir: /app/redis
 cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_password') }}"
 cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
 cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_tls_port') }}"
 cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_tls_privkey_pass') }}"
+
+cs_mysql_data_dir: /app/mysql
+cs_mysql_host: "{{ cs_rb4_m1_ip }}"
+cs_mysql_db: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_db') }}"
+cs_mysql_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_password') }}"
+cs_mysql_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_port') }}"
+cs_mysql_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_user') }}"

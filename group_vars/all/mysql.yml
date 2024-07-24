@@ -1,7 +1,0 @@
----
-cs_mysql_data_dir: /app/mysql
-cs_mysql_host: "{{ cs_rb4_m1_ip }}"
-cs_mysql_db: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_db') }}"
-cs_mysql_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_password') }}"
-cs_mysql_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_port') }}"
-cs_mysql_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/mysql', 'custom_properties', 'cs_mysql_user') }}"
