@@ -46,6 +46,7 @@
             -e PGPASSWORD={{ cs_nc_db_password }} -e PGSSLMODE=verify-full -e PGDATABASE={{ cs_nc_db_database }} \
             -e PGSSLROOTCERT=/ca-certificates.crt -e PGSSLCERT=/client-cert.pem -e PGSSLKEY=/client-key.pem \
             -e PGUSER={{ cs_nc_db_user }} -e PGHOST={{ cs_nc_db_host }} -e PGPORT={{ cs_nc_db_port }} \
+            --entrypoint "" \
             docker.io/library/postgres:16.3 pg_dump -F tar -f /backup/{{ cs_nc_db_type }}-db.tar
 
           echo "${backup_id}:: Creating database dump in plain text"
@@ -57,6 +58,7 @@
             -e PGPASSWORD={{ cs_nc_db_password }} -e PGSSLMODE=verify-full -e PGDATABASE={{ cs_nc_db_database }} \
             -e PGSSLROOTCERT=/ca-certificates.crt -e PGSSLCERT=/client-cert.pem -e PGSSLKEY=/client-key.pem \
             -e PGUSER={{ cs_nc_db_user }} -e PGHOST={{ cs_nc_db_host }} -e PGPORT={{ cs_nc_db_port }} \
+            --entrypoint "" \
             docker.io/library/postgres:16.3 pg_dump -f /backup/{{ cs_nc_db_type }}-db.sql
 
           echo "${backup_id}:: Turning off maintenance mode"
