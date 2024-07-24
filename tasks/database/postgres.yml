@@ -188,7 +188,7 @@
       mode: "0644"
       owner: 5050
       group: 5050
-  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
       cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Sign SSL CSR
@@ -207,7 +207,7 @@
       group: 5050
       return_content: true
   register: cs_postgres_client_ssl_cert
-  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
       cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Write Full chain
@@ -259,7 +259,7 @@
       ssl_rootcert: "{{ cs_postgres_dir }}/client-certs/client-ca.pem"
       ssl_cert: "{{ cs_postgres_dir }}/client-certs/client-fullchain-{{ cs_postgres_user }}.pem"
       ssl_key: "{{ cs_postgres_dir }}/client-certs/client.key"
-  with_items: "{{ cs_postgres_apps | dict2items }}"
+  with_items: "{{ cs_postgres_apps_dict | dict2items }}"
 
 - name: Database | Postgres | Create databases
   community.postgresql.postgresql_db:
@@ -276,7 +276,7 @@
       ssl_rootcert: "{{ cs_postgres_dir }}/client-certs/client-ca.pem"
       ssl_cert: "{{ cs_postgres_dir }}/client-certs/client-fullchain-{{ cs_postgres_user }}.pem"
       ssl_key: "{{ cs_postgres_dir }}/client-certs/client.key"
-  with_items: "{{ cs_postgres_apps | dict2items }}"
+  with_items: "{{ cs_postgres_apps_dict | dict2items }}"
 
 - name: Database | Postgres | pgAdmin | Create directories
   ansible.builtin.file:
@@ -303,11 +303,11 @@
       mode: "0600"
       owner: "5050"
       group: "5050"
-  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
       cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
 
 - name: Database | Postgres | pgAdmin | Set Server json fact
-  with_items: "{{ cs_postgres_apps | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
       cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
   loop_control:
       index_var: index

@@ -9,6 +9,26 @@
       - apache2
       - php{{ cs_nc_php_version }}-fpm
 
+- name: Nextcloud | Post Install | Get Status
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ status --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: false
+  register: nc_status
+
+- name: Nextcloud | Post Install | Test if Nextcloud is installed correctly
+  ansible.builtin.assert:
+      that:
+          - nc_current_status.installed
+          - nc_current_status.versionstring == cs_nc_version
+          - not nc_current_status.needsDbUpgrade
+      fail_msg: "Nextcloud is not installed correctly"
+      success_msg: "Nextcloud is installed"
+  vars:
+      nc_current_status: "{{ nc_status.stdout | from_json }}"
+
 - name: Nextcloud | Post Install | Enable UFW port
   community.general.ufw:
       rule: allow
@@ -53,26 +73,6 @@
   with_items:
       - fail2ban
       - sendmail
-
-- name: Nextcloud | Post Install | Get Status
-  become: true
-  become_user: "{{ cs_nc_run_user }}"
-  ansible.builtin.command:
-      cmd: "php occ status --output=json"
-      chdir: "{{ cs_nc_web_dir }}"
-  changed_when: false
-  register: nc_status
-
-- name: Nextcloud | Post Install | Test if Nextcloud is installed correctly
-  ansible.builtin.assert:
-      that:
-          - nc_current_status.installed
-          - nc_current_status.versionstring == cs_nc_version
-          - not nc_current_status.needsDbUpgrade
-      fail_msg: "Nextcloud is not installed correctly"
-      success_msg: "Nextcloud is installed"
-  vars:
-      nc_current_status: "{{ nc_status.stdout | from_json }}"
 
 - name: Nextcloud | Post Install | Add missing indices
   become: true

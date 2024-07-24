@@ -6,7 +6,7 @@
       cmd: "php occ app:list --output=json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
-  register: cs_nc_app_list
+  register: cs_nc_app_list_fulltextsearch
 
 - name: Nextcloud | Full Text Search | Install apps
   become: true
@@ -22,9 +22,9 @@
   when: >
       not
       (
-        item in cs_nc_app_list.stdout | from_json | community.general.json_query('enabled')
+        item in cs_nc_app_list_fulltextsearch.stdout | from_json | community.general.json_query('enabled')
       or
-        item in cs_nc_app_list.stdout | from_json | community.general.json_query('disabled')
+        item in cs_nc_app_list_fulltextsearch.stdout | from_json | community.general.json_query('disabled')
       )
 
 - name: Nextcloud | Full Text Search | create nextcloud-fulltext-elasticsearch-worker
@@ -50,15 +50,19 @@
           WantedBy=multi-user.target
       mode: "0644"
 
-- name: Nextcloud | Full Text Search | Set Apps Config
-  ansible.builtin.set_fact:
-      cs_nc_app_config:
+- name: Nextcloud | Full Text Search | Write Apps Config
+  ansible.builtin.copy:
+      content: "{{ cs_nc_app_config_fulltextsearch | to_nice_json }}"
+      dest: "/tmp/nc-apps-fulltextsearch-config.json"
+      mode: "0644"
+  vars:
+      cs_nc_app_config_fulltextsearch:
           apps:
               fulltextsearch:
-                  "app_navigation": "1"
+                  app_navigation: "1"
                   enabled: "yes"
                   search_platform: "OCA\\FullTextSearch_Elasticsearch\\Platform\\ElasticSearchPlatform"
-                  "types": ""
+                  types: ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
                   elastic_host: "http://elastic:{{ cs_nc_elasticsearch_password }}@{{ cs_nc_elasticsearch_host }}:{{
@@ -79,17 +83,11 @@
                   files_group_folders: "1"
                   files_external: "1"
 
-- name: Nextcloud | Full Text Search | Write Apps Config
-  ansible.builtin.copy:
-      content: "{{ cs_nc_app_config | to_nice_json }}"
-      dest: "/tmp/nc-apps-config.json"
-      mode: "0644"
-
 - name: Nextcloud | Full Text Search | Import Apps Config
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
-      cmd: "php occ config:import /tmp/nc-apps-config.json"
+      cmd: "php occ config:import /tmp/nc-apps-fulltextsearch-config.json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 

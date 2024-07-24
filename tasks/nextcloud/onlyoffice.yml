@@ -6,7 +6,7 @@
       cmd: "php occ app:list --output=json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
-  register: cs_nc_app_list
+  register: cs_nc_app_list_onlyoffice
 
 - name: Nextcloud | Onlyoffice | Install apps
   become: true
@@ -20,13 +20,17 @@
   when: >
       not
       (
-        item in cs_nc_app_list.stdout | from_json | community.general.json_query('enabled')
+        item in cs_nc_app_list_onlyoffice.stdout | from_json | community.general.json_query('enabled')
       or
-        item in cs_nc_app_list.stdout | from_json | community.general.json_query('disabled')
+        item in cs_nc_app_list_onlyoffice.stdout | from_json | community.general.json_query('disabled')
       )
 
-- name: Nextcloud | Onlyoffice | Set Apps Config
-  ansible.builtin.set_fact:
+- name: Nextcloud | Onlyoffice | Write
+  ansible.builtin.copy:
+      content: "{{ cs_nc_onlyoffice_config | to_nice_json }}"
+      dest: "/tmp/nc-apps-onlyoffice-config.json"
+      mode: "0644"
+  vars:
       cs_nc_onlyoffice_config:
           apps:
               onlyoffice:
@@ -55,12 +59,6 @@
                   "customizationToolbarNoTabs": "true"
                   "customizationReviewDisplay": "original"
                   "customizationTheme": "theme-classic-light"
-
-- name: Nextcloud | Onlyoffice | Write
-  ansible.builtin.copy:
-      content: "{{ cs_nc_onlyoffice_config | to_nice_json }}"
-      dest: "/tmp/nc-apps-onlyoffice-config.json"
-      mode: "0644"
 
 - name: Nextcloud | Onlyoffice | Import Apps Config
   become: true
