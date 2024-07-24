@@ -1,0 +1,12 @@
+[Unit]
+Description=Nextcloud Data Dump
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart={{ cs_nc_root_dir }}/create_dump.sh
+
+[Install]
+WantedBy=multi-user.target

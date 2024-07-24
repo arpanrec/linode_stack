@@ -18,94 +18,23 @@
       state: present
 
 - name: Nextcloud | Data Dump | Create Script
-  ansible.builtin.copy:
+  ansible.builtin.template:
       mode: "0755"
       dest: "{{ cs_nc_root_dir }}/create_dump.sh"
-      content: |+
-          #!/usr/bin/env bash
-          set -euo pipefail
-
-          backup_id=$(date +%Y%m%d%H%M%S)
-          current_dir="{{ cs_nc_external_drive_mount_data_dump_path }}/current"
-
-          echo "${backup_id}:: Backup ID: ${backup_id}"
-
-          echo "${backup_id}:: Turning on maintenance mode"
-          sudo -u {{ cs_nc_run_user }} php {{ cs_nc_web_dir }}/occ maintenance:mode --on
-
-          echo "${backup_id}:: Syncing data directory"
-          rsync --acls --archive --one-file-system --progress \
-            --verbose --delete-before --recursive {{ cs_nc_root_dir }}/ "${current_dir}/"
-
-          echo "${backup_id}:: Creating database dump in tar format"
-          docker run --rm \
-            -v {{ cs_nc_db_ca_pem_file }}:/ca-certificates.crt:ro \
-            -v {{ cs_nc_db_fullchain_pem_file }}:/client-cert.pem:ro \
-            -v {{ cs_nc_db_privkey_pem_file }}:/client-key.pem:ro \
-            -v "${current_dir}:/backup" \
-            -e PGPASSWORD={{ cs_nc_db_password }} -e PGSSLMODE=verify-full -e PGDATABASE={{ cs_nc_db_database }} \
-            -e PGSSLROOTCERT=/ca-certificates.crt -e PGSSLCERT=/client-cert.pem -e PGSSLKEY=/client-key.pem \
-            -e PGUSER={{ cs_nc_db_user }} -e PGHOST={{ cs_nc_db_host }} -e PGPORT={{ cs_nc_db_port }} \
-            --entrypoint "" \
-            docker.io/library/postgres:16.3 pg_dump -F tar -f /backup/{{ cs_nc_db_type }}-db.tar
-
-          echo "${backup_id}:: Creating database dump in plain text"
-          docker run --rm \
-            -v {{ cs_nc_db_ca_pem_file }}:/ca-certificates.crt:ro \
-            -v {{ cs_nc_db_fullchain_pem_file }}:/client-cert.pem:ro \
-            -v {{ cs_nc_db_privkey_pem_file }}:/client-key.pem:ro \
-            -v "${current_dir}:/backup" \
-            -e PGPASSWORD={{ cs_nc_db_password }} -e PGSSLMODE=verify-full -e PGDATABASE={{ cs_nc_db_database }} \
-            -e PGSSLROOTCERT=/ca-certificates.crt -e PGSSLCERT=/client-cert.pem -e PGSSLKEY=/client-key.pem \
-            -e PGUSER={{ cs_nc_db_user }} -e PGHOST={{ cs_nc_db_host }} -e PGPORT={{ cs_nc_db_port }} \
-            --entrypoint "" \
-            docker.io/library/postgres:16.3 pg_dump -f /backup/{{ cs_nc_db_type }}-db.sql
-
-          echo "${backup_id}:: Turning off maintenance mode"
-          sudo -u {{ cs_nc_run_user }} php {{ cs_nc_web_dir }}/occ maintenance:mode --off
-
-          echo "${backup_id}:: Creating tarball"
-          tar --use-compress-program=zstdmt -cf "{{ cs_nc_external_drive_mount_data_dump_path }}/${backup_id}.tar" \
-            -C "${current_dir}" .
-
-          echo "${backup_id}:: Truncating log file"
-          truncate -s 0 {{ cs_nc_log_file }}
-
-          echo "${backup_id}:: Done"
+      src: "templates/nc/create_dump.sh.j2"
 
 - name: Nextcloud | Data Dump | Create systemd service
-  ansible.builtin.copy:
+  ansible.builtin.template:
       mode: "0644"
       dest: "/etc/systemd/system/nextcloud-data-dump.service"
-      content: |+
-          [Unit]
-          Description=Nextcloud Data Dump
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=root
-          Group=root
-          ExecStart={{ cs_nc_root_dir }}/create_dump.sh
-
-          [Install]
-          WantedBy=multi-user.target
+      src: "templates/nc/nextcloud-data-dump.service.j2"
 
 - name: Nextcloud | Data Dump | Create systemd timer
   ansible.builtin.copy:
       mode: "0644"
       dest: "/etc/systemd/system/nextcloud-data-dump.timer"
-      content: |+
-          [Unit]
-          Description=Nextcloud Data Dump Timer
-
-          [Timer]
-          Persistent=true
-          OnBootSec=5min
-          OnUnitActiveSec=1d
-
-          [Install]
-          WantedBy=timers.target
+      src: files/nc/nextcloud-data-dump.timer
+      remote_src: false
 
 - name: Nextcloud | Data Dump | Make sure cron systemd service is enabled
   ansible.builtin.systemd:
