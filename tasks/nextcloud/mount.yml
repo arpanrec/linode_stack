@@ -104,7 +104,7 @@
       content: "{{ item.content }}"
       mode: "0644"
   with_items:
-      - dest: /etc/systemd/system/nextcloudscanfiles.service
+      - dest: /etc/systemd/system/nextcloud-scanfiles.service
         content: |+
             [Unit]
             Description=Nextcloud scan files
@@ -117,7 +117,7 @@
             WorkingDirectory={{ cs_nc_web_dir }}
             KillMode=process
 
-      - dest: /etc/systemd/system/nextcloudscanfiles.timer
+      - dest: /etc/systemd/system/nextcloud-scanfiles.timer
         content: |
             [Unit]
             Description=Run Nextcloud cron every 15 minutes
@@ -125,14 +125,14 @@
             [Timer]
             OnBootSec=1min
             OnUnitActiveSec=15min
-            Unit=nextcloudscanfiles.service
+            Unit=nextcloud-scanfiles.service
 
             [Install]
             WantedBy=multi-user.target
 
-- name: Nextcloud | Mount Disk | Unencrypted | Enable and start nextcloudscanfiles.timer
+- name: Nextcloud | Mount Disk | Unencrypted | Enable and start nextcloud-scanfiles.timer
   ansible.builtin.systemd_service:
-      name: nextcloudscanfiles.timer
+      name: nextcloud-scanfiles.timer
       enabled: true
       state: started
       daemon_reload: true

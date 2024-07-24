@@ -391,7 +391,7 @@
       content: "{{ item.content }}"
       mode: "0644"
   with_items:
-      - dest: /etc/systemd/system/nextcloudcron.service
+      - dest: /etc/systemd/system/nextcloud-cron.service
         content: |+
             [Unit]
             Description=Nextcloud cron.php job
@@ -404,7 +404,7 @@
             WorkingDirectory={{ cs_nc_web_dir }}
             KillMode=process
 
-      - dest: /etc/systemd/system/nextcloudcron.timer
+      - dest: /etc/systemd/system/nextcloud-cron.timer
         content: |
             [Unit]
             Description=Run Nextcloud cron every 15 minutes
@@ -412,14 +412,14 @@
             [Timer]
             OnBootSec=1min
             OnUnitActiveSec=15min
-            Unit=nextcloudcron.service
+            Unit=nextcloud-cron.service
 
             [Install]
             WantedBy=multi-user.target
 
 - name: Nextcloud | Install | Enable systemd timmer for nextcloud cron
   ansible.builtin.systemd_service:
-      name: nextcloudcron.timer
+      name: nextcloud-cron.timer
       enabled: true
       state: restarted
       daemon_reload: true
