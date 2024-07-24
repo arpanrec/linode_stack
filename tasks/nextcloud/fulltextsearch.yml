@@ -59,10 +59,10 @@
       cs_nc_app_config_fulltextsearch:
           apps:
               fulltextsearch:
-                  "app_navigation": "1"
+                  app_navigation: "1"
                   enabled: "yes"
                   search_platform: "OCA\\FullTextSearch_Elasticsearch\\Platform\\ElasticSearchPlatform"
-                  "types": ""
+                  types: ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
                   elastic_host: "http://elastic:{{ cs_nc_elasticsearch_password }}@{{ cs_nc_elasticsearch_host }}:{{
