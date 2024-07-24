@@ -76,10 +76,9 @@
                       local_pk: "{{ cs_nc_redis_privkey_file }}"
                       cafile: "{{ cs_nc_redis_ca_file }}"
                       verify_peer_name: false
-              memcache:
-                  local: "\\OC\\Memcache\\APCu"
-                  distributed: "\\OC\\Memcache\\Redis"
-                  locking: "\\OC\\Memcache\\Redis"
+              memcache.local: "\\OC\\Memcache\\APCu"
+              memcache.distributed: "\\OC\\Memcache\\Redis"
+              memcache.locking: "\\OC\\Memcache\\Redis"
 
 - name: Nextcloud | Cache | Set nextcloud config
   become: true
