@@ -27,9 +27,9 @@ cs_nc_db_fullchain_pem_file: "{{ cs_nc_cert_dir }}/fullchain.pem"
 cs_nc_db_privkey_pem_file: "{{ cs_nc_cert_dir }}/privkey.pem"
 cs_nc_db_ca_pem_file: "{{ cs_nc_cert_dir }}/ca.pem"
 cs_nc_db_type: pgsql
-cs_nc_db_user: "{{ cs_postgres_apps.nextcloud.user }}"
-cs_nc_db_password: "{{ cs_postgres_apps.nextcloud.password }}"
-cs_nc_db_database: "{{ cs_postgres_apps.nextcloud.database }}"
+cs_nc_db_user: "{{ cs_postgres_apps_dict.nextcloud.user }}"
+cs_nc_db_password: "{{ cs_postgres_apps_dict.nextcloud.password }}"
+cs_nc_db_database: "{{ cs_postgres_apps_dict.nextcloud.database }}"
 cs_nc_db_host: "{{ cs_postgres_host_private_ip }}"
 cs_nc_db_port: "{{ cs_postgres_port }}"
 
@@ -66,12 +66,7 @@ cs_nc_elasticsearch_index_name: nextcloud-fulltextsearch
 cs_nc_onlyoffice_port: "{{ cs_onlyoffice_port }}"
 cs_nc_onlyoffice_domain: "{{ cs_onlyoffice_domain }}"
 cs_nc_onlyoffice_jwt_secret: "{{ cs_onlyoffice_jwt_secret }}"
-cs_nc_users_dict:
-    arpan:
-        email: arpan.rec@gmail.com
-        display_name: Arpan Mandal
-        groups:
-            local_mnt_nextcloud_nextcloud: {}
+cs_nc_users_dict: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_users_dict') | from_json }}"
 
 cs_nc_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_nc_domain + '.fullchain.pem') }}"
 cs_nc_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_nc_domain + '.privkey.pem') }}"
