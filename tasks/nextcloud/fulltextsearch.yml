@@ -53,7 +53,7 @@
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
       content: "{{ cs_nc_app_config | to_nice_json }}"
-      dest: "/tmp/nc-apps-config.json"
+      dest: "/tmp/nc-apps-fulltextsearch-config.json"
       mode: "0644"
   vars:
       cs_nc_app_config:
@@ -87,7 +87,7 @@
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
-      cmd: "php occ config:import /tmp/nc-apps-config.json"
+      cmd: "php occ config:import /tmp/nc-apps-fulltextsearch-config.json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
