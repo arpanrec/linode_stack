@@ -18,10 +18,8 @@ cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/datab
 cs_postgres_pg_admin_dir: "{{ cs_postgres_dir }}/pgadmin"
 cs_postgres_pg_admin_domain: "{{ cs_dns_mapping }}"
 cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
-cs_postgres_pg_admin_fullchain_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_postgres_pg_admin_domain + '.fullchain.pem') }}"
 cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_pg_admin_password') }}"
 cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_pg_admin_port') }}"
-cs_postgres_pg_admin_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'LETSENCRYPT_CERTIFICATES', 'attachments', cs_postgres_pg_admin_domain + '.privkey.pem') }}"
 cs_postgres_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_port') }}"
 cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_user') }}"
 
