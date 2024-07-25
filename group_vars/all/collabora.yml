@@ -1,7 +1,8 @@
 ---
 cs_collabora_dir: /app/collabora
 
-cs_collabora_domain: "{{ cs_dns_mapping }}"
+cs_collabora_domain: "{{ cs_public_ingress_dns_entry }}"
+cs_collabora_allowlist: "{{ cs_rb4_m3_ip }}"
 
 cs_collabora_admin_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/collabora', 'custom_properties', 'cs_collabora_admin_user') }}"
 cs_collabora_admin_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/collabora', 'custom_properties', 'cs_collabora_admin_password') }}"
