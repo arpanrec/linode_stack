@@ -17,17 +17,50 @@
       - "{{ cs_onlyoffice_dir }}/db"
       - "/etc/ssl/{{ cs_onlyoffice_domain }}"
 
-- name: OnlyOffice | Write SSL certificate and key
-  ansible.builtin.copy:
-      src: "{{ item.src }}"
-      dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/{{ item.dest }}"
+- name: OnlyOffice | Create SSL Private key
+  community.crypto.openssl_privatekey:
+      path: "/etc/ssl/{{ cs_onlyoffice_domain }}/privkey.pem"
+      size: 4096
+      mode: "0600"
+
+- name: OnlyOffice | Create SSL CSR
+  community.crypto.openssl_csr:
+      path: "/tmp/onlyoffice-server.csr"
+      privatekey_path: "/etc/ssl/{{ cs_onlyoffice_domain }}/privkey.pem"
+      common_name: "{{ cs_onlyoffice_domain }}"
+      subject_alt_name:
+          - "DNS:{{ cs_onlyoffice_domain }}"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "serverAuth"
+      create_subject_key_identifier: true
       mode: "0644"
-      remote_src: false
-  with_items:
-      - dest: fullchain.pem
-        src: "{{ cs_onlyoffice_fullchain_pem_file }}"
-      - dest: privkey.pem
-        src: "{{ cs_onlyoffice_privkey_pem_file }}"
+
+- name: OnlyOffice | Sign SSL CSR
+  community.crypto.x509_certificate:
+      path: "/tmp/server.crt"
+      csr_path: "/tmp/onlyoffice-server.csr"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      return_content: true
+  register: cs_onlyoffice_ssl_cert
+
+- name: OnlyOffice | Write Full chain
+  ansible.builtin.copy:
+      content: |+
+          {{ cs_onlyoffice_ssl_cert.certificate | trim }}
+          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
+      dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/fullchain.pem"
+      mode: "0644"
 
 - name: OnlyOffice | Start Container
   community.docker.docker_container:
@@ -65,6 +98,8 @@
       method: GET
       status_code: 200
       return_content: true
+      ca_path: "/etc/ssl/{{ cs_onlyoffice_domain }}/fullchain.pem"
+      validate_certs: true
   register: is_onlyoffice_up
   until: is_onlyoffice_up.status == 200
   retries: 30
