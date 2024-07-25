@@ -178,17 +178,53 @@
       state: directory
       mode: "0755"
 
-- name: Nextcloud | Prepare | Copy SSL Certificates
-  when: cs_nc_protocol == "https"
-  ansible.builtin.copy:
-      src: "{{ item.src }}"
-      dest: "/etc/ssl/{{ cs_nc_domain }}/{{ item.dest }}"
+- name: Nextcloud | Prepare | Server Certificate | Create SSL Private key
+  community.crypto.openssl_privatekey:
+      path: "/etc/ssl/{{ cs_nc_domain }}/privkey.pem"
+      size: 4096
+      mode: "0600"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Prepare | Server Certificate | Create SSL CSR
+  community.crypto.openssl_csr:
+      path: "/etc/ssl/{{ cs_nc_domain }}/csr.pem"
+      privatekey_path: "/etc/ssl/{{ cs_nc_domain }}/privkey.pem"
+      common_name: "{{ cs_nc_domain }}"
+      subject_alt_name:
+          - "DNS:{{ cs_nc_domain }}"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "serverAuth"
+      create_subject_key_identifier: true
       mode: "0644"
-  with_items:
-      - src: "{{ cs_nc_fullchain_pem_file }}"
-        dest: fullchain.pem
-      - src: "{{ cs_nc_privkey_pem_file }}"
-        dest: privkey.pem
+
+- name: Nextcloud | Prepare | Server Certificate | Sign SSL CSR
+  community.crypto.x509_certificate:
+      path: "/etc/ssl/{{ cs_nc_domain }}/cert.pem"
+      csr_path: "/etc/ssl/{{ cs_nc_domain }}/csr.pem"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      return_content: true
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Prepare | Server Certificate | Write CA certificate
+  ansible.builtin.copy:
+      content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
+      dest: "/etc/ssl/{{ cs_nc_domain }}/chain.pem"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Prepare | Create Apache2 config
   ansible.builtin.template:

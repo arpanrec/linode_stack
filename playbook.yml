@@ -78,19 +78,6 @@
         ansible.builtin.import_tasks:
             file: tasks/database/elasticsearch.yml
 
-- name: OnlyOffice
-  hosts: rb4-m2
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tasks:
-      - name: OnlyOffice
-        tags: never,onlyoffice
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/onlyoffice.yml
-
 - name: Nextcloud
   hosts: rb4-m3
   become: false
@@ -153,13 +140,6 @@
         tags: never,nextcloud,nextcloud_fulltextsearch
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/fulltextsearch.yml
-
-      - name: Nextcloud | OnlyOffice
-        become: true
-        become_user: root
-        tags: never,nextcloud,nextcloud_onlyoffice
-        ansible.builtin.import_tasks:
-            file: tasks/nextcloud/onlyoffice.yml
 
       - name: Nextcloud | Hub Bundle
         become: true

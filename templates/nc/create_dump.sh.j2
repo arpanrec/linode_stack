@@ -15,8 +15,8 @@ rsync --acls --archive --one-file-system --progress \
 
 echo "${backup_id}:: Creating database dump in tar format"
 docker run --rm \
-    -v {{ cs_nc_db_ca_pem_file }}:/ca-certificates.crt:ro \
-    -v {{ cs_nc_db_fullchain_pem_file }}:/client-cert.pem:ro \
+    -v {{ cs_nc_db_chain_pem_file }}:/ca-certificates.crt:ro \
+    -v {{ cs_nc_db_cert_pem_file }}:/client-cert.pem:ro \
     -v {{ cs_nc_db_privkey_pem_file }}:/client-key.pem:ro \
     -v "${current_dir}:/backup" \
     -e PGPASSWORD={{ cs_nc_db_password }} -e PGSSLMODE=verify-full -e PGDATABASE={{ cs_nc_db_database }} \
@@ -27,8 +27,8 @@ docker run --rm \
 
 echo "${backup_id}:: Creating database dump in plain text"
 docker run --rm \
-    -v {{ cs_nc_db_ca_pem_file }}:/ca-certificates.crt:ro \
-    -v {{ cs_nc_db_fullchain_pem_file }}:/client-cert.pem:ro \
+    -v {{ cs_nc_db_chain_pem_file }}:/ca-certificates.crt:ro \
+    -v {{ cs_nc_db_cert_pem_file }}:/client-cert.pem:ro \
     -v {{ cs_nc_db_privkey_pem_file }}:/client-key.pem:ro \
     -v "${current_dir}:/backup" \
     -e PGPASSWORD={{ cs_nc_db_password }} -e PGSSLMODE=verify-full -e PGDATABASE={{ cs_nc_db_database }} \

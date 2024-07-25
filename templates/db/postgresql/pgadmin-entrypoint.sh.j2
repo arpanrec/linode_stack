@@ -1,0 +1,6 @@
+#!/bin/sh
+mkdir -p /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/;
+cp /pgpassfile /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/pgpassfile
+chmod 600 /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_') }}/pgpassfile
+cp -r /client-certs/* /var/lib/pgadmin/storage/{{ cs_postgres_pg_admin_email | regex_replace('@', '_', '') }}/
+/entrypoint.sh
