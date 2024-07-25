@@ -112,11 +112,12 @@
 
 - name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
   ansible.builtin.copy:
-      content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
+      src: "{{ cs_root_ca_cert_pem_file }}"
       dest: "{{ cs_nc_db_chain_pem_file }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
+      remote_src: false
 
 - name: Nextcloud | Install | Write ownca CA certificate
   ansible.builtin.copy:
