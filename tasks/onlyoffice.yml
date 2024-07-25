@@ -25,7 +25,7 @@
 
 - name: OnlyOffice | Create SSL CSR
   community.crypto.openssl_csr:
-      path: "/tmp/onlyoffice-server.csr"
+      path: "/etc/ssl/{{ cs_onlyoffice_domain }}/csr.pem"
       privatekey_path: "/etc/ssl/{{ cs_onlyoffice_domain }}/privkey.pem"
       common_name: "{{ cs_onlyoffice_domain }}"
       subject_alt_name:
@@ -41,8 +41,8 @@
 
 - name: OnlyOffice | Sign SSL CSR
   community.crypto.x509_certificate:
-      path: "/tmp/server.crt"
-      csr_path: "/tmp/onlyoffice-server.csr"
+      path: "/etc/ssl/{{ cs_onlyoffice_domain }}/cert.pem"
+      csr_path: "/etc/ssl/{{ cs_onlyoffice_domain }}/csr.pem"
       provider: ownca
       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
           lstrip=false, rstrip=false) }}"
@@ -62,10 +62,26 @@
       dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/fullchain.pem"
       mode: "0644"
 
+- name: OnlyOffice | Write ownca CA certificate
+  ansible.builtin.copy:
+      src: "{{ cs_root_ca_cert_pem_file }}"
+      dest: "/etc/ssl/{{ cs_onlyoffice_domain }}/chain.pem"
+      mode: "0644"
+      remote_src: false
+
+- name: OnlyOffice | Write entrypoint script for updating CA certificates
+  ansible.builtin.copy:
+      src: "files/onlyoffice/entrypoint-update-ca-certificates.sh"
+      dest: "{{ cs_onlyoffice_dir }}/entrypoint-update-ca-certificates.sh"
+      mode: "0755"
+      remote_src: false
+
 - name: OnlyOffice | Start Container
   community.docker.docker_container:
       name: onlyoffice-main
       image: "docker.io/onlyoffice/documentserver:8.1.1.1"
+      entrypoint:
+          - /entrypoint-update-ca-certificates.sh
       volumes:
           - "{{ cs_onlyoffice_dir }}/data:/var/www/onlyoffice/Data"
           - "{{ cs_onlyoffice_dir }}/logs:/var/log/onlyoffice"
@@ -73,6 +89,8 @@
           - "{{ cs_onlyoffice_dir }}/db:/var/lib/postgresql"
           - "/etc/ssl/{{ cs_onlyoffice_domain }}/fullchain.pem:/cert.pem:ro"
           - "/etc/ssl/{{ cs_onlyoffice_domain }}/privkey.pem:/priv.key:ro"
+          - /etc/ssl/{{ cs_onlyoffice_domain }}/chain.pem:/usr/local/share/ca-certificates/ownca.crt:ro
+          - "{{ cs_onlyoffice_dir }}/entrypoint-update-ca-certificates.sh:/entrypoint-update-ca-certificates.sh"
       state: started
       ports:
           - "{{ cs_onlyoffice_port }}:443"
@@ -83,6 +101,11 @@
           SSL_CERTIFICATE_PATH: "/cert.pem"
           WOPI_ENABLED: "true"
           GENERATE_FONTS: "true"
+          # TODO: Change to false, server doesn't validate the certificate from client. \
+          # This is a security risk. But right now, it's the only way to get it working.
+          # https://github.com/ONLYOFFICE/Docker-DocumentServer/issues/96#issuecomment-770344608
+          # This also doesn't work
+          USE_UNAUTHORIZED_STORAGE: "true"
 
 - name: OnlyOffice | Enable UFW port
   community.general.ufw:

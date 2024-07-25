@@ -96,7 +96,7 @@
 
 - name: Nextcloud | Install | Databse Client Certificate | Sign SSL CSR
   community.crypto.x509_certificate:
-      path: "/tmp/nc_db_client.crt"
+      path: "{{ cs_nc_db_cert_pem_file }}"
       csr_path: "/tmp/nc_db_client.csr"
       provider: ownca
       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
@@ -109,25 +109,23 @@
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
       return_content: true
-  register: cs_postgres_client_ssl_cert
-
-- name: Nextcloud | Install | Databse Client Certificate | Write Full chain
-  ansible.builtin.copy:
-      content: |+
-          {{ cs_postgres_client_ssl_cert.certificate | trim }}
-          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
-      dest: "{{ cs_nc_db_fullchain_pem_file }}"
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
   ansible.builtin.copy:
       content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
-      dest: "{{ cs_nc_db_ca_pem_file }}"
+      dest: "{{ cs_nc_db_chain_pem_file }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Install | Write ownca CA certificate
+  ansible.builtin.copy:
+      src: "{{ cs_root_ca_cert_pem_file }}"
+      dest: "{{ cs_nc_root_ca_chain_pem_file }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      remote_src: false
 
 - name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
@@ -157,7 +155,7 @@
       cmd: "php occ maintenance:install --database '{{ cs_nc_db_type }}' --database-name '{{ cs_nc_db_database }}'
           --database-user '{{ cs_nc_db_user }}' --database-pass '{{ cs_nc_db_password }}'
           --database-host '{{ cs_nc_db_host }};port={{ cs_nc_db_port }};\
-          sslmode=verify-full;sslrootcert={{ cs_nc_db_ca_pem_file }};sslcert={{ cs_nc_db_fullchain_pem_file }};\
+          sslmode=verify-full;sslrootcert={{ cs_nc_db_chain_pem_file }};sslcert={{ cs_nc_db_cert_pem_file }};\
           sslkey={{ cs_nc_db_privkey_pem_file }}'
           --admin-user '{{ cs_nc_admin_user }}' --admin-pass '{{ cs_nc_admin_password }}'
           --data-dir '{{ cs_nc_data_dir }}' --no-interaction"
@@ -221,6 +219,14 @@
       success_msg: "Nextcloud is installed"
   vars:
       nc_current_status: "{{ nc_status_installed.stdout | from_json }}"
+
+- name: Nextcloud | Install | Import Ownca CA certificate
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ security:certificates:import {{ cs_nc_root_ca_chain_pem_file }}"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
 
 - name: Nextcloud | Install | Gather facts
   ansible.builtin.setup:
