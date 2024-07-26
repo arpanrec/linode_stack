@@ -41,8 +41,6 @@
           FULLTEXTSEARCH_PASSWORD: "{{ cs_elasticsearch_password }}"
       ulimits:
           - "memlock:-1:-1"
-      sysctls:
-          - vm.overcommit_memory=1
 
 - name: Database | Elasticsearch | Enable UFW port
   community.general.ufw:
