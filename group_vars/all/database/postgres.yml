@@ -30,3 +30,27 @@ cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/datab
 cs_postgres_db: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_db') }}"
 
 cs_postgres_apps_dict: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_apps_dict') | from_json }}"
+
+cs_postgres_pg_admin_run_user: "5050"
+cs_postgres_pg_admin_run_group: "5050"
+
+cs_postgres_pg_admin_dir: "{{ cs_postgres_dir }}/pgadmin"
+cs_postgres_pg_admin_certs_dir: "{{ cs_postgres_pg_admin_dir }}/certs"
+cs_postgres_pg_admin_certs_privkey_file: "{{ cs_postgres_pg_admin_certs_dir }}/privkey.pem"
+cs_postgres_pg_admin_certs_cert_file: "{{ cs_postgres_pg_admin_certs_dir }}/cert.pem"
+cs_postgres_pg_admin_certs_chain_file: "{{ cs_postgres_pg_admin_certs_dir }}/chain.pem"
+cs_postgres_pg_admin_certs_fullchain_file: "{{ cs_postgres_pg_admin_certs_dir }}/fullchain.pem"
+cs_postgres_pg_admin_certs_csr_file: "{{ cs_postgres_pg_admin_certs_dir }}/csr.pem"
+cs_postgres_pg_admin_client_certs_dir: "{{ cs_postgres_pg_admin_dir }}/client_certs"
+ps_postgres_pg_admin_pg_pass_file: "{{ cs_postgres_pg_admin_dir }}/pgpass"
+ps_postgres_pg_admin_pg_servers_file: "{{ cs_postgres_pg_admin_dir }}/pg_servers.json"
+ps_postgres_pg_admin_entrypoint_file: "{{ cs_postgres_pg_admin_dir }}/entrypoint.sh"
+
+ps_postgres_pg_admin_docker_container_name: pgadmin
+ps_postgres_pg_admin_docker_image: docker.io/dpage/pgadmin4
+ps_postgres_pg_admin_docker_image_tag: 8.9
+
+cs_postgres_pg_admin_domain: "{{ cs_public_ingress_dns_entry }}"
+cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
+cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_pg_admin_password') }}"
+cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_pg_admin_port') }}"

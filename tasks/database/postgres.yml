@@ -392,7 +392,7 @@
           - "{{ cs_postgres_pg_admin_certs_privkey_file }}:/certs/server.key:ro"
           - "{{ ps_postgres_pg_admin_entrypoint_file }}:/file-entrypoint.sh"
           - "{{ ps_postgres_pg_admin_pg_servers_file }}:/pgadmin4/servers.json"
-          - "{{ cs_postgres_pg_admin_dir }}/pgpassfile:/pgpassfile"
+          - "{{ ps_postgres_pg_admin_pg_pass_file }}:/pgpassfile"
           - "{{ cs_postgres_pg_admin_client_certs_dir }}:/client-certs"
 
 - name: Database | Postgres | Enable UFW port
