@@ -18,6 +18,9 @@
       regexp: 'rights="none" pattern="{{ item }}"'
       replace: 'rights="read|write" pattern="{{ item }}"'
       backup: true
+      owner: root
+      group: root
+      mode: "0644"
   with_items:
       - "PNG"
       - "PDF"
@@ -38,7 +41,8 @@
       url: "https://packages.sury.org/php/apt.gpg"
       dest: "/etc/apt/trusted.gpg.d/php.gpg"
       mode: "0644"
-
+      owner: root
+      group: root
 - name: Nextcloud | Prepare | Gather Facts
   ansible.builtin.setup:
 
@@ -81,6 +85,7 @@
           - php{{ cs_nc_php_version }}-dev
           - php{{ cs_nc_php_version }}-imagick
           - php{{ cs_nc_php_version }}-fpm
+      install_recommends: true
 
 - name: Nextcloud | Prepare | Install Apache2
   ansible.builtin.apt:
@@ -88,6 +93,7 @@
           - apache2
           - apache2-utils
           - libapache2-mod-php{{ cs_nc_php_version }}
+      install_recommends: true
 
 - name: Nextcloud | Prepare | Change PHP ini settings
   community.general.ini_file:
@@ -96,6 +102,8 @@
       option: "{{ item.option }}"
       value: "{{ item.value }}"
       mode: "0644"
+      owner: root
+      group: root
       create: false
       no_extra_spaces: "{{ item.no_extra_spaces | default(true) }}"
   with_items:
@@ -174,13 +182,21 @@
 - name: Nextcloud | Prepare | Create SSL Directory
   when: cs_nc_protocol == "https"
   ansible.builtin.file:
-      path: /etc/ssl/{{ cs_nc_domain }}
+      path: "{{ item }}"
       state: directory
       mode: "0755"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+  with_items:
+      - "{{ cs_nc_cert_dir }}"
+      - "{{ cs_nc_cert_privkey_file | dirname }}"
+      - "{{ cs_nc_cert_cert_file | dirname }}"
+      - "{{ cs_nc_cert_chain_file | dirname }}"
+      - "{{ cs_nc_cert_cert_csr_file | dirname }}"
 
 - name: Nextcloud | Prepare | Server Certificate | Create SSL Private key
   community.crypto.openssl_privatekey:
-      path: "/etc/ssl/{{ cs_nc_domain }}/privkey.pem"
+      path: "{{ cs_nc_cert_privkey_file }}"
       size: 4096
       mode: "0600"
       owner: "{{ cs_nc_run_user }}"
@@ -188,8 +204,8 @@
 
 - name: Nextcloud | Prepare | Server Certificate | Create SSL CSR
   community.crypto.openssl_csr:
-      path: "/etc/ssl/{{ cs_nc_domain }}/csr.pem"
-      privatekey_path: "/etc/ssl/{{ cs_nc_domain }}/privkey.pem"
+      path: "{{ cs_nc_cert_cert_csr_file }}"
+      privatekey_path: "{{ cs_nc_cert_privkey_file }}"
       common_name: "{{ cs_nc_domain }}"
       subject_alt_name:
           - "DNS:{{ cs_nc_domain }}"
@@ -201,11 +217,13 @@
           - "serverAuth"
       create_subject_key_identifier: true
       mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Prepare | Server Certificate | Sign SSL CSR
   community.crypto.x509_certificate:
-      path: "/etc/ssl/{{ cs_nc_domain }}/cert.pem"
-      csr_path: "/etc/ssl/{{ cs_nc_domain }}/csr.pem"
+      path: "{{ cs_nc_cert_cert_file }}"
+      csr_path: "{{ cs_nc_cert_cert_csr_file }}"
       provider: ownca
       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
           lstrip=false, rstrip=false) }}"
@@ -220,17 +238,28 @@
 
 - name: Nextcloud | Prepare | Server Certificate | Write CA certificate
   ansible.builtin.copy:
-      content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}"
-      dest: "/etc/ssl/{{ cs_nc_domain }}/chain.pem"
+      src: "{{ cs_root_ca_cert_pem_file }}"
+      dest: "{{ cs_nc_cert_chain_file }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
+      remote_src: false
 
 - name: Nextcloud | Prepare | Create Apache2 config
   ansible.builtin.template:
-      src: templates/nc/100-apache.j2
-      dest: "/etc/apache2/sites-available/100-nextcloud.conf"
+      src: templates/nc/{{ cs_nc_apache_template_name }}.conf.j2
+      dest: "/etc/apache2/sites-available/{{ cs_nc_apache_template_name }}.conf"
       mode: "0644"
+      owner: root
+      group: root
+
+- name: Nextcloud | Prepare | Create DocumentRoot
+  ansible.builtin.file:
+      path: "{{ cs_nc_web_dir }}"
+      state: directory
+      mode: "0755"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Prepare | Enable Apache2 Modules
   community.general.apache2_module:
@@ -254,7 +283,7 @@
 
 - name: Nextcloud | Prepare | Enable Apache2 site for Nextcloud and SSL
   ansible.builtin.command:
-      cmd: a2ensite default-ssl 100-nextcloud
+      cmd: a2ensite default-ssl {{ cs_nc_apache_template_name }}
   changed_when: true
 
 - name: Nextcloud | Prepare | Create php systemd fpm override directory
@@ -262,15 +291,16 @@
       path: /etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d
       state: directory
       mode: "0755"
+      owner: root
+      group: root
 
 - name: Nextcloud | Prepare | Create php systemd fpm override config for run directory
-  ansible.builtin.copy:
-      content: |+
-          [Service]
-          ExecStartPre=/bin/bash -c 'mkdir -p /run/php'
-          ExecStartPre=/bin/bash -c 'chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} /run/php'
+  ansible.builtin.template:
+      src: templates/nc/php-systemd-override.conf.j2
       dest: "/etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d/override.conf"
       mode: "0644"
+      owner: root
+      group: root
 
 - name: Nextcloud | Prepare | Restart apache2 and php-fpm
   ansible.builtin.systemd_service:

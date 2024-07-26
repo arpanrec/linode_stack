@@ -100,20 +100,20 @@
 
 - name: Nextcloud | Mount Disk | Unencrypted | Create systemd unit file for nextcloud scan files
   ansible.builtin.template:
-      dest: /etc/systemd/system/nextcloud-scanfiles.service
-      src: templates/nc/nextcloud-scanfiles.service.j2
+      dest: /etc/systemd/system/{{ cs_nc_files_scanner_systemd_timer_name }}.service
+      src: templates/nc/{{ cs_nc_files_scanner_systemd_timer_name }}.service.j2
       mode: "0644"
 
 - name: Nextcloud | Mount Disk | Unencrypted | Create systemd timmer file for nextcloud scan files
   ansible.builtin.copy:
-      dest: /etc/systemd/system/nextcloud-scanfiles.timer
-      src: files/nc/nextcloud-scanfiles.timer
+      dest: /etc/systemd/system/{{ cs_nc_files_scanner_systemd_timer_name }}.timer
+      src: files/nc/{{ cs_nc_files_scanner_systemd_timer_name }}.timer
       mode: "0644"
       remote_src: false
 
-- name: Nextcloud | Mount Disk | Unencrypted | Enable and start nextcloud-scanfiles.timer
+- name: Nextcloud | Mount Disk | Unencrypted | Enable and start {{ cs_nc_files_scanner_systemd_timer_name }}
   ansible.builtin.systemd_service:
-      name: nextcloud-scanfiles.timer
+      name: "{{ cs_nc_files_scanner_systemd_timer_name }}.timer"
       enabled: true
       state: started
       daemon_reload: true

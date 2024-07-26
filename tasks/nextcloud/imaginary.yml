@@ -1,14 +1,95 @@
 ---
 - name: Nextcloud | Imaginary | Stop old dependency containers
   community.docker.docker_container:
-      name: "nextcloud-imaginary"
+      name: "{{ cs_nc_imaginary_docker_container_name }}"
       state: absent
       force_kill: true
 
-- name: Nextcloud | Imaginary | Run Imaginary
+- name: Nextcloud | Imaginary | Create Certificate Directories
+  when: cs_nc_imaginary_protocol == "https"
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+  with_items:
+      - "{{ cs_nc_imaginary_certs_dir }}"
+      - "{{ cs_nc_imaginary_privkey_file | dirname }}"
+      - "{{ cs_nc_imaginary_cert_file | dirname }}"
+      - "{{ cs_nc_imaginary_csr_file | dirname }}"
+      - "{{ cs_nc_imaginary_fullchain_file | dirname }}"
+
+- name: Nextcloud | Imaginary | Create SSL Private key
+  when: cs_nc_imaginary_protocol == "https"
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_nc_imaginary_privkey_file }}"
+      size: 4096
+      mode: "0644"
+
+- name: Nextcloud | Imaginary | Create SSL CSR
+  when: cs_nc_imaginary_protocol == "https"
+  community.crypto.openssl_csr:
+      path: "{{ cs_nc_imaginary_csr_file }}"
+      privatekey_path: "{{ cs_nc_imaginary_privkey_file }}"
+      common_name: "{{ cs_nc_imaginary_domain }}"
+      subject_alt_name:
+          - IP:{{ cs_nc_imaginary_domain }}
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "serverAuth"
+      create_subject_key_identifier: true
+      mode: "0644"
+
+- name: Nextcloud | Imaginary | Sign SSL CSR
+  when: cs_nc_imaginary_protocol == "https"
+  community.crypto.x509_certificate:
+      path: "{{ cs_nc_imaginary_cert_file }}"
+      csr_path: "{{ cs_nc_imaginary_csr_file }}"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      return_content: true
+  register: cs_nc_imaginary_cert_content
+
+- name: Nextcloud | Imaginary | Write full chain
+  when: cs_nc_imaginary_protocol == "https"
+  ansible.builtin.copy:
+      content: |+
+          {{ cs_nc_imaginary_cert_content.certificate | trim }}
+          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
+      dest: "{{ cs_nc_imaginary_fullchain_file }}"
+      mode: "0644"
+
+- name: Nextcloud | Imaginary | Run Imaginary https
+  when: cs_nc_imaginary_protocol == "https" # TODO: Nextcloud is not applying CA when calling Imaginary
   community.docker.docker_container:
-      name: nextcloud-imaginary
-      image: "docker.io/nextcloud/aio-imaginary:latest"
+      name: "{{ cs_nc_imaginary_docker_container_name }}"
+      image: "{{ cs_nc_imaginary_docker_image }}:{{ cs_nc_imaginary_docker_image_tag }}"
+      state: started
+      restart_policy: unless-stopped
+      volumes:
+          - "{{ cs_nc_imaginary_privkey_file }}:/privkey.pem:ro"
+          - "{{ cs_nc_imaginary_fullchain_file }}:/cert.pem:ro"
+      ports:
+          - "{{ cs_nc_imaginary_port }}:{{ cs_nc_imaginary_port }}"
+      env:
+          TZ: "Asia/Kolkata"
+          IMAGINARY_SECRET: "{{ cs_nc_imaginary_key }}"
+          PORT: "{{ cs_nc_imaginary_port | string }}"
+      command: "-enable-url-source  -p {{ cs_nc_imaginary_port | string }} -certfile /cert.pem -keyfile /privkey.pem"
+
+- name: Nextcloud | Imaginary | Run Imaginary http
+  when: cs_nc_imaginary_protocol != "https"
+  community.docker.docker_container:
+      name: "{{ cs_nc_imaginary_docker_container_name }}"
+      image: "{{ cs_nc_imaginary_docker_image }}:{{ cs_nc_imaginary_docker_image_tag }}"
       state: started
       restart_policy: unless-stopped
       ports:
@@ -17,7 +98,7 @@
           TZ: "Asia/Kolkata"
           IMAGINARY_SECRET: "{{ cs_nc_imaginary_key }}"
           PORT: "{{ cs_nc_imaginary_port | string }}"
-      command: -enable-url-source
+      command: "-enable-url-source  -p {{ cs_nc_imaginary_port | string }}"
 
 - name: Nextcloud | Imaginary | Set Imaginary as Preview Provider
   become: true
@@ -37,8 +118,8 @@
       - "config:system:set enabledPreviewProviders 6 --value='OC\\Preview\\Movie'"
       - "config:system:set enabledPreviewProviders 7 --value='OC\\Preview\\Krita'"
       - "config:system:set enable_previews --value true"
-      - "config:system:set preview_imaginary_url --value 'http://{{ cs_nc_imaginary_domain }}:{{
-        cs_nc_imaginary_port }}'"
+      - "config:system:set preview_imaginary_url
+        --value '{{ cs_nc_imaginary_protocol }}://{{ cs_nc_imaginary_domain }}:{{ cs_nc_imaginary_port }}'"
       - "config:system:set preview_imaginary_key --value '{{ cs_nc_imaginary_key }}'"
       - "config:system:set preview_max_x --value 2048"
       - "config:system:set preview_max_y --value 2048"
