@@ -1,7 +1,7 @@
 ---
 - name: Database | Elasticsearch | Stop old container
   community.docker.docker_container:
-      name: elasticsearch-main
+      name: "{{ cs_elasticsearch_docker_container_name }}"
       state: absent
       force_kill: true
 
@@ -10,14 +10,14 @@
       path: "{{ cs_elasticsearch_data_dir }}"
       state: directory
       mode: "0777"
-      owner: 1000
-      group: 0
+      owner: "{{ cs_elasticsearch_run_user_id }}"
+      group: "{{ cs_elasticsearch_run_group_id }}"
 
 - name: Database | Elasticsearch | Start Container
   community.docker.docker_container:
-      name: elasticsearch-main
-      image: "docker.io/nextcloud/aio-fulltextsearch:latest"
-      user: 1000:0
+      name: "{{ cs_elasticsearch_docker_container_name }}"
+      image: "{{ cs_elasticsearch_docker_image }}:{{ cs_elasticsearch_docker_image_tag }}"
+      user: "{{ cs_elasticsearch_run_user_id }}:{{ cs_elasticsearch_run_group_id }}"
       volumes:
           - "{{ cs_elasticsearch_data_dir }}:/usr/share/elasticsearch/data:rw"
       ports:
