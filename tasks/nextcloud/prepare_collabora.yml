@@ -5,84 +5,84 @@
       state: absent
       force_kill: true
 
-- name: Nextcloud | Collabora | Create directories
-  ansible.builtin.file:
-      path: "{{ item }}"
-      state: directory
-      mode: "0755"
-  with_items:
-      - "{{ cs_collabora_dir }}"
-      - "{{ cs_collabora_cert_dir }}"
-      - "{{ cs_collabora_cert_pem_file | dirname }}"
-      - "{{ cs_collabora_privkey_pem_file | dirname }}"
-      - "{{ cs_collabora_chain_pem_file | dirname }}"
-      - "{{ cs_collabora_fullchain_pem_file | dirname }}"
+# - name: Nextcloud | Collabora | Create directories
+#   ansible.builtin.file:
+#       path: "{{ item }}"
+#       state: directory
+#       mode: "0755"
+#   with_items:
+#       - "{{ cs_collabora_dir }}"
+#       - "{{ cs_collabora_cert_dir }}"
+#       - "{{ cs_collabora_cert_pem_file | dirname }}"
+#       - "{{ cs_collabora_privkey_pem_file | dirname }}"
+#       - "{{ cs_collabora_chain_pem_file | dirname }}"
+#       - "{{ cs_collabora_fullchain_pem_file | dirname }}"
 
-- name: Nextcloud | Collabora | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_collabora_privkey_pem_file }}"
-      size: 4096
-      mode: "0600"
-      owner: "{{ cs_collabora_run_user_id }}"
-      group: "{{ cs_collabora_run_group_id }}"
+# - name: Nextcloud | Collabora | Create SSL Private key
+#   community.crypto.openssl_privatekey:
+#       path: "{{ cs_collabora_privkey_pem_file }}"
+#       size: 4096
+#       mode: "0600"
+#       owner: "{{ cs_collabora_run_user_id }}"
+#       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Nextcloud | Collabora | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_collabora_cert_dir }}/csr.pem"
-      privatekey_path: "{{ cs_collabora_privkey_pem_file }}"
-      common_name: "{{ cs_nc_domain }}"
-      subject_alt_name:
-          - IP:{{ cs_nc_private_ip }}
-          - DNS:{{ cs_nc_domain }}
-          - IP:127.0.0.1
-          - IP:127.0.1.1
-          - DNS:localhost
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_collabora_run_user_id }}"
-      group: "{{ cs_collabora_run_group_id }}"
+# - name: Nextcloud | Collabora | Create SSL CSR
+#   community.crypto.openssl_csr:
+#       path: "{{ cs_collabora_cert_dir }}/csr.pem"
+#       privatekey_path: "{{ cs_collabora_privkey_pem_file }}"
+#       common_name: "{{ cs_nc_domain }}"
+#       subject_alt_name:
+#           - IP:{{ cs_nc_private_ip }}
+#           - DNS:{{ cs_nc_domain }}
+#           - IP:127.0.0.1
+#           - IP:127.0.1.1
+#           - DNS:localhost
+#       key_usage:
+#           - "digitalSignature"
+#           - "keyEncipherment"
+#           - "keyAgreement"
+#       extended_key_usage:
+#           - "serverAuth"
+#       create_subject_key_identifier: true
+#       mode: "0644"
+#       owner: "{{ cs_collabora_run_user_id }}"
+#       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Nextcloud | Collabora | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_collabora_cert_pem_file }}"
-      csr_path: "{{ cs_collabora_cert_dir }}/csr.pem"
-      provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
-      mode: "0644"
-      return_content: true
-      owner: "{{ cs_collabora_run_user_id }}"
-      group: "{{ cs_collabora_run_group_id }}"
-  register: cs_collabora_ssl_cert
+# - name: Nextcloud | Collabora | Sign SSL CSR
+#   community.crypto.x509_certificate:
+#       path: "{{ cs_collabora_cert_pem_file }}"
+#       csr_path: "{{ cs_collabora_cert_dir }}/csr.pem"
+#       provider: ownca
+#       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+#           lstrip=false, rstrip=false) }}"
+#       ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+#           lstrip=false, rstrip=false) }}"
+#       ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+#           lstrip=false, rstrip=false) }}"
+#       mode: "0644"
+#       return_content: true
+#       owner: "{{ cs_collabora_run_user_id }}"
+#       group: "{{ cs_collabora_run_group_id }}"
+#   register: cs_collabora_ssl_cert
 
-- name: Nextcloud | Collabora | Write Full chain
-  ansible.builtin.copy:
-      content: |+
-          {{ cs_collabora_ssl_cert.certificate | trim }}
-          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
-      dest: "{{ cs_collabora_fullchain_pem_file }}"
-      mode: "0644"
-      owner: "{{ cs_collabora_run_user_id }}"
-      group: "{{ cs_collabora_run_group_id }}"
+# - name: Nextcloud | Collabora | Write Full chain
+#   ansible.builtin.copy:
+#       content: |+
+#           {{ cs_collabora_ssl_cert.certificate | trim }}
+#           {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
+#       dest: "{{ cs_collabora_fullchain_pem_file }}"
+#       mode: "0644"
+#       owner: "{{ cs_collabora_run_user_id }}"
+#       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Nextcloud | Collabora | Write ownca CA certificate
-  ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
-      dest: "{{ cs_collabora_chain_pem_file }}"
-      mode: "0644"
-      remote_src: false
-      owner: "{{ cs_collabora_run_user_id }}"
-      group: "{{ cs_collabora_run_group_id }}"
+# - name: Nextcloud | Collabora | Write ownca CA certificate
+#   ansible.builtin.copy:
+#       src: "{{ cs_root_ca_cert_pem_file }}"
+#       dest: "{{ cs_collabora_chain_pem_file }}"
+#       mode: "0644"
+#       remote_src: false
+#       owner: "{{ cs_collabora_run_user_id }}"
+#       group: "{{ cs_collabora_run_group_id }}"
 
 - name: Nextcloud | Collabora | Start docker container
   community.docker.docker_container:
@@ -96,15 +96,20 @@
       volumes:
           - "{{ cs_collabora_cert_pem_file }}:/etc/coolwsd/cert.pem"
           - "{{ cs_collabora_privkey_pem_file }}:/etc/coolwsd/key.pem"
+          - "{{ cs_collabora_chain_pem_file }}:/usr/local/ssl/certs/ca-chain.cert.pem"
           - "{{ cs_collabora_chain_pem_file }}:/etc/coolwsd/ca-chain.cert.pem"
       env:
           aliasgroup1: "{{ cs_nc_url }}"
           username: "{{ cs_collabora_admin_user }}"
           password: "{{ cs_collabora_admin_password }}"
           domain: "{{ cs_nc_url }}"
-          server_name: "{{ cs_nc_domain }}"
-          extra_params: "--port {{ cs_collabora_port }} --o:ssl.enable=false --o:ssl.termination=true
-              --o:home_mode.enable=true --o:security.seccomp=true"
+          server_name: "{{ cs_nc_domain }}:{{ cs_nc_port }}"
+          extra_params: "--o:ssl.enable=true --o:ssl.termination=false --o:mount_jail_tree=false
+              --o:logging.level=debug --o:home_mode.enable=true --o:security.seccomp=true
+              --o:remote_font_config.url={{ cs_nc_url }}/apps/richdocuments/settings/fonts.json
+              "
+          # extra_params: "--port {{ cs_collabora_port }} --o:ssl.enable=false --o:ssl.termination=true
+          #     --o:home_mode.enable=true --o:security.seccomp=true"
           DONT_GEN_SSL_CERT: "1"
           LC_CTYPE: "C.UTF-8"
           TZ: "Asia/Kolkata"

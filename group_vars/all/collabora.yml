@@ -18,4 +18,4 @@ cs_collabora_docker_image_tag: latest
 cs_collabora_run_user_id: 100
 cs_collabora_run_group_id: 101
 
-cs_collabora_private_url: "http://{{ cs_nc_private_ip }}:{{ cs_collabora_port }}"
+cs_collabora_private_url: "https://{{ cs_nc_private_ip }}:{{ cs_collabora_port }}"
