@@ -1,10 +1,10 @@
 ---
 all:
     vars:
-        keepass_dbx: "{{ lookup('file', '/home/arpan/.cache/codespace.loc') }}"
-        keepass_psw: "{{ lookup('file', '/home/arpan/.cache/codespace.key') }}"
-        keepass_key: /home/arpan/.cache/codespace.keyx
-        keepass_ttl: 5
+        keepass_dbx: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_DBX') | mandatory }}"
+        keepass_psw: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_PSW') | mandatory }}"
+        keepass_key: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_KEY') | mandatory }}"
+        keepass_ttl: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_TTL', default=5) | mandatory | int }}"
 
     children:
         patchservers:
