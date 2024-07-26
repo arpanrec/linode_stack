@@ -16,7 +16,7 @@ cs_postgres_host_public_ip: "127.0.0.1"
 cs_postgres_network_name: postgres-main-net
 cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_password') }}"
 cs_postgres_pg_admin_dir: "{{ cs_postgres_dir }}/pgadmin"
-cs_postgres_pg_admin_domain: "{{ cs_dns_mapping }}"
+cs_postgres_pg_admin_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
 cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_pg_admin_password') }}"
 cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/postgres', 'custom_properties', 'cs_postgres_pg_admin_port') }}"
