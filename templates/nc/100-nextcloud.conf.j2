@@ -23,9 +23,9 @@ Listen {{ cs_nc_port }}
     CustomLog ${APACHE_LOG_DIR}/nextcloud_access.log combined
 {% if cs_nc_protocol == "https" %}
     SSLEngine on
-    SSLCertificateFile /etc/ssl/{{ cs_nc_domain }}/cert.pem
-    SSLCertificateChainFile /etc/ssl/{{ cs_nc_domain }}/chain.pem
-    SSLCertificateKeyFile /etc/ssl/{{ cs_nc_domain }}/privkey.pem
+    SSLCertificateFile {{ cs_nc_cert_cert_file }}
+    SSLCertificateChainFile {{ cs_nc_cert_chain_file }}
+    SSLCertificateKeyFile {{ cs_nc_cert_privkey_file }}
     SSLProtocol             all -SSLv3 -TLSv1 -TLSv1.1 -TLSv1.2
     SSLHonorCipherOrder     off
     SSLSessionTickets       off

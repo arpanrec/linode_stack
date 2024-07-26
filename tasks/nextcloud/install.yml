@@ -18,9 +18,6 @@
             path: /tmp/nextcloud-{{ cs_nc_version }}
             state: directory
             mode: "0755"
-        with_items:
-            - /tmp/nextcloud-{{ cs_nc_version }}
-            - "{{ cs_nc_web_dir }}"
 
       - name: Nextcloud | Install | Download New | Unzip Nextcloud
         ansible.builtin.unarchive:
@@ -54,6 +51,13 @@
   with_items:
       - "{{ cs_nc_data_dir }}"
       - "{{ cs_nc_cert_dir }}"
+      - "{{ cs_nc_root_ca_chain_pem_file | dirname }}"
+      - "{{ cs_nc_log_file | dirname }}"
+      - "{{ cs_nc_db_cert_dir }}"
+      - "{{ cs_nc_db_cert_pem_file | dirname }}"
+      - "{{ cs_nc_db_privkey_pem_file | dirname }}"
+      - "{{ cs_nc_db_chain_pem_file | dirname }}"
+      - "{{ cs_nc_db_cert_csr_file | dirname }}"
 
 - name: Nextcloud | Install | Copy icons
   ansible.builtin.copy:
@@ -80,7 +84,7 @@
 
 - name: Nextcloud | Install | Databse Client Certificate | Create SSL CSR
   community.crypto.openssl_csr:
-      path: "/tmp/nc_db_client.csr"
+      path: "{{ cs_nc_db_cert_csr_file }}"
       privatekey_path: "{{ cs_nc_db_privkey_pem_file }}"
       common_name: "{{ cs_nc_db_user }}"
       key_usage:
@@ -97,7 +101,7 @@
 - name: Nextcloud | Install | Databse Client Certificate | Sign SSL CSR
   community.crypto.x509_certificate:
       path: "{{ cs_nc_db_cert_pem_file }}"
-      csr_path: "/tmp/nc_db_client.csr"
+      csr_path: "{{ cs_nc_db_cert_csr_file }}"
       provider: ownca
       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
           lstrip=false, rstrip=false) }}"
@@ -108,7 +112,6 @@
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
-      return_content: true
 
 - name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
   ansible.builtin.copy:
@@ -375,20 +378,20 @@
 
 - name: Nextcloud | Install | Create systemd unit file for nextcloud cron
   ansible.builtin.template:
-      dest: "/etc/systemd/system/nextcloud-cron.service"
-      src: "templates/nc/nextcloud-cron.service.j2"
+      dest: "/etc/systemd/system/{{ cs_nc_cron_system_timer_name }}.service"
+      src: "templates/nc/{{ cs_nc_cron_system_timer_name }}.service.j2"
       mode: "0644"
 
 - name: Nextcloud | Install | Create systemd timmer file for nextcloud cron
   ansible.builtin.copy:
-      dest: "/etc/systemd/system/nextcloud-cron.timer"
-      src: files/nc/nextcloud-cron.timer
+      dest: "/etc/systemd/system/{{ cs_nc_cron_system_timer_name }}.timer"
+      src: files/nc/{{ cs_nc_cron_system_timer_name }}.timer
       mode: "0644"
       remote_src: false
 
 - name: Nextcloud | Install | Enable systemd timmer for nextcloud cron
   ansible.builtin.systemd_service:
-      name: nextcloud-cron.timer
+      name: "{{ cs_nc_cron_system_timer_name }}.timer"
       enabled: true
       state: restarted
       daemon_reload: true
