@@ -246,6 +246,15 @@
       - mime
       - ssl
       - socache_shmcb
+      - proxy
+      - proxy_http
+      - proxy_ajp
+      - rewrite
+      - deflate
+      - headers
+      - proxy_balancer
+      - proxy_connect
+      - proxy_html
 
 - name: Nextcloud | Prepare | Enable Apache2 config for PHP
   ansible.builtin.command:

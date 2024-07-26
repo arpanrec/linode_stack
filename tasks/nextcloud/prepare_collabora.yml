@@ -1,11 +1,11 @@
 ---
-- name: Collabora | Make sure existing container is stopped
+- name: Nextcloud | Collabora | Make sure existing container is stopped
   community.general.docker_container:
       name: "{{ cs_collabora_container_name }}"
       state: absent
       force_kill: true
 
-- name: Collabora | Create directories
+- name: Nextcloud | Collabora | Create directories
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
@@ -18,7 +18,7 @@
       - "{{ cs_collabora_chain_pem_file | dirname }}"
       - "{{ cs_collabora_fullchain_pem_file | dirname }}"
 
-- name: Collabora | Create SSL Private key
+- name: Nextcloud | Collabora | Create SSL Private key
   community.crypto.openssl_privatekey:
       path: "{{ cs_collabora_privkey_pem_file }}"
       size: 4096
@@ -26,13 +26,17 @@
       owner: "{{ cs_collabora_run_user_id }}"
       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Collabora | Create SSL CSR
+- name: Nextcloud | Collabora | Create SSL CSR
   community.crypto.openssl_csr:
       path: "{{ cs_collabora_cert_dir }}/csr.pem"
       privatekey_path: "{{ cs_collabora_privkey_pem_file }}"
-      common_name: "{{ cs_collabora_domain }}"
+      common_name: "{{ cs_nc_domain }}"
       subject_alt_name:
-          - "DNS:{{ cs_collabora_domain }}"
+          - IP:{{ cs_nc_private_ip }}
+          - DNS:{{ cs_nc_domain }}
+          - IP:127.0.0.1
+          - IP:127.0.1.1
+          - DNS:localhost
       key_usage:
           - "digitalSignature"
           - "keyEncipherment"
@@ -44,7 +48,7 @@
       owner: "{{ cs_collabora_run_user_id }}"
       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Collabora | Sign SSL CSR
+- name: Nextcloud | Collabora | Sign SSL CSR
   community.crypto.x509_certificate:
       path: "{{ cs_collabora_cert_pem_file }}"
       csr_path: "{{ cs_collabora_cert_dir }}/csr.pem"
@@ -61,7 +65,7 @@
       group: "{{ cs_collabora_run_group_id }}"
   register: cs_collabora_ssl_cert
 
-- name: Collabora | Write Full chain
+- name: Nextcloud | Collabora | Write Full chain
   ansible.builtin.copy:
       content: |+
           {{ cs_collabora_ssl_cert.certificate | trim }}
@@ -71,7 +75,7 @@
       owner: "{{ cs_collabora_run_user_id }}"
       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Collabora | Write ownca CA certificate
+- name: Nextcloud | Collabora | Write ownca CA certificate
   ansible.builtin.copy:
       src: "{{ cs_root_ca_cert_pem_file }}"
       dest: "{{ cs_collabora_chain_pem_file }}"
@@ -80,7 +84,7 @@
       owner: "{{ cs_collabora_run_user_id }}"
       group: "{{ cs_collabora_run_group_id }}"
 
-- name: Collabora | Start docker container
+- name: Nextcloud | Collabora | Start docker container
   community.docker.docker_container:
       name: "{{ cs_collabora_container_name }}"
       image: "{{ cs_collabora_docker_image }}:{{ cs_collabora_docker_image_tag }}"
@@ -94,8 +98,14 @@
           - "{{ cs_collabora_privkey_pem_file }}:/etc/coolwsd/key.pem"
           - "{{ cs_collabora_chain_pem_file }}:/etc/coolwsd/ca-chain.cert.pem"
       env:
+          aliasgroup1: "{{ cs_nc_url }}"
           username: "{{ cs_collabora_admin_user }}"
           password: "{{ cs_collabora_admin_password }}"
-          domain: "{{ cs_collabora_domain }}"
-          extra_params: "--port {{ cs_collabora_port }} --o:ssl.enable=true"
-          DONT_GEN_SSL_CERT: "true"
+          domain: "{{ cs_nc_url }}"
+          server_name: "{{ cs_nc_domain }}"
+          extra_params: "--port {{ cs_collabora_port }} --o:ssl.enable=false --o:ssl.termination=true
+              --o:home_mode.enable=true --o:security.seccomp=true"
+          DONT_GEN_SSL_CERT: "1"
+          LC_CTYPE: "C.UTF-8"
+          TZ: "Asia/Kolkata"
+          dictionaries: "de_DE en_GB en_US es_ES fr_FR it nl pt_BR pt_PT ru"
