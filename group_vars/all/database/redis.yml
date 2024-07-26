@@ -1,0 +1,23 @@
+---
+cs_redis_dir: /app/redis
+cs_redis_data_dir: "{{ cs_redis_dir }}/data"
+cs_redis_certs_dir: "{{ cs_redis_dir }}/certs"
+cs_redis_certs_privkey_file: "{{ cs_redis_certs_dir }}/privkey.pem"
+cs_redis_certs_cert_file: "{{ cs_redis_certs_dir }}/cert.pem"
+cs_redis_certs_chain_file: "{{ cs_redis_certs_dir }}/chain.pem"
+cs_redis_certs_csr_file: "{{ cs_redis_certs_dir }}/csr.pem"
+
+cs_redis_client_certs_dir: "{{ cs_redis_dir }}/client_certs"
+cs_redis_client_certs_key_file: "{{ cs_redis_client_certs_dir }}/client.key"
+cs_redis_client_certs_csr_file: "{{ cs_redis_client_certs_dir }}/client.csr"
+cs_redis_client_certs_cert_file: "{{ cs_redis_client_certs_dir }}/client.crt"
+cs_redis_client_certs_ca_file: "{{ cs_redis_client_certs_dir }}/ca.crt"
+
+redis_container_name: redis
+redis_docker_image: "docker.io/library/redis"
+redis_docker_image_tag: "7.2.0"
+
+cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_password') }}"
+cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
+cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_tls_port') }}"
+cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_tls_privkey_pass') }}"
