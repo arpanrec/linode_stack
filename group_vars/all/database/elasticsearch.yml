@@ -1,4 +1,11 @@
 ---
+cs_elasticsearch_docker_container_name: elasticsearch
+cs_elasticsearch_docker_image: docker.io/nextcloud/aio-fulltextsearch
+cs_elasticsearch_docker_image_tag: latest
+
+cs_elasticsearch_run_user_id: 1000
+cs_elasticsearch_run_group_id: 0
+
 cs_elasticsearch_data_dir: /app/elasticsearch
 cs_elasticsearch_host: "{{ cs_rb4_m1_ip }}"
 cs_elasticsearch_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/elasticsearch', 'custom_properties', 'cs_elasticsearch_password') }}"

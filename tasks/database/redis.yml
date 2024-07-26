@@ -24,12 +24,6 @@
       state: absent
       force_kill: true
 
-- name: Database | Redis | Enable UFW port
-  community.general.ufw:
-      rule: allow
-      port: "{{ cs_redis_tls_port }}"
-      state: enabled
-
 - name: Database | Redis | Create SSL Private key
   community.crypto.openssl_privatekey:
       path: "{{ cs_redis_certs_privkey_file }}"
@@ -85,7 +79,7 @@
       name: "{{ redis_container_name }}"
       image: "{{ redis_docker_image }}:{{ redis_docker_image_tag }}"
       state: started
-      # restart_policy: unless-stopped
+      restart_policy: unless-stopped
       volumes:
           - "{{ cs_redis_data_dir }}:/data"
           - "{{ cs_redis_certs_privkey_file }}:/server.key"
@@ -98,6 +92,12 @@
           --tls-port "{{ cs_redis_tls_port }}" --tls-cert-file /server.crt --tls-auth-clients yes
           --tls-key-file /server.key --tls-ca-cert-file /ca.crt
           --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
+
+- name: Database | Redis | Enable UFW port
+  community.general.ufw:
+      rule: allow
+      port: "{{ cs_redis_tls_port }}"
+      state: enabled
 
 - name: Database | Redis | Test | Install Redis Tools
   ansible.builtin.apt:
