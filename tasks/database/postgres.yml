@@ -255,8 +255,7 @@
   ansible.builtin.copy:
       src: "{{ cs_postgres_client_certs_dir }}/"
       dest: "{{ cs_postgres_pg_admin_client_certs_dir }}"
-      mode: "0644"
-      directory_mode: "0755"
+      mode: "0755"
       owner: "{{ cs_postgres_pg_admin_run_user }}"
       group: "{{ cs_postgres_pg_admin_run_group }}"
       remote_src: true
