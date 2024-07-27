@@ -380,10 +380,6 @@
   ansible.builtin.import_tasks:
       file: tasks/nextcloud/install_collabora.yml
 
-- name: Nextcloud | Install | Office | Collabora
-  ansible.builtin.import_tasks:
-      file: tasks/nextcloud/install_collabora.yml
-
 - name: Nextcloud | Install | Create systemd unit file for nextcloud cron
   ansible.builtin.template:
       dest: "/etc/systemd/system/{{ cs_nc_cron_system_timer_name }}.service"
