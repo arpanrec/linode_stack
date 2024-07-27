@@ -42,10 +42,10 @@ cs_mini0_mini0_kes_endpoint: https://{{ cs_mini0_kes_container_name }}:{{ cs_min
 
 cs_mini0_mini0_container_name: mini0
 cs_mini0_mini0_image: docker.io/minio/minio
-cs_mini0_mini0_version: RELEASE.2024-07-04T14-25-45Z
+cs_mini0_mini0_version: RELEASE.2024-07-26T20-48-21Z
 cs_mini0_mini0_default_kms_key_id: my-minio-key
-cs_mini0_mini0_port: 9000
-cs_mini0_mini0_console_port: 9001
+cs_mini0_mini0_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/mini0', 'custom_properties', 'cs_mini0_mini0_port') }}"
+cs_mini0_mini0_console_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/mini0', 'custom_properties', 'cs_mini0_mini0_console_port') }}"
 cs_mini0_mini0_root_user: "{{ lookup('viczem.keepass.keepass', 'home_inventory/mini0', 'custom_properties', 'cs_mini0_mini0_root_user') }}"
 cs_mini0_mini0_root_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/mini0', 'custom_properties', 'cs_mini0_mini0_root_password') }}"
 cs_mini0_mini0_region: "{{ lookup('viczem.keepass.keepass', 'home_inventory/mini0', 'custom_properties', 'cs_mini0_mini0_region') }}"

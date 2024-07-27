@@ -75,6 +75,7 @@
       subject_alt_name:
           - "IP:{{ cs_mini0_mini0_public_ip }}"
           - "DNS:{{ cs_mini0_mini0_domain }}"
+          - "DNS:*.{{ cs_mini0_mini0_domain }}"
           - "IP:{{ cs_mini0_mini0_private_ip }}"
       key_usage:
           - "digitalSignature"
@@ -142,11 +143,12 @@
           - "{{ cs_mini0_mini0_kes_admin_cert }}:{{ cs_mini0_mini0_kes_admin_cert }}"
           - "{{ cs_mini0_mini0_kes_ca_cert }}:{{ cs_mini0_mini0_kes_ca_cert }}"
           - "{{ cs_mini0_mini0_private_key }}:/certs/private.key"
-          - "{{ cs_mini0_mini0_cert_file }}:/certs/public.crt"
+          - "{{ cs_mini0_mini0_fullchain_file }}:/certs/public.crt"
           - "{{ cs_mini0_mini0_chain_file }}:/certs/CAs/chain.crt"
       networks:
           - name: "{{ cs_mini0_docker_network_name }}"
       env:
+          MINIO_DOMAIN: "{{ cs_mini0_mini0_domain }}"
           MINIO_KMS_KES_ENDPOINT: "{{ cs_mini0_mini0_kes_endpoint }}"
           MINIO_KMS_KES_KEY_FILE: "{{ cs_mini0_mini0_kes_admin_key }}"
           MINIO_KMS_KES_CERT_FILE: "{{ cs_mini0_mini0_kes_admin_cert }}"
