@@ -37,9 +37,6 @@
       item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
       )
 
-- name: Nextcloud | Install | Office | Collabora | Gather facts
-  ansible.builtin.setup:
-
 - name: Nextcloud | Install | Office | Collabora | Set Collabora State if true
   ansible.builtin.set_fact:
       cs_nc_collabora_state: true
