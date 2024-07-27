@@ -91,6 +91,19 @@
         ansible.builtin.import_tasks:
             file: tasks/onlyoffice.yml
 
+- name: Collabora
+  hosts: rb4-m2
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Collabora
+        tags: never,collabora
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/collabora.yml
+
 - name: Nextcloud
   hosts: rb4-m3
   become: false
@@ -104,13 +117,6 @@
                 - "cs_nc_protocol in ['http', 'https']"
             fail_msg: "cs_nc_protocol must be either 'http' or 'https'"
             success_msg: "cs_nc_protocol is valid"
-
-      - name: Nextcloud | Collabora
-        tags: never,nextcloud_prepare_collabora
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/nextcloud/prepare_collabora.yml
 
       - name: Nextcloud | Prepare
         tags: never,nextcloud,nextcloud_prepare

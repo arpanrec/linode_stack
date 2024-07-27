@@ -1,249 +1,249 @@
 ---
-- name: Nextcloud | Prepare | Install Packages
-  ansible.builtin.apt:
-      state: present
-      name:
-          - ffmpeg
-          - libvips-dev
-          - libvips42
-          - libsystemd-dev
-          - imagemagick
-          - python3-requests
-          - memcached
-          - libmagickcore-6.q16-6-extra
+# - name: Nextcloud | Prepare | Install Packages
+#   ansible.builtin.apt:
+#       state: present
+#       name:
+#           - ffmpeg
+#           - libvips-dev
+#           - libvips42
+#           - libsystemd-dev
+#           - imagemagick
+#           - python3-requests
+#           - memcached
+#           - libmagickcore-6.q16-6-extra
 
-- name: Nextcloud | Prepare | Change ImageMagick policy
-  ansible.builtin.replace:
-      path: /etc/ImageMagick-6/policy.xml
-      regexp: 'rights="none" pattern="{{ item }}"'
-      replace: 'rights="read|write" pattern="{{ item }}"'
-      backup: true
-      owner: root
-      group: root
-      mode: "0644"
-  with_items:
-      - "PNG"
-      - "PDF"
-      - "XPS"
-      - "EPS"
-      - "PS2"
-      - "PS"
-      - "PS3"
+# - name: Nextcloud | Prepare | Change ImageMagick policy
+#   ansible.builtin.replace:
+#       path: /etc/ImageMagick-6/policy.xml
+#       regexp: 'rights="none" pattern="{{ item }}"'
+#       replace: 'rights="read|write" pattern="{{ item }}"'
+#       backup: true
+#       owner: root
+#       group: root
+#       mode: "0644"
+#   with_items:
+#       - "PNG"
+#       - "PDF"
+#       - "XPS"
+#       - "EPS"
+#       - "PS2"
+#       - "PS"
+#       - "PS3"
 
-- name: Nextcloud | Prepare | Enable Local Memcached
-  ansible.builtin.systemd_service:
-      name: memcached
-      enabled: true
-      state: started
+# - name: Nextcloud | Prepare | Enable Local Memcached
+#   ansible.builtin.systemd_service:
+#       name: memcached
+#       enabled: true
+#       state: started
 
-- name: Nextcloud | Prepare | Download Debian PHP Repository gpg key
-  ansible.builtin.get_url:
-      url: "https://packages.sury.org/php/apt.gpg"
-      dest: "/etc/apt/trusted.gpg.d/php.gpg"
-      mode: "0644"
-      owner: root
-      group: root
-- name: Nextcloud | Prepare | Gather Facts
-  ansible.builtin.setup:
+# - name: Nextcloud | Prepare | Download Debian PHP Repository gpg key
+#   ansible.builtin.get_url:
+#       url: "https://packages.sury.org/php/apt.gpg"
+#       dest: "/etc/apt/trusted.gpg.d/php.gpg"
+#       mode: "0644"
+#       owner: root
+#       group: root
+# - name: Nextcloud | Prepare | Gather Facts
+#   ansible.builtin.setup:
 
-- name: Nextcloud | Prepare | Add PHP Repository
-  ansible.builtin.apt_repository:
-      repo: "deb [signed-by=/etc/apt/trusted.gpg.d/php.gpg] https://packages.sury.org/php/
-          {{ ansible_distribution_release }} main"
-      state: present
-      filename: "php"
-      update_cache: true
+# - name: Nextcloud | Prepare | Add PHP Repository
+#   ansible.builtin.apt_repository:
+#       repo: "deb [signed-by=/etc/apt/trusted.gpg.d/php.gpg] https://packages.sury.org/php/
+#           {{ ansible_distribution_release }} main"
+#       state: present
+#       filename: "php"
+#       update_cache: true
 
-- name: Nextcloud | Prepare | Install php packages for {{ cs_nc_php_version }}
-  ansible.builtin.apt:
-      name:
-          - php{{ cs_nc_php_version }}
-          - php{{ cs_nc_php_version }}-cli
-          - php{{ cs_nc_php_version }}-curl
-          - php{{ cs_nc_php_version }}-gd
-          - php{{ cs_nc_php_version }}-bz2
-          - php{{ cs_nc_php_version }}-mbstring
-          - php{{ cs_nc_php_version }}-intl
-          - php{{ cs_nc_php_version }}-xml
-          - php{{ cs_nc_php_version }}-zip
-          - php{{ cs_nc_php_version }}-common
-          - php{{ cs_nc_php_version }}-pgsql
-          - php{{ cs_nc_php_version }}-ldap
-          - php{{ cs_nc_php_version }}-smbclient
-          - php{{ cs_nc_php_version }}-imap
-          - php{{ cs_nc_php_version }}-bcmath
-          - php{{ cs_nc_php_version }}-gmp
-          - php{{ cs_nc_php_version }}-imagick
-          - php{{ cs_nc_php_version }}-redis
-          - php{{ cs_nc_php_version }}-apcu
-          - php{{ cs_nc_php_version }}-opcache
-          - php{{ cs_nc_php_version }}-igbinary
-          - php{{ cs_nc_php_version }}-memcached
-          - php{{ cs_nc_php_version }}-soap
-          - php{{ cs_nc_php_version }}-xmlrpc
-          - php{{ cs_nc_php_version }}-mysql
-          - php{{ cs_nc_php_version }}-dev
-          - php{{ cs_nc_php_version }}-imagick
-          - php{{ cs_nc_php_version }}-fpm
-      install_recommends: true
+# - name: Nextcloud | Prepare | Install php packages for {{ cs_nc_php_version }}
+#   ansible.builtin.apt:
+#       name:
+#           - php{{ cs_nc_php_version }}
+#           - php{{ cs_nc_php_version }}-cli
+#           - php{{ cs_nc_php_version }}-curl
+#           - php{{ cs_nc_php_version }}-gd
+#           - php{{ cs_nc_php_version }}-bz2
+#           - php{{ cs_nc_php_version }}-mbstring
+#           - php{{ cs_nc_php_version }}-intl
+#           - php{{ cs_nc_php_version }}-xml
+#           - php{{ cs_nc_php_version }}-zip
+#           - php{{ cs_nc_php_version }}-common
+#           - php{{ cs_nc_php_version }}-pgsql
+#           - php{{ cs_nc_php_version }}-ldap
+#           - php{{ cs_nc_php_version }}-smbclient
+#           - php{{ cs_nc_php_version }}-imap
+#           - php{{ cs_nc_php_version }}-bcmath
+#           - php{{ cs_nc_php_version }}-gmp
+#           - php{{ cs_nc_php_version }}-imagick
+#           - php{{ cs_nc_php_version }}-redis
+#           - php{{ cs_nc_php_version }}-apcu
+#           - php{{ cs_nc_php_version }}-opcache
+#           - php{{ cs_nc_php_version }}-igbinary
+#           - php{{ cs_nc_php_version }}-memcached
+#           - php{{ cs_nc_php_version }}-soap
+#           - php{{ cs_nc_php_version }}-xmlrpc
+#           - php{{ cs_nc_php_version }}-mysql
+#           - php{{ cs_nc_php_version }}-dev
+#           - php{{ cs_nc_php_version }}-imagick
+#           - php{{ cs_nc_php_version }}-fpm
+#       install_recommends: true
 
-- name: Nextcloud | Prepare | Install Apache2
-  ansible.builtin.apt:
-      name:
-          - apache2
-          - apache2-utils
-          - libapache2-mod-php{{ cs_nc_php_version }}
-      install_recommends: true
+# - name: Nextcloud | Prepare | Install Apache2
+#   ansible.builtin.apt:
+#       name:
+#           - apache2
+#           - apache2-utils
+#           - libapache2-mod-php{{ cs_nc_php_version }}
+#       install_recommends: true
 
-- name: Nextcloud | Prepare | Change PHP ini settings
-  community.general.ini_file:
-      path: "{{ item.path }}"
-      section: "{{ item.section | default('') }}"
-      option: "{{ item.option }}"
-      value: "{{ item.value }}"
-      mode: "0644"
-      owner: root
-      group: root
-      create: false
-      no_extra_spaces: "{{ item.no_extra_spaces | default(true) }}"
-  with_items:
-      - path: /etc/php/{{ cs_nc_php_version }}/fpm/php.ini
-        section: PHP
-        option: memory_limit
-        value: 1024M
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/apache2/php.ini
-        section: PHP
-        option: memory_limit
-        value: 1024M
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
-        section: www
-        option: env[HOSTNAME]
-        value: $HOSTNAME
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
-        section: www
-        option: env[PATH]
-        value: /usr/local/bin:/usr/bin:/bin
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
-        section: www
-        option: env[TMP]
-        value: /tmp
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
-        section: www
-        option: env[TMPDIR]
-        value: /tmp
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
-        section: www
-        option: env[TEMP]
-        value: /tmp
-        no_extra_spaces: false
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/apcu.ini
-        option: extension
-        value: apcu.so
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/apcu.ini
-        option: apc.enable_cli
-        value: 1
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: zend_extension
-        value: opcache.so
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.enable
-        value: 1
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.enable_cli
-        value: 1
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.revalidate_freq
-        value: 60
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.validate_timestamps
-        value: 0
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.save_comments
-        value: 1
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.jit
-        value: 1255
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.jit_buffer_size
-        value: 128M
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.interned_strings_buffer
-        value: 64
-      - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
-        option: opcache.memory_consumption
-        value: 256
+# - name: Nextcloud | Prepare | Change PHP ini settings
+#   community.general.ini_file:
+#       path: "{{ item.path }}"
+#       section: "{{ item.section | default('') }}"
+#       option: "{{ item.option }}"
+#       value: "{{ item.value }}"
+#       mode: "0644"
+#       owner: root
+#       group: root
+#       create: false
+#       no_extra_spaces: "{{ item.no_extra_spaces | default(true) }}"
+#   with_items:
+#       - path: /etc/php/{{ cs_nc_php_version }}/fpm/php.ini
+#         section: PHP
+#         option: memory_limit
+#         value: 1024M
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/apache2/php.ini
+#         section: PHP
+#         option: memory_limit
+#         value: 1024M
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
+#         section: www
+#         option: env[HOSTNAME]
+#         value: $HOSTNAME
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
+#         section: www
+#         option: env[PATH]
+#         value: /usr/local/bin:/usr/bin:/bin
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
+#         section: www
+#         option: env[TMP]
+#         value: /tmp
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
+#         section: www
+#         option: env[TMPDIR]
+#         value: /tmp
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/fpm/pool.d/www.conf
+#         section: www
+#         option: env[TEMP]
+#         value: /tmp
+#         no_extra_spaces: false
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/apcu.ini
+#         option: extension
+#         value: apcu.so
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/apcu.ini
+#         option: apc.enable_cli
+#         value: 1
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: zend_extension
+#         value: opcache.so
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.enable
+#         value: 1
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.enable_cli
+#         value: 1
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.revalidate_freq
+#         value: 60
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.validate_timestamps
+#         value: 0
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.save_comments
+#         value: 1
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.jit
+#         value: 1255
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.jit_buffer_size
+#         value: 128M
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.interned_strings_buffer
+#         value: 64
+#       - path: /etc/php/{{ cs_nc_php_version }}/mods-available/opcache.ini
+#         option: opcache.memory_consumption
+#         value: 256
 
-- name: Nextcloud | Prepare | Create SSL Directory
-  when: cs_nc_protocol == "https"
-  ansible.builtin.file:
-      path: "{{ item }}"
-      state: directory
-      mode: "0755"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-  with_items:
-      - "{{ cs_nc_cert_dir }}"
-      - "{{ cs_nc_cert_privkey_file | dirname }}"
-      - "{{ cs_nc_cert_cert_file | dirname }}"
-      - "{{ cs_nc_cert_chain_file | dirname }}"
-      - "{{ cs_nc_cert_cert_csr_file | dirname }}"
+# - name: Nextcloud | Prepare | Create SSL Directory
+#   when: cs_nc_protocol == "https"
+#   ansible.builtin.file:
+#       path: "{{ item }}"
+#       state: directory
+#       mode: "0755"
+#       owner: "{{ cs_nc_run_user }}"
+#       group: "{{ cs_nc_run_group }}"
+#   with_items:
+#       - "{{ cs_nc_cert_dir }}"
+#       - "{{ cs_nc_cert_privkey_file | dirname }}"
+#       - "{{ cs_nc_cert_cert_file | dirname }}"
+#       - "{{ cs_nc_cert_chain_file | dirname }}"
+#       - "{{ cs_nc_cert_cert_csr_file | dirname }}"
 
-- name: Nextcloud | Prepare | Server Certificate | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_nc_cert_privkey_file }}"
-      size: 4096
-      mode: "0600"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
+# - name: Nextcloud | Prepare | Server Certificate | Create SSL Private key
+#   community.crypto.openssl_privatekey:
+#       path: "{{ cs_nc_cert_privkey_file }}"
+#       size: 4096
+#       mode: "0600"
+#       owner: "{{ cs_nc_run_user }}"
+#       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Prepare | Server Certificate | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_nc_cert_cert_csr_file }}"
-      privatekey_path: "{{ cs_nc_cert_privkey_file }}"
-      common_name: "{{ cs_nc_domain }}"
-      subject_alt_name:
-          - "DNS:{{ cs_nc_domain }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
+# - name: Nextcloud | Prepare | Server Certificate | Create SSL CSR
+#   community.crypto.openssl_csr:
+#       path: "{{ cs_nc_cert_cert_csr_file }}"
+#       privatekey_path: "{{ cs_nc_cert_privkey_file }}"
+#       common_name: "{{ cs_nc_domain }}"
+#       subject_alt_name:
+#           - "DNS:{{ cs_nc_domain }}"
+#       key_usage:
+#           - "digitalSignature"
+#           - "keyEncipherment"
+#           - "keyAgreement"
+#       extended_key_usage:
+#           - "serverAuth"
+#       create_subject_key_identifier: true
+#       mode: "0644"
+#       owner: "{{ cs_nc_run_user }}"
+#       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Prepare | Server Certificate | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_nc_cert_cert_file }}"
-      csr_path: "{{ cs_nc_cert_cert_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
-      mode: "0644"
-      return_content: true
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
+# - name: Nextcloud | Prepare | Server Certificate | Sign SSL CSR
+#   community.crypto.x509_certificate:
+#       path: "{{ cs_nc_cert_cert_file }}"
+#       csr_path: "{{ cs_nc_cert_cert_csr_file }}"
+#       provider: ownca
+#       ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+#           lstrip=false, rstrip=false) }}"
+#       ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+#           lstrip=false, rstrip=false) }}"
+#       ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+#           lstrip=false, rstrip=false) }}"
+#       mode: "0644"
+#       return_content: true
+#       owner: "{{ cs_nc_run_user }}"
+#       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Prepare | Server Certificate | Write CA certificate
-  ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
-      dest: "{{ cs_nc_cert_chain_file }}"
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-      remote_src: false
+# - name: Nextcloud | Prepare | Server Certificate | Write CA certificate
+#   ansible.builtin.copy:
+#       src: "{{ cs_root_ca_cert_pem_file }}"
+#       dest: "{{ cs_nc_cert_chain_file }}"
+#       mode: "0644"
+#       owner: "{{ cs_nc_run_user }}"
+#       group: "{{ cs_nc_run_group }}"
+#       remote_src: false
 
 - name: Nextcloud | Prepare | Create Apache2 config
   ansible.builtin.template:
@@ -253,54 +253,54 @@
       owner: root
       group: root
 
-- name: Nextcloud | Prepare | Create DocumentRoot
-  ansible.builtin.file:
-      path: "{{ cs_nc_web_dir }}"
-      state: directory
-      mode: "0755"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
+# - name: Nextcloud | Prepare | Create DocumentRoot
+#   ansible.builtin.file:
+#       path: "{{ cs_nc_web_dir }}"
+#       state: directory
+#       mode: "0755"
+#       owner: "{{ cs_nc_run_user }}"
+#       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Prepare | Enable Apache2 Modules
-  community.general.apache2_module:
-      name: "{{ item }}"
-      state: present
-  with_items:
-      - proxy_fcgi
-      - setenvif
-      - rewrite
-      - headers
-      - env
-      - dir
-      - mime
-      - ssl
-      - socache_shmcb
+# - name: Nextcloud | Prepare | Enable Apache2 Modules
+#   community.general.apache2_module:
+#       name: "{{ item }}"
+#       state: present
+#   with_items:
+#       - proxy_fcgi
+#       - setenvif
+#       - rewrite
+#       - headers
+#       - env
+#       - dir
+#       - mime
+#       - ssl
+#       - socache_shmcb
 
-- name: Nextcloud | Prepare | Enable Apache2 config for PHP
-  ansible.builtin.command:
-      cmd: a2enconf php{{ cs_nc_php_version }}-fpm
-  changed_when: true
+# - name: Nextcloud | Prepare | Enable Apache2 config for PHP
+#   ansible.builtin.command:
+#       cmd: a2enconf php{{ cs_nc_php_version }}-fpm
+#   changed_when: true
 
-- name: Nextcloud | Prepare | Enable Apache2 site for Nextcloud and SSL
-  ansible.builtin.command:
-      cmd: a2ensite default-ssl {{ cs_nc_apache_template_name }}
-  changed_when: true
+# - name: Nextcloud | Prepare | Enable Apache2 site for Nextcloud and SSL
+#   ansible.builtin.command:
+#       cmd: a2ensite default-ssl {{ cs_nc_apache_template_name }}
+#   changed_when: true
 
-- name: Nextcloud | Prepare | Create php systemd fpm override directory
-  ansible.builtin.file:
-      path: /etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d
-      state: directory
-      mode: "0755"
-      owner: root
-      group: root
+# - name: Nextcloud | Prepare | Create php systemd fpm override directory
+#   ansible.builtin.file:
+#       path: /etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d
+#       state: directory
+#       mode: "0755"
+#       owner: root
+#       group: root
 
-- name: Nextcloud | Prepare | Create php systemd fpm override config for run directory
-  ansible.builtin.template:
-      src: templates/nc/php-systemd-override.conf.j2
-      dest: "/etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d/override.conf"
-      mode: "0644"
-      owner: root
-      group: root
+# - name: Nextcloud | Prepare | Create php systemd fpm override config for run directory
+#   ansible.builtin.template:
+#       src: templates/nc/php-systemd-override.conf.j2
+#       dest: "/etc/systemd/system/php{{ cs_nc_php_version }}-fpm.service.d/override.conf"
+#       mode: "0644"
+#       owner: root
+#       group: root
 
 - name: Nextcloud | Prepare | Restart apache2 and php-fpm
   ansible.builtin.systemd_service:

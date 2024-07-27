@@ -32,40 +32,48 @@ Listen {{ cs_nc_port }}
 {% else %}
     SSLEngine off
 {% endif %}
+{% if (cs_nc_collabora_ip is defined and cs_nc_collabora_https_port is defined) %}
 
-    # ProxyPreserveHost On
-    # SSLProxyEngine On
-    # AllowEncodedSlashes NoDecode
-    # SSLProxyVerify None
-    # SSLProxyCheckPeerCN Off
-    # SSLProxyCheckPeerName Off
+    # Start Collabora reverse proxy configuration
 
-    # # static html, js, images, etc. served from coolwsd
-    # # browser is the client part of Collabora Online
-    # ProxyPass           /browser {{ cs_collabora_private_url }}/browser retry=0
-    # ProxyPassReverse    /browser {{ cs_collabora_private_url }}/browser
+    ProxyPreserveHost On
+    AllowEncodedSlashes NoDecode
+    SSLProxyEngine On
 
-    # # WOPI discovery URL
-    # ProxyPass           /hosting/discovery {{ cs_collabora_private_url }}/hosting/discovery retry=0
-    # ProxyPassReverse    /hosting/discovery {{ cs_collabora_private_url }}/hosting/discovery
+    # cert is issued for collaboraonline.example.com and we proxy to localhost
+    SSLProxyVerify None
+    SSLProxyCheckPeerCN Off
+    SSLProxyCheckPeerName Off
 
-    # # Capabilities
-    # ProxyPass           /hosting/capabilities {{ cs_collabora_private_url }}/hosting/capabilities retry=0
-    # ProxyPassReverse    /hosting/capabilities {{ cs_collabora_private_url }}/hosting/capabilities
+    # static html, js, images, etc. served from coolwsd
+    # browser is the client part of Collabora Online
+    ProxyPass           /browser https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/browser retry=0
+    ProxyPassReverse    /browser https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/browser
 
-    # # Main websocket
-    # ProxyPassMatch      "/cool/(.*)/ws$"      wss://{{ cs_nc_private_ip }}:{{ cs_collabora_port }}/cool/$1/ws nocanon
+    # WOPI discovery URL
+    ProxyPass           /hosting/discovery https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/discovery retry=0
+    ProxyPassReverse    /hosting/discovery https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/discovery
 
-    # # Admin Console websocket
-    # ProxyPass           /cool/adminws wss://{{ cs_nc_private_ip }}:{{ cs_collabora_port }}/cool/adminws
+    # Capabilities
+    ProxyPass           /hosting/capabilities https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/capabilities retry=0
+    ProxyPassReverse    /hosting/capabilities https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/capabilities
 
-    # # Download as, Fullscreen presentation and Image upload operations
-    # ProxyPass           /cool {{ cs_collabora_private_url }}/cool
-    # ProxyPassReverse    /cool {{ cs_collabora_private_url }}/cool
-    # # Compatibility with integrations that use the /lool/convert-to endpoint
-    # ProxyPass           /lool {{ cs_collabora_private_url }}/cool
-    # ProxyPassReverse    /lool {{ cs_collabora_private_url }}/cool
+    # Main websocket
+    ProxyPassMatch      "/cool/(.*)/ws$"      wss://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool/$1/ws nocanon
 
+    # Admin Console websocket
+    ProxyPass           /cool/adminws wss://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool/adminws
+
+    # Download as, Fullscreen presentation and Image upload operations
+    ProxyPass           /cool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+    ProxyPassReverse    /cool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+    # Compatibility with integrations that use the /lool/convert-to endpoint
+    ProxyPass           /lool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+    ProxyPassReverse    /lool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+
+    # End Collabora reverse proxy configuration
+
+{% endif %}
 </VirtualHost>
 {% if cs_nc_protocol == "https" %}
 SSLUseStapling On

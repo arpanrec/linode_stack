@@ -99,4 +99,6 @@ cs_nc_users_dict: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud
 cs_nc_protocol: https
 
 cs_nc_url: "{{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
-cs_nc_private_ip: "{{ cs_rb4_m3_ip }}"
+
+cs_nc_collabora_ip: "{{ cs_rb4_m2_ip }}"
+cs_nc_collabora_https_port: "{{ cs_collabora_https_port }}"
