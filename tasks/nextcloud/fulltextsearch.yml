@@ -48,8 +48,8 @@
                   types: ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
-                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{ cs_nc_fts_elasticsearch_host }}:{{
-                      cs_nc_fts_elasticsearch_servlet_port }}"
+                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{
+                      cs_nc_fts_elasticsearch_host }}:{{ cs_nc_fts_elasticsearch_servlet_port }}"
                   elastic_index: "{{ cs_nc_fts_elasticsearch_index_name }}"
                   elastic_type: "file"
                   analyzer_tokenizer: "standard"
