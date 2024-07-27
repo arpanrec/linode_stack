@@ -194,21 +194,30 @@
         become_user: root
         ansible.builtin.shell:
             cmd: |+
-                docker rm -f postgres-main pgadmin-main redis-main elasticsearch-main nextcloud-imaginary
+                docker rm -f {{ cs_postgres_container_name }} \
+                  {{ ps_postgres_pg_admin_docker_container_name }} \
+                  {{ redis_container_name }} {{ cs_elasticsearch_docker_container_name }} \
+                  {{ cs_nc_imaginary_docker_container_name }} {{ cs_collabora_container_name }}
+
                 apt-get clean
                 apt-get autoremove -y
-                systemctl disable --now nextcloud-cron.timer || true
-                systemctl disable --now nextcloud-cron.service || true
-                systemctl disable --now nextcloud-fulltext-elasticsearch-worker.service || true
-                systemctl disable --now nextcloud-scanfiles.timer || true
-                systemctl disable --now nextcloud-scanfiles.service || true
+
+                systemctl disable --now {{ cs_nc_cron_system_timer_name }}.timer || true
+                systemctl disable --now {{ cs_nc_cron_system_timer_name }}.service || true
+                systemctl disable --now {{ cs_nc_fts_elasticsearch_systemd }}.service || true
+                systemctl disable --now {{ cs_nc_files_scanner_systemd_timer_name }}.timer || true
+                systemctl disable --now {{ cs_nc_files_scanner_systemd_timer_name }}.service || true
                 systemctl disable --now nextcloud-data-dump.timer || true
                 systemctl disable --now nextcloud-data-dump.service || true
-                rm -rf /etc/systemd/system/nextcloud-*
-                rm -rf /app/elasticsearch
-                rm -rf /app/postgres
-                rm -rf /app/redis
-                rm -rf /app/nextcloud
+
+                rm -rf /etc/systemd/system/nextcloud*
+
+                rm -rf {{ cs_nc_root_dir }}
+                rm -rf {{ cs_postgres_dir }}
+                rm -rf {{ cs_redis_dir }}
+                rm -rf {{ cs_elasticsearch_dir }}
+                rm -rf {{ cs_collabora_dir }}
+
             executable: /bin/bash
         changed_when: true
         register: delete_all
