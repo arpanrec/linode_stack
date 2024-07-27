@@ -37,12 +37,6 @@
       item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
       )
 
-- name: Nextcloud | Install | Office | Collabora | Gather facts
-  ansible.builtin.set_fact:
-      cs_nc_collabora_ip: "{{ cs_collabora_ip }}"
-      cs_nc_collabora_https_port: "{{ cs_collabora_https_port }}"
-  when: cs_collabora_ip is defined and cs_collabora_https_port is defined
-
 - name: Nextcloud | Install | Office | Collabora | Set Collabora State if true
   ansible.builtin.set_fact:
       cs_nc_collabora_state: true
