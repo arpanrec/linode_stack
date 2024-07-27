@@ -27,10 +27,10 @@
         item in cs_nc_app_list_fulltextsearch.stdout | from_json | community.general.json_query('disabled')
       )
 
-- name: Nextcloud | Full Text Search | create {{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}
+- name: Nextcloud | Full Text Search | create {{ cs_nc_fts_elasticsearch_systemd }}
   ansible.builtin.template:
-      dest: /etc/systemd/system/{{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}.service
-      src: templates/nc/{{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}.service.j2
+      dest: /etc/systemd/system/{{ cs_nc_fts_elasticsearch_systemd }}.service
+      src: templates/nc/{{ cs_nc_fts_elasticsearch_systemd }}.service.j2
       mode: "0644"
 
 - name: Nextcloud | Full Text Search | Write Apps Config
@@ -48,9 +48,9 @@
                   types: ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
-                  elastic_host: "http://elastic:{{ cs_nc_elasticsearch_password }}@{{ cs_nc_elasticsearch_host }}:{{
-                      cs_nc_elasticsearch_servlet_port }}"
-                  elastic_index: "{{ cs_nc_elasticsearch_index_name }}"
+                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{ cs_nc_fts_elasticsearch_host }}:{{
+                      cs_nc_fts_elasticsearch_servlet_port }}"
+                  elastic_index: "{{ cs_nc_fts_elasticsearch_index_name }}"
                   elastic_type: "file"
                   analyzer_tokenizer: "standard"
                   types: ""
@@ -74,9 +74,9 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
-- name: Nextcloud | Full Text Search | Stop {{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}
+- name: Nextcloud | Full Text Search | Stop {{ cs_nc_fts_elasticsearch_systemd }}
   ansible.builtin.systemd_service:
-      name: "{{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}.service"
+      name: "{{ cs_nc_fts_elasticsearch_systemd }}.service"
       enabled: false
       state: stopped
       daemon_reload: true
@@ -89,9 +89,9 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
-- name: Nextcloud | Full Text Search | Start {{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}
+- name: Nextcloud | Full Text Search | Start {{ cs_nc_fts_elasticsearch_systemd }}
   ansible.builtin.systemd_service:
-      name: "{{ cs_nc_elasticsearch_full_text_search_systemd_service_name }}.service"
+      name: "{{ cs_nc_fts_elasticsearch_systemd }}.service"
       enabled: true
       state: started
       daemon_reload: true
