@@ -82,7 +82,8 @@
                         public_wopi_url: "{{ cs_nc_url }}"
                         doc_format: ooxml
                         disable_certificate_verification: "no"
-                        wopi_allowlist: "{{ cs_nc_collabora_ip }}"
+                        wopi_allowlist: "{{ cs_public_ingress_ip }},\
+                            127.0.0.1/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8,fd00::/8,::1"
 
       - name: Nextcloud | Install | Office | Collabora | Install | Write Config | Set Config
         become: true
