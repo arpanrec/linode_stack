@@ -78,6 +78,19 @@
         ansible.builtin.import_tasks:
             file: tasks/database/elasticsearch.yml
 
+- name: Mini0
+  hosts: rb4-m2
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Mini0
+        tags: never,mini0
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/mini0/main.yml
+
 - name: Collabora
   hosts: rb4-m2
   become: false
