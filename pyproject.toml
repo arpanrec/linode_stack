@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "core-services"
+name = "blr-act-home-lab-setup"
 version = "0.1.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
