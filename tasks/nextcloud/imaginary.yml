@@ -100,6 +100,32 @@
           PORT: "{{ cs_nc_imaginary_port | string }}"
       command: "-enable-url-source  -p {{ cs_nc_imaginary_port | string }}"
 
+- name: Nextcloud | Imaginary | List all apps
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: false
+  register: cs_nc_app_list_for_previewgenerator
+
+- name: Nextcloud | Imaginary | Install apps
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ app:install {{ item }}"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+  with_items:
+      - "previewgenerator"
+  when: >
+      not
+      (
+        item in cs_nc_app_list_for_previewgenerator.stdout | from_json | community.general.json_query('enabled')
+      or
+        item in cs_nc_app_list_for_previewgenerator.stdout | from_json | community.general.json_query('disabled')
+      )
+
 - name: Nextcloud | Imaginary | Set Imaginary as Preview Provider
   become: true
   become_user: "{{ cs_nc_run_user }}"
@@ -117,6 +143,19 @@
       - "config:system:set enabledPreviewProviders 5 --value='OC\\Preview\\OpenDocument'"
       - "config:system:set enabledPreviewProviders 6 --value='OC\\Preview\\Movie'"
       - "config:system:set enabledPreviewProviders 7 --value='OC\\Preview\\Krita'"
+      - "config:system:set enabledPreviewProviders 8 --value='OC\\Preview\\Photoshop'"
+      - "config:system:set enabledPreviewProviders 9 --value='OC\\Preview\\Postscript'"
+      - "config:system:set enabledPreviewProviders 10 --value='OC\\Preview\\SVG'"
+      - "config:system:set enabledPreviewProviders 11 --value='OC\\Preview\\TIFF'"
+      - "config:system:set enabledPreviewProviders 12 --value='OC\\Preview\\Illustrator'"
+      - "config:system:set enabledPreviewProviders 13 --value='OC\\Preview\\MSOffice2003'"
+      - "config:system:set enabledPreviewProviders 14 --value='OC\\Preview\\MSOffice2007'"
+      - "config:system:set enabledPreviewProviders 15 --value='OC\\Preview\\MSOfficeDoc'"
+      - "config:system:set enabledPreviewProviders 16 --value='OC\\Preview\\PDF'"
+      - "config:system:set enabledPreviewProviders 17 --value='OC\\Preview\\Photos'"
+      - "config:system:set enabledPreviewProviders 18 --value='OC\\Preview\\MP4'"
+      - "config:system:set enabledPreviewProviders 19 --value='OC\\Preview\\StarOffice'"
+      - "config:system:set enabledPreviewProviders 20 --value='OC\\Preview\\Font'"
       - "config:system:set enable_previews --value true"
       - "config:system:set preview_imaginary_url
         --value '{{ cs_nc_imaginary_protocol }}://{{ cs_nc_imaginary_domain }}:{{ cs_nc_imaginary_port }}'"
@@ -124,3 +163,5 @@
       - "config:system:set preview_max_x --value 2048"
       - "config:system:set preview_max_y --value 2048"
       - "config:system:set jpeg_quality --value 60"
+      # - "preview:pre-generate" # Doesn't work with encryption enabled
+      # - "preview:generate-all" # Doesn't work with encryption enabled
