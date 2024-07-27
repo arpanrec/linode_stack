@@ -32,7 +32,48 @@ Listen {{ cs_nc_port }}
 {% else %}
     SSLEngine off
 {% endif %}
+{% if (cs_nc_collabora_ip is defined and cs_nc_collabora_https_port is defined) %}
 
+    # Start Collabora reverse proxy configuration
+
+    ProxyPreserveHost On
+    AllowEncodedSlashes NoDecode
+    SSLProxyEngine On
+
+    # cert is issued for collaboraonline.example.com and we proxy to localhost
+    SSLProxyVerify None
+    SSLProxyCheckPeerCN Off
+    SSLProxyCheckPeerName Off
+
+    # static html, js, images, etc. served from coolwsd
+    # browser is the client part of Collabora Online
+    ProxyPass           /browser https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/browser retry=0
+    ProxyPassReverse    /browser https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/browser
+
+    # WOPI discovery URL
+    ProxyPass           /hosting/discovery https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/discovery retry=0
+    ProxyPassReverse    /hosting/discovery https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/discovery
+
+    # Capabilities
+    ProxyPass           /hosting/capabilities https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/capabilities retry=0
+    ProxyPassReverse    /hosting/capabilities https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/hosting/capabilities
+
+    # Main websocket
+    ProxyPassMatch      "/cool/(.*)/ws$"      wss://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool/$1/ws nocanon
+
+    # Admin Console websocket
+    ProxyPass           /cool/adminws wss://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool/adminws
+
+    # Download as, Fullscreen presentation and Image upload operations
+    ProxyPass           /cool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+    ProxyPassReverse    /cool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+    # Compatibility with integrations that use the /lool/convert-to endpoint
+    ProxyPass           /lool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+    ProxyPassReverse    /lool https://{{ cs_nc_collabora_ip }}:{{ cs_nc_collabora_https_port }}/cool
+
+    # End Collabora reverse proxy configuration
+
+{% endif %}
 </VirtualHost>
 {% if cs_nc_protocol == "https" %}
 SSLUseStapling On
