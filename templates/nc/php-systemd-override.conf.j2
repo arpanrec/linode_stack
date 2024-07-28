@@ -1,3 +1,0 @@
-[Service]
-ExecStartPre=/bin/bash -c 'mkdir -p /run/php'
-ExecStartPre=/bin/bash -c 'chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} /run/php'
