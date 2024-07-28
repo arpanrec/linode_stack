@@ -1,0 +1,151 @@
+---
+- name: Mini0 | KES | Create Group
+  ansible.builtin.group:
+      name: "{{ cs_mini0_kes_group_name }}"
+      state: present
+      system: true
+  register: mini0_kes_group_name_create
+
+- name: Mini0 | KES | Create User
+  ansible.builtin.user:
+      name: "{{ cs_mini0_kes_user_name }}"
+      group: "{{ cs_mini0_kes_group_name }}"
+      groups:
+          - docker
+      shell: /bin/false
+      system: true
+      state: present
+  register: mini0_kes_user_name_create
+
+- name: Mini0 | KES | Create Directory
+  ansible.builtin.file:
+      name: "{{ item }}"
+      owner: "{{ cs_mini0_kes_user_name }}"
+      group: "{{ cs_mini0_kes_group_name }}"
+      mode: "0755"
+      state: directory
+  with_items:
+      - "{{ cs_mini0_kes_working_dir }}"
+      - "{{ cs_mini0_kes_keystore_dir }}"
+      - "{{ cs_mini0_kes_cert_dir }}"
+      - "{{ cs_mini0_kes_cert_file | dirname }}"
+      - "{{ cs_mini0_kes_cert_key_file | dirname }}"
+      - "{{ cs_mini0_kes_cert_id_file | dirname }}"
+      - "{{ cs_mini0_kes_config_file | dirname }}"
+
+- name: Mini0 | KES | Docker Network
+  community.docker.docker_network:
+      name: "{{ cs_mini0_docker_network_name }}"
+      state: present
+
+- name: Mini0 | KES | Check files
+  ansible.builtin.stat:
+      path: "{{ item }}"
+  with_items:
+      - "{{ cs_mini0_kes_cert_file }}"
+      - "{{ cs_mini0_kes_cert_key_file }}"
+      - "{{ cs_mini0_kes_cert_id_file }}"
+  register: mini0_kes_cert_files_stat
+
+- name: Mini0 | KES | Touch Cert Files
+  ansible.builtin.file:
+      path: "{{ item.item }}"
+      state: touch
+      mode: "0644"
+      owner: "{{ cs_mini0_kes_user_name }}"
+      group: "{{ cs_mini0_kes_group_name }}"
+  with_items: "{{ mini0_kes_cert_files_stat.results }}"
+  when: not item.stat.exists
+
+- name: Mini0 | KES | Remove old Container
+  community.docker.docker_container:
+      name: "{{ cs_mini0_kes_container_name }}"
+      state: absent
+      force_kill: true
+
+- name: Mini0 | KES | Create Certificates
+  become: true
+  become_user: "{{ cs_mini0_kes_user_name }}"
+  community.docker.docker_container:
+      name: "{{ cs_mini0_kes_container_name }}"
+      image: "{{ cs_mini0_kes_image }}:{{ cs_mini0_kes_version }}"
+      user: "{{ mini0_kes_user_name_create.uid }}:{{ mini0_kes_group_name_create.gid }}"
+      auto_remove: true
+      entrypoint: ""
+      working_dir: /
+      volumes:
+          - "{{ cs_mini0_kes_cert_file }}:{{ cs_mini0_kes_cert_file }}"
+          - "{{ cs_mini0_kes_cert_key_file }}:{{ cs_mini0_kes_cert_key_file }}"
+          - "{{ cs_mini0_kes_cert_id_file }}:{{ cs_mini0_kes_cert_id_file }}"
+      command:
+          - "/bin/bash"
+          - "-c"
+          - "/kes identity new --key '{{ cs_mini0_kes_cert_key_file }}' --cert '{{ cs_mini0_kes_cert_file }}' \
+            kesadmin --force --dns '{{ cs_mini0_kes_container_name }}' && \
+            /kes identity of '{{ cs_mini0_kes_cert_file }}' | tee '{{ cs_mini0_kes_cert_id_file }}'"
+
+- name: Mini0 | KES | Read Certificate ID
+  ansible.builtin.slurp:
+      src: "{{ cs_mini0_kes_cert_id_file }}"
+  register: mini0_kes_cert_id_file_read
+
+- name: Mini0 | KES | Write Config
+  ansible.builtin.copy:
+      content: "{{ mini0_kes_config | to_nice_yaml }}"
+      dest: "{{ cs_mini0_kes_config_file }}"
+      owner: "{{ cs_mini0_kes_user_name }}"
+      group: "{{ cs_mini0_kes_group_name }}"
+      mode: "0644"
+  vars:
+      mini0_kes_config:
+          version: v1
+          address: 0.0.0.0:{{ cs_mini0_kes_port }}
+          admin:
+              identity: "{{ mini0_kes_cert_id_file_read.content | b64decode }}"
+          tls:
+              key: "{{ cs_mini0_kes_cert_key_file }}"
+              cert: "{{ cs_mini0_kes_cert_file }}"
+              auth: "on"
+              ca: "{{ cs_mini0_kes_cert_file }}"
+          policy:
+              minio:
+                  allow:
+                      - /v1/key/create/*
+                      - /v1/key/generate/*
+                      - /v1/key/decrypt/*
+                      - /v1/key/bulk/decrypt
+                      - /v1/key/list/*
+                      - /v1/status
+                      - /v1/metrics
+                      - /v1/log/audit
+                      - /v1/log/error
+
+          keystore:
+              fs:
+                  path: "{{ cs_mini0_kes_keystore_dir }}"
+          log:
+              error: "on"
+              audit: "on"
+
+- name: Mini0 | KES | Start Container
+  become: true
+  become_user: "{{ cs_mini0_kes_user_name }}"
+  community.docker.docker_container:
+      name: "{{ cs_mini0_kes_container_name }}"
+      image: "{{ cs_mini0_kes_image }}:{{ cs_mini0_kes_version }}"
+      user: "{{ mini0_kes_user_name_create.uid }}:{{ mini0_kes_group_name_create.gid }}"
+      auto_remove: false
+      detach: true
+      restart_policy: unless-stopped
+      hostname: "{{ cs_mini0_kes_container_name }}"
+      networks:
+          - name: "{{ cs_mini0_docker_network_name }}"
+      volumes:
+          - "{{ cs_mini0_kes_keystore_dir }}:{{ cs_mini0_kes_keystore_dir }}"
+          - "{{ cs_mini0_kes_config_file }}:{{ cs_mini0_kes_config_file }}"
+          - "{{ cs_mini0_kes_cert_key_file }}:{{ cs_mini0_kes_cert_key_file }}"
+          - "{{ cs_mini0_kes_cert_file }}:{{ cs_mini0_kes_cert_file }}"
+
+      command:
+          - server
+          - --config={{ cs_mini0_kes_config_file }}

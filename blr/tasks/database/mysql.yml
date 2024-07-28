@@ -46,10 +46,6 @@
   with_items:
       - "{{ cs_mysql_port }}"
 
-- ansible.builtin.pause:
-      prompt: "Waiting for MySQL to start"
-      echo: true
-
 - name: Database | MySQL | Wait for service to start
   community.mysql.mysql_info:
       login_user: "root"
@@ -57,6 +53,3 @@
       login_host: "{{ cs_mysql_host }}"
       login_port: "{{ cs_mysql_port }}"
   register: cs_mysql_info
-
-- ansible.builtin.debug:
-      var: cs_mysql_info
