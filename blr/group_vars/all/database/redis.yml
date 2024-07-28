@@ -17,7 +17,7 @@ redis_container_name: redis
 redis_docker_image: "docker.io/library/redis"
 redis_docker_image_tag: "7.2.0"
 
-cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_password') }}"
+cs_redis_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/redis', 'custom_properties', 'cs_redis_password') }}"
 cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
-cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_tls_port') }}"
-cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'home_inventory/database/redis', 'custom_properties', 'cs_redis_tls_privkey_pass') }}"
+cs_redis_tls_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/redis', 'custom_properties', 'cs_redis_tls_port') }}"
+cs_redis_tls_privkey_pass: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/redis', 'custom_properties', 'cs_redis_tls_privkey_pass') }}"
