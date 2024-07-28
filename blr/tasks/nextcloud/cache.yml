@@ -1,0 +1,92 @@
+---
+- name: Nextcloud | Cache | Redis | Client Certificate | Create Directories
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+  with_items:
+      - "{{ cs_nc_redis_cert_dir }}"
+      - "{{ cs_nc_redis_privkey_file | dirname }}"
+      - "{{ cs_nc_redis_cert_file | dirname }}"
+      - "{{ cs_nc_redis_ca_file | dirname }}"
+      - "{{ cs_nc_redis_csr_file | dirname }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Create SSL Private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_nc_redis_privkey_file }}"
+      size: 4096
+      mode: "0600"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Create SSL CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_nc_redis_csr_file }}"
+      privatekey_path: "{{ cs_nc_redis_privkey_file }}"
+      common_name: "redis"
+      key_usage:
+          - "digitalSignature"
+          - "keyEncipherment"
+          - "keyAgreement"
+      extended_key_usage:
+          - "clientAuth"
+      create_subject_key_identifier: true
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Sign SSL CSR
+  community.crypto.x509_certificate:
+      path: "{{ cs_nc_redis_cert_file }}"
+      csr_path: "{{ cs_nc_redis_csr_file }}"
+      provider: ownca
+      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
+          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
+          lstrip=false, rstrip=false) }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+
+- name: Nextcloud | Cache | Redis | Client Certificate | Write CA certificate
+  ansible.builtin.copy:
+      src: "{{ cs_root_ca_cert_pem_file }}"
+      dest: "{{ cs_nc_redis_ca_file }}"
+      mode: "0644"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      remote_src: false
+
+- name: Nextcloud | Cache | Write temp config
+  ansible.builtin.copy:
+      content: "{{ cs_nc_redis_cache_config | to_json }}"
+      dest: "/tmp/nc_redis_cache_config.json"
+      mode: "0644"
+  vars:
+      cs_nc_redis_cache_config:
+          system:
+              redis:
+                  host: "{{ cs_nc_redis_host }}"
+                  port: "{{ cs_nc_redis_port }}"
+                  timeout: "{{ cs_nc_redis_timeout }}"
+                  password: "{{ cs_nc_redis_password }}"
+                  ssl_context:
+                      local_cert: "{{ cs_nc_redis_cert_file }}"
+                      local_pk: "{{ cs_nc_redis_privkey_file }}"
+                      cafile: "{{ cs_nc_redis_ca_file }}"
+                      verify_peer_name: false
+              memcache.local: "\\OC\\Memcache\\APCu"
+              memcache.distributed: "\\OC\\Memcache\\Redis"
+              memcache.locking: "\\OC\\Memcache\\Redis"
+
+- name: Nextcloud | Cache | Set nextcloud config
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ config:import /tmp/nc_redis_cache_config.json"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true

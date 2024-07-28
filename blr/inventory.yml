@@ -1,0 +1,26 @@
+---
+all:
+    vars:
+        keepass_dbx: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_DBX') | mandatory }}"
+        keepass_psw: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_PSW') | mandatory }}"
+        keepass_key: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_KEY') | mandatory }}"
+        keepass_ttl: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_TTL', default=5) | mandatory | int }}"
+
+    children:
+        patchservers:
+            hosts:
+                rb4-m1:
+                rb4-m2:
+                rb4-m3:
+    hosts:
+        localhost:
+        rb4-m1:
+            ansible_host: "{{ cs_rb4_m1_ip }}"
+            # ansible_user: root
+            # ansible_ssh_password: password
+            # ansible_become_method: su
+            # ansible_become_password: root
+        rb4-m2:
+            ansible_host: "{{ cs_rb4_m2_ip }}"
+        rb4-m3:
+            ansible_host: "{{ cs_rb4_m3_ip }}"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Nextcloud Data Dump Timer
+
+[Timer]
+Persistent=true
+OnBootSec=5min
+OnUnitActiveSec=1d
+Unit=nextcloud-data-dump.service
+
+[Install]
+WantedBy=timers.target

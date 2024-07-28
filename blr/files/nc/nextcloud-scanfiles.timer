@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Nextcloud cron every 15 minutes
+
+[Timer]
+Persistent=true
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=nextcloud-scanfiles.service
+
+[Install]
+WantedBy=multi-user.target

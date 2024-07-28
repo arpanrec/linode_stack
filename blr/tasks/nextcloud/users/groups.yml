@@ -1,0 +1,40 @@
+---
+- name: Nextcloud | Users | Groups Manage | Get User info
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ user:info '{{ cs_nc_user_name }}' --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: false
+  register: nextcloud_user_info
+
+- name: Nextcloud | Users | Groups Manage | Add user to groups
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ group:adduser '{{ user_group_details['key'] }}' '{{ cs_nc_user_name }}'"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+  loop: "{{ cs_nc_user_details['groups'] | dict2items }}"
+  when: >
+      cs_nc_user_details['groups'] is defined and cs_nc_user_details['groups'] | length > 0
+      and
+      user_group_details['key'] not in (nextcloud_user_info.stdout | from_json
+        | community.general.json_query('groups'))
+  loop_control:
+      loop_var: user_group_details
+
+- name: Nextcloud | Users | Groups Manage | Remove user from groups
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ group:removeuser '{{ group_name }}' '{{ cs_nc_user_name }}'"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+  loop: "{{ nextcloud_user_info.stdout | from_json | community.general.json_query('groups') }}"
+  when: >
+      (cs_nc_user_details['groups'] is not defined or cs_nc_user_details['groups'] | length == 0)
+      or
+      group_name not in cs_nc_user_details['groups']
+  loop_control:
+      loop_var: group_name

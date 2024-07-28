@@ -1,0 +1,57 @@
+---
+- name: Nextcloud | Users | Create | Get all users in Nextcloud
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ user:list --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  register: cs_nc_user_list_all_users
+  changed_when: false
+
+- name: Nextcloud | Users | Create | Create Users if not exists
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ user:add --generate-password '{{ item.key }}'"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+  with_items: "{{ cs_nc_users_dict | dict2items }}"
+  when: item.key not in cs_nc_user_list_all_users.stdout | from_json
+
+- name: Nextcloud | Users | Create | Repolute all users list from Nextcloud
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ user:list --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  register: cs_nc_user_list_all_users
+  changed_when: false
+
+- name: Nextcloud | Users | Create | Set Users properties
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.shell:
+      cmd: |+
+          php occ user:setting {{ item.key }} settings email {{ item.value.email }}
+          php occ twofactorauth:enable {{ item.key }} totp
+          php occ user:enable {{ item.key }}
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+  with_items: "{{ cs_nc_users_dict | dict2items }}"
+
+- name: Nextcloud | Users | Create | All users dict from Nextcloud
+  ansible.builtin.set_fact:
+      cs_nc_user_list_all_users_dict: "{{ cs_nc_user_list_all_users.stdout | from_json }}"
+
+- name: Nextcloud | Users | Create | Set Display Name
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  changed_when: true
+  ansible.builtin.command:
+      cmd: "php occ user:setting {{ item.key }}
+          settings display_name '{{ item.value.display_name | default(item.key) }}'"
+      chdir: "{{ cs_nc_web_dir }}"
+  with_items: "{{ cs_nc_users_dict | dict2items }}"
+  when: current_user_display_name != item.value.display_name | default(item.key)
+  vars:
+      current_user_display_name: "{{ cs_nc_user_list_all_users_dict[item.key] }}"

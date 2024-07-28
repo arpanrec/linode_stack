@@ -1,0 +1,125 @@
+---
+- name: Nextcloud | Install | Office | Collabora | List all apps
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ app:list --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: false
+  register: cs_nc_app_list_collabora
+
+- name: Nextcloud | Install | Office | Collabora | Gather facts | Setup
+  ansible.builtin.setup:
+
+- name: Nextcloud | Install | Office | Collabora | Check if ansible architecture is either aarch64 or x86_64
+  ansible.builtin.fail:
+      msg: "This playbook only supports aarch64 and x86_64 architectures"
+  when: not ( ansible_architecture == "aarch64" or ansible_architecture == "x86_64" )
+
+- name: Nextcloud | Install | Office | Collabora | Set Collabora State and is aarch64
+  ansible.builtin.set_fact:
+      cs_nc_collabora_state: false
+      cs_nc_collabora_appname: "{{ (ansible_architecture == 'aarch64')
+          | ternary('richdocumentscode_arm64', 'richdocumentscode') }}"
+
+- name: Nextcloud | Install | Office | Collabora | UnInstall built-in Collabora
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ app:remove {{ item }}"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+  with_items:
+      - "{{ cs_nc_collabora_appname }}"
+  when: (
+      item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
+      or
+      item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
+      )
+
+- name: Nextcloud | Install | Office | Collabora | Set Collabora State if true
+  ansible.builtin.set_fact:
+      cs_nc_collabora_state: true
+  when: cs_nc_collabora_ip is defined and cs_nc_collabora_https_port is defined
+
+- name: Nextcloud | Install | Office | Collabora | Install
+  when: cs_nc_collabora_state
+  block:
+      - name: Nextcloud | Install | Office | Collabora | Install | Nextcloud App
+        become: true
+        become_user: "{{ cs_nc_run_user }}"
+        ansible.builtin.command:
+            cmd: "php occ app:install {{ item }}"
+            chdir: "{{ cs_nc_web_dir }}"
+        changed_when: true
+        with_items:
+            - richdocuments
+        when: >
+            not
+            (
+              item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
+            or
+              item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('disabled')
+            )
+
+      - name: Nextcloud | Install | Office | Collabora | Install | Write Config
+        ansible.builtin.copy:
+            dest: "/tmp/collabora-config.json"
+            content: "{{ cs_nc_collabora_nc_config | to_nice_json }}"
+            mode: "0644"
+        vars:
+            cs_nc_collabora_nc_config:
+                apps:
+                    richdocuments:
+                        types: prevent_group_restriction
+                        wopi_url: "{{ cs_nc_url }}"
+                        public_wopi_url: "{{ cs_nc_url }}"
+                        doc_format: ooxml
+                        disable_certificate_verification: "no"
+                        wopi_allowlist: "{{ cs_public_ingress_ip }},\
+                            127.0.0.1/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8,fd00::/8,::1"
+
+      - name: Nextcloud | Install | Office | Collabora | Install | Write Config | Set Config
+        become: true
+        become_user: "{{ cs_nc_run_user }}"
+        ansible.builtin.command:
+            cmd: "php occ config:import /tmp/collabora-config.json"
+            chdir: "{{ cs_nc_web_dir }}"
+        changed_when: true
+
+- name: Nextcloud | Install | Office | Collabora | UnInstall
+  when: not cs_nc_collabora_state
+  block:
+      - name: Nextcloud | Install | Office | Collabora | UnInstall | Nextcloud App
+        become: true
+        become_user: "{{ cs_nc_run_user }}"
+        ansible.builtin.command:
+            cmd: "php occ app:remove {{ item }}"
+            chdir: "{{ cs_nc_web_dir }}"
+        changed_when: true
+        with_items:
+            - richdocuments
+        when: >
+            (
+              item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
+            or
+              item in cs_nc_app_list_collabora.stdout | from_json | community.general.json_query('enabled')
+            )
+
+      - name: Nextcloud | Install | Office | Collabora | UnInstall | Write Config
+        ansible.builtin.copy:
+            dest: "/tmp/collabora-config.json"
+            content: "{{ cs_nc_collabora_nc_config | to_nice_json }}"
+            mode: "0644"
+        vars:
+            cs_nc_collabora_nc_config:
+                apps:
+                    richdocuments: {}
+
+      - name: Nextcloud | Install | Office | Collabora | UnInstall | Write Config | Set Config
+        become: true
+        become_user: "{{ cs_nc_run_user }}"
+        ansible.builtin.command:
+            cmd: "php occ config:import /tmp/collabora-config.json"
+            chdir: "{{ cs_nc_web_dir }}"
+        changed_when: true
