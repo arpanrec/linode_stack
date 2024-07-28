@@ -91,10 +91,10 @@ cs_nc_fts_elasticsearch_host: "{{ cs_elasticsearch_host }}"
 cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
 cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
 
+cs_nc_users_dict: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_users_dict') | from_json }}"
 cs_nc_onlyoffice_port: "{{ cs_onlyoffice_port }}"
 cs_nc_onlyoffice_domain: "{{ cs_onlyoffice_domain }}"
 cs_nc_onlyoffice_jwt_secret: "{{ cs_onlyoffice_jwt_secret }}"
-cs_nc_users_dict: "{{ lookup('viczem.keepass.keepass', 'home_inventory/nextcloud', 'custom_properties', 'cs_nc_users_dict') | from_json }}"
 
 cs_nc_protocol: https
 
