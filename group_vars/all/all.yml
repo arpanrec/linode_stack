@@ -22,7 +22,7 @@ cs_public_ingress_dns_entry: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/
 cs_mail_smtpmode: "{{ lookup('viczem.keepass.keepass',
     'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpmode') }}"
 cs_mail_sendmailmode: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email',
-    'custom_properties','sendmailmode') }}"
+    'custom_properties', 'sendmailmode') }}"
 cs_mail_smtpport: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email',
     'custom_properties', 'smtpport') }}"
 cs_mail_from_address: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email',
