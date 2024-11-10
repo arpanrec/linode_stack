@@ -21,6 +21,7 @@ DOCUMENTATION = """
     short_description: Get Credentials for Homelab.
     description:
         - This lookup plugin retrieves the credentials for the Homelab.
+        - For bitwarden path should be like <Organization Name>/<Collection Name>/<Item Name>/<Field Name>.
     options:
         _terms:
             description: Path for the credentials.
@@ -39,12 +40,6 @@ DOCUMENTATION = """
 """
 
 _creds_manager = Bitwarden()
-
-
-def run_module() -> None:
-    """
-    Search for the latest release in a GitHub repository.
-    """
 
 
 class LookupModule(LookupBase):
