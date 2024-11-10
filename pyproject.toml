@@ -36,6 +36,7 @@ bitwarden-sdk = "1.0.0"
 bcrypt = "4.2.0"
 jmespath = "1.0.1"
 pykeepass = "4.1.0.post1"
+maturin = "1.7.4" # Needed for bitwarden-sdk
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
@@ -50,6 +51,7 @@ pyright = "1.1.388"
 types-requests = "2.32.0.20241016"
 types-pyyaml = "6.0.12.20240917"
 isort = "5.13.2"
+bandit = "1.7.10"
 
 [build-system]
 requires = ["poetry-core"]
