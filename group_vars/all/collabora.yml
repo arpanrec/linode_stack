@@ -2,9 +2,9 @@
 cs_collabora_dir: /app/collabora
 
 cs_collabora_admin_user: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/collabora',
- 'custom_properties', 'cs_collabora_admin_user') }}"
+    'custom_properties', 'cs_collabora_admin_user') }}"
 cs_collabora_admin_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/collabora',
- 'custom_properties', 'cs_collabora_admin_password') }}"
+    'custom_properties', 'cs_collabora_admin_password') }}"
 
 cs_collabora_cert_dir: "{{ cs_collabora_dir }}/certs"
 cs_collabora_cert_pem_file: "{{ cs_collabora_cert_dir }}/cert.pem"
@@ -13,7 +13,7 @@ cs_collabora_chain_pem_file: "{{ cs_collabora_cert_dir }}/chain.pem"
 cs_collabora_fullchain_pem_file: "{{ cs_collabora_cert_dir }}/fullchain.pem"
 
 cs_collabora_https_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/collabora',
- 'custom_properties', 'cs_collabora_https_port') }}"
+    'custom_properties', 'cs_collabora_https_port') }}"
 
 cs_collabora_container_name: collabora
 cs_collabora_docker_image: docker.io/nextcloud/aio-collabora # docker.io/collabora/code
