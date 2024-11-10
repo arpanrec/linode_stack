@@ -37,7 +37,6 @@ maturin = "1.7.4" # Needed for bitwarden-sdk
 bitwarden-sdk = "1.0.0"
 bcrypt = "4.2.0"
 jmespath = "1.0.1"
-pykeepass = "4.1.0.post1"
 cachier = "3.1.2"
 
 [tool.poetry.group.dev.dependencies]
