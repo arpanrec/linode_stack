@@ -27,13 +27,14 @@ DOCUMENTATION = """
             description: Path for the credentials.
             required: true
             type: str
-        is_file:
+        get_homelab_creds_is_file:
             description: If the path is a file.
             required: false
             type: bool
             default: false
-        use_cache:
-            description: Use cache for credentials.
+        get_homelab_creds_use_cache:
+            description:
+                - Use cache for credentials.
             required: false
             type: bool
             default: true
@@ -46,6 +47,9 @@ class LookupModule(LookupBase):
     """
     Lookup module that retrieves version details.
     """
+
+    def _var(self, var_value):
+        return self._templar.template(var_value, fail_on_undefined=True)
 
     def run(self, terms: List[str], variables: Optional[Dict[str, Any]] = None, **kwargs: Dict[str, Any]) -> List[str]:
         """
@@ -60,7 +64,11 @@ class LookupModule(LookupBase):
         if len(terms) > 1:
             raise AnsibleLookupError(f"Only one term is allowed for lookup, got {len(terms)}, {terms}")
 
-        is_file = self.get_option("is_file")
+        if variables is not None:
+            self._templar.available_variables = variables
+        variables_ = getattr(self._templar, "_available_variables", {})
+
+        is_file = self.get_option("is_file", True)
         use_cache = self.get_option("use_cache")
         if use_cache:
             return [_creds_manager.get_with_cache(terms[0], is_file)]
