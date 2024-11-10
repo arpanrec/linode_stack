@@ -32,7 +32,12 @@ module.exports = {
         [
             '@semantic-release/exec',
             {
-                prepareCmd: ['poetry version ${nextRelease.version}'].join(' && '),
+                prepareCmd: [
+                    'rm -f CHANGELOG.md',
+                    'poetry version ${nextRelease.version}',
+                ].join(' && '),
+                // successCmd:
+                //     'ansible-galaxy collection publish arpanrec-nebula-${nextRelease.version}.tar.gz --api-key ${process.env.GALAXY_API_KEY}',
             },
         ],
         [
