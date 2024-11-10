@@ -7,4 +7,11 @@
       - name: Test Retrieve Credential
         ansible.builtin.debug:
             # msg: "{{ lookup('ansible.builtin.get_homelab_creds', 'cs_vm_ssh_priv_id_ecdsa_file') }}"
-            msg: "{{ lookup('get_homelab_creds', 'cs_vm_ssh_priv_id_ecdsa_file') }}"
+            msg: "{{ lookup('get_homelab_creds', 'Family - Password Manager/Development Workspace/\
+                arpanrec - managed/Linode - arpanrecme/linode_ssh_key', is_file=true) }}"
+
+      - name: Test Retrieve Credential
+        ansible.builtin.debug:
+            # msg: "{{ lookup('ansible.builtin.get_homelab_creds', 'cs_vm_ssh_priv_id_ecdsa_file') }}"
+            msg: "{{ lookup('get_homelab_creds', 'Family - Password Manager/Development Workspace/\
+                arpanrec - managed/Linode - arpanrecme/Phone') }}"

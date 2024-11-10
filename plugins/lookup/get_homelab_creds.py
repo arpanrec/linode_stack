@@ -7,13 +7,12 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type  # pylint: disable=invalid-name
 
-import json
 from typing import Any, Dict, List, Optional
 
 from ansible.errors import AnsibleLookupError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
 from ansible.utils.display import Display  # type: ignore
-from homelab.get_cred import get_credentials  # type: ignore
+from homelab.get_cred import Bitwarden  # type: ignore
 
 DOCUMENTATION = """
 ---
@@ -28,7 +27,14 @@ DOCUMENTATION = """
             description: Path for the credentials.
             required: true
             type: str
+        is_file:
+            description: If the path is a file.
+            required: false
+            type: bool
+            default: false
 """
+
+_creds_manager = Bitwarden()
 
 
 def run_module() -> None:
@@ -58,4 +64,6 @@ class LookupModule(LookupBase):
         if len(terms) > 1:
             raise AnsibleLookupError(f"Only one term is allowed for lookup, got {len(terms)}, {terms}")
 
-        return [json.dumps(get_credentials())]  # type: ignore
+        is_file = self.get_option("is_file", False)
+
+        return [_creds_manager.get(terms[0], is_file)]  # type: ignore
