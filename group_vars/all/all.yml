@@ -1,7 +1,4 @@
 ---
-cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
-cs_no_log: "{{ not cs_env_debug }}"
-
 cs_vm_ssh_priv_id_ecdsa_file: "{{ lookup('viczem.keepass.keepass', 'OPENSSH_ID_ECDSA', 'attachments', 'id_ecdsa') }}"
 cs_vm_ssh_priv_id_ecdsa_password: "{{ lookup('viczem.keepass.keepass', 'OPENSSH_ID_ECDSA', 'password') }}"
 
@@ -22,7 +19,7 @@ cs_public_ingress_dns_entry: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/
 cs_mail_smtpmode: "{{ lookup('viczem.keepass.keepass',
     'managed_services/Arpanrec bot account Email', 'custom_properties', 'smtpmode') }}"
 cs_mail_sendmailmode: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email',
-    'custom_properties','sendmailmode') }}"
+    'custom_properties', 'sendmailmode') }}"
 cs_mail_smtpport: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email',
     'custom_properties', 'smtpport') }}"
 cs_mail_from_address: "{{ lookup('viczem.keepass.keepass', 'managed_services/Arpanrec bot account Email',
