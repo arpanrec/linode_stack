@@ -15,29 +15,30 @@ from homelab.get_cred import Bitwarden  # type: ignore
 
 DOCUMENTATION = """
 ---
-    name: get_homelab_creds
-    author:
-        - Arpan Mandal <me@arpanrec.com>
-    short_description: Get Credentials for Homelab.
-    description:
-        - This lookup plugin retrieves the credentials for the Homelab.
-        - For bitwarden path should be like <Organization Name>/<Collection Name>/<Item Name>/<Field Name>.
-    options:
-        _terms:
-            description: Path for the credentials.
-            required: true
-            type: str
-        get_homelab_creds_is_file:
-            description: If the path is a file.
-            required: false
-            type: bool
-            default: false
-        get_homelab_creds_use_cache:
-            description:
-                - Use cache for credentials.
-            required: false
-            type: bool
-            default: true
+name: get_homelab_creds
+author:
+    - Arpan Mandal <me@arpanrec.com>
+short_description: Get Credentials for Homelab.
+description:
+    - This lookup plugin retrieves the credentials for the Homelab.
+    - For bitwarden path should be like <Organization Name>/<Collection Name>/<Item Name>/<Field Name or Attachment
+      Name>.
+options:
+    _terms:
+        description: Path for the credentials.
+        required: true
+        type: str
+    get_homelab_creds_is_file:
+        description: If the path is a file.
+        required: false
+        type: bool
+        default: false
+    get_homelab_creds_use_cache:
+        description:
+            - Use cache for credentials.
+        required: false
+        type: bool
+        default: true
 """
 
 _creds_manager = Bitwarden()
