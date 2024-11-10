@@ -1,8 +1,8 @@
 import json
 import os
 import subprocess
-from typing import Dict, Optional, List
 import tempfile
+from typing import Dict, List, Optional
 
 try:
     from cachier import cachier

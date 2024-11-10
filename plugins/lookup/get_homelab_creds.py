@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional
 
 from ansible.errors import AnsibleLookupError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
-from ansible.utils.display import Display  # type: ignore
 from homelab.get_cred import Bitwarden  # type: ignore
 
 DOCUMENTATION = """
@@ -32,6 +31,11 @@ DOCUMENTATION = """
             required: false
             type: bool
             default: false
+        use_cache:
+            description: Use cache for credentials.
+            required: false
+            type: bool
+            default: true
 """
 
 _creds_manager = Bitwarden()
@@ -41,9 +45,6 @@ def run_module() -> None:
     """
     Search for the latest release in a GitHub repository.
     """
-
-
-display = Display()
 
 
 class LookupModule(LookupBase):
@@ -64,6 +65,9 @@ class LookupModule(LookupBase):
         if len(terms) > 1:
             raise AnsibleLookupError(f"Only one term is allowed for lookup, got {len(terms)}, {terms}")
 
-        is_file = self.get_option("is_file", False)
+        is_file = self.get_option("is_file")
+        use_cache = self.get_option("use_cache")
+        if use_cache:
+            return [_creds_manager.get_with_cache(terms[0], is_file)]
 
         return [_creds_manager.get(terms[0], is_file)]  # type: ignore
