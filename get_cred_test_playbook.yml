@@ -1,0 +1,10 @@
+---
+- name: Test Get Credential
+  hosts: localhost
+  become: false
+  gather_facts: false
+  tasks:
+      - name: Test Retrieve Credential
+        ansible.builtin.debug:
+            # msg: "{{ lookup('ansible.builtin.get_homelab_creds', 'cs_vm_ssh_priv_id_ecdsa_file') }}"
+            msg: "{{ lookup('get_homelab_creds', 'cs_vm_ssh_priv_id_ecdsa_file') }}"

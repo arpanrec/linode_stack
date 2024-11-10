@@ -22,7 +22,8 @@ version = "1.0.2"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
-package-mode = false
+package-mode = true
+packages = [{ include = "homelab", from = "pylib" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -32,11 +33,11 @@ ansible-specdoc = "0.0.17"
 godaddypy = "2.5.1"
 configloader = "1.0.1"
 dnspython = "2.7.0"
+maturin = "1.7.4" # Needed for bitwarden-sdk
 bitwarden-sdk = "1.0.0"
 bcrypt = "4.2.0"
 jmespath = "1.0.1"
 pykeepass = "4.1.0.post1"
-maturin = "1.7.4" # Needed for bitwarden-sdk
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
