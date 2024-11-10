@@ -1,6 +1,8 @@
 ---
-cs_vm_ssh_priv_id_ecdsa_file: "{{ lookup('viczem.keepass.keepass', 'OPENSSH_ID_ECDSA', 'attachments', 'id_ecdsa') }}"
-cs_vm_ssh_priv_id_ecdsa_password: "{{ lookup('viczem.keepass.keepass', 'OPENSSH_ID_ECDSA', 'password') }}"
+cs_vm_ssh_priv_id_ecdsa_file: "{{ lookup('get_homelab_creds', 'Family - Password Manager/\
+    Development Workspace/Keys and Certificates/OPENSSH ID_ECDSA/id_ecdsa', is_file=True) }}"
+cs_vm_ssh_priv_id_ecdsa_password: "{{ lookup('get_homelab_creds', 'Family - Password Manager/\
+    Development Workspace/Keys and Certificates/OPENSSH ID_ECDSA/OPENSSH_KEY_PASSPHRASE') }}"
 
 cs_root_ca_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY',
     'attachments', 'privkey.pem') }}"
