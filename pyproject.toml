@@ -36,6 +36,7 @@ bitwarden-sdk = "1.0.0"
 bcrypt = "4.2.0"
 jmespath = "1.0.1"
 pykeepass = "4.1.0.post1"
+maturin = "1.7.4" # Needed for bitwarden-sdk
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
