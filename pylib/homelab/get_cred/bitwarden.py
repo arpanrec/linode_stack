@@ -89,8 +89,6 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
                 if field_value != "":
                     raise ValueError(f"Multiple fields found with the name {field_name}")
                 field_value = field["value"]
-        if field_value == "":
-            raise ValueError(f"No field found with the name {field_name}")
         return field_value
 
     @staticmethod
@@ -101,8 +99,6 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
                 if attachment_id != "":
                     raise ValueError(f"Multiple attachments found with the name {file_name}")
                 attachment_id = attachment["id"]
-        if attachment_id == "":
-            raise ValueError(f"No attachment found with the name {file_name}")
         return attachment_id
 
     @cachier()
@@ -146,15 +142,35 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
 
         item = json.loads(self.__bw_exec(["get", "item", item_id]))
         fields = item["fields"]
-        field_name = path.split("/")[-1]
-        if is_file:
-            attachments = item["attachments"]
-            attachment_id = self.__get_attachment_id(attachments, field_name)
-            attachment_file = tempfile.NamedTemporaryFile(delete=False)  # pylint: disable=consider-using-with
-            attachment_content = self.__bw_exec(["get", "attachment", attachment_id, "--itemid", item_id])
-            attachment_file.write(attachment_content.encode())
-            attachment_file.close()
-            return attachment_file.name
+        attachments = item["attachments"]
 
-        field_value = self.__get_field(fields, field_name)
-        return field_value
+        field_or_attachment_name = path.split("/")[-1]
+
+        field_value = self.__get_field(fields, field_or_attachment_name)
+        attachment_id = self.__get_attachment_id(attachments, field_or_attachment_name)
+
+        if field_value == "" and attachment_id == "":
+            raise ValueError(f"No field or attachment found with the name {field_or_attachment_name}")
+
+        if field_value != "" and attachment_id != "":
+            raise ValueError(f"Both field and attachment found with the name {field_or_attachment_name}")
+
+        ret: str = ""
+
+        if attachment_id != "":
+            attachment_content = self.__bw_exec(["get", "attachment", attachment_id, "--itemid", item_id])
+            ret = attachment_content
+
+        if field_value != "":
+            ret = field_value
+
+        if ret == "":
+            raise ValueError(f"No field or attachment found with the name {field_or_attachment_name}")
+
+        if is_file:
+            attachment_file = tempfile.NamedTemporaryFile(delete=False)  # pylint: disable=consider-using-with
+            attachment_file.write(ret.encode())
+            attachment_file.close()
+            ret = attachment_file.name
+
+        return ret
