@@ -29,7 +29,7 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
         if env_vars:
             cli_env_vars.update(env_vars)
         command_out = subprocess.run(
-            cmd, capture_output=True, check=False, encoding=ret_encoding, env=cli_env_vars, timeout=10
+            cmd, capture_output=True, check=False, encoding=ret_encoding, env=cli_env_vars, timeout=10, shell=False
         )
         command_out.check_returncode()
         if len(command_out.stdout) > 0:
