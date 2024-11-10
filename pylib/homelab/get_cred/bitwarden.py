@@ -1,6 +1,6 @@
 import json
 import os
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 from typing import Dict, List, Optional
 
@@ -29,7 +29,13 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
         if env_vars:
             cli_env_vars.update(env_vars)
         command_out = subprocess.run(
-            cmd, capture_output=True, check=False, encoding=ret_encoding, env=cli_env_vars, timeout=10, shell=False
+            cmd,
+            shell=False,
+            capture_output=True,
+            check=False,
+            encoding=ret_encoding,
+            env=cli_env_vars,
+            timeout=10,  # nosec B603
         )
         command_out.check_returncode()
         if len(command_out.stdout) > 0:
