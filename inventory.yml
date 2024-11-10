@@ -1,10 +1,8 @@
 ---
 all:
     vars:
-        keepass_dbx: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_DBX') | mandatory }}"
-        keepass_psw: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_PSW') | mandatory }}"
-        keepass_key: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_KEY') | mandatory }}"
-        keepass_ttl: "{{ lookup('ansible.builtin.env', 'ANSIBLE_KEEPASS_TTL', default=5) | mandatory | int }}"
+        cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
+        cs_no_log: "{{ not cs_env_debug }}"
 
     children:
         patchservers:
