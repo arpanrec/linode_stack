@@ -37,7 +37,7 @@ cs_nc_files_external_mount_folder_name: local_mnt_nextcloud_nextcloud
 cs_nc_files_external_mount_group_name: local_mnt_nextcloud_nextcloud
 cs_nc_files_scanner_systemd_timer_name: nextcloud-scanfiles
 
-cs_nc_email_regex: (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
+cs_nc_email_regex: (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]) # yamllint disable-line rule:line-length
 
 cs_nc_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_nc_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_port') }}"
@@ -49,8 +49,10 @@ cs_nc_db_database: "{{ cs_postgres_apps_dict.nextcloud.database }}"
 cs_nc_db_host: "{{ cs_postgres_host_private_ip }}"
 cs_nc_db_port: "{{ cs_postgres_port }}"
 
-cs_nc_admin_user: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_admin_user') }}"
-cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_admin_password') }}"
+cs_nc_admin_user: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud',
+    'custom_properties', 'cs_nc_admin_user') }}"
+cs_nc_admin_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud',
+    'custom_properties', 'cs_nc_admin_password') }}"
 
 cs_nc_mail_smtpmode: "{{ cs_mail_smtpmode }}"
 cs_nc_mail_sendmailmode: "{{ cs_mail_sendmailmode }}"
@@ -81,9 +83,12 @@ cs_nc_imaginary_cert_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.crt"
 cs_nc_imaginary_csr_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.csr"
 cs_nc_imaginary_fullchain_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.fullchain.pem"
 cs_nc_imaginary_protocol: http
-cs_nc_imaginary_key: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_imaginary_key') }}"
-cs_nc_imaginary_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_imaginary_port') }}"
-cs_nc_imaginary_domain: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_imaginary_domain') }}"
+cs_nc_imaginary_key: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud',
+    'custom_properties', 'cs_nc_imaginary_key') }}"
+cs_nc_imaginary_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud',
+    'custom_properties', 'cs_nc_imaginary_port') }}"
+cs_nc_imaginary_domain: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud',
+    'custom_properties', 'cs_nc_imaginary_domain') }}"
 
 cs_nc_fts_elasticsearch_password: "{{ cs_elasticsearch_password }}"
 cs_nc_fts_elasticsearch_servlet_port: "{{ cs_elasticsearch_servlet_port }}"
@@ -91,10 +96,11 @@ cs_nc_fts_elasticsearch_host: "{{ cs_elasticsearch_host }}"
 cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
 cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
 
-cs_nc_users_dict: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud', 'custom_properties', 'cs_nc_users_dict') | from_json }}"
 cs_nc_onlyoffice_port: "{{ cs_onlyoffice_port }}"
 cs_nc_onlyoffice_domain: "{{ cs_onlyoffice_domain }}"
 cs_nc_onlyoffice_jwt_secret: "{{ cs_onlyoffice_jwt_secret }}"
+cs_nc_users_dict: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nextcloud',
+    'custom_properties', 'cs_nc_users_dict') | from_json }}"
 
 cs_nc_protocol: https
 
