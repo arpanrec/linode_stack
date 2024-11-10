@@ -17,7 +17,7 @@ line_length = 120
 line-length = 120
 
 [tool.poetry]
-name = "blr-home-lab"
+name = "home-lab"
 version = "1.0.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
