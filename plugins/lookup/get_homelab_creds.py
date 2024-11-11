@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from ansible.errors import AnsibleLookupError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
+from ansible.utils.display import Display # type: ignore
+
 from homelab.get_cred import Bitwarden  # type: ignore
 
 DOCUMENTATION = """
@@ -28,29 +30,22 @@ options:
         description: Path for the credentials.
         required: true
         type: str
-    get_homelab_creds_is_file:
-        description: If the path is a file.
-        required: false
-        type: bool
-        default: false
-    get_homelab_creds_use_cache:
+    use_cache:
         description:
             - Use cache for credentials.
+            - `get_homelab_creds_use_cache` variable can be used to set this option.
         required: false
-        type: bool
-        default: true
 """
 
-_creds_manager = Bitwarden()
+_credential_manager = Bitwarden()
+
+display = Display()
 
 
 class LookupModule(LookupBase):
     """
     Lookup module that retrieves version details.
     """
-
-    def _var(self, var_value):
-        return self._templar.template(var_value, fail_on_undefined=True)
 
     def run(self, terms: List[str], variables: Optional[Dict[str, Any]] = None, **kwargs: Dict[str, Any]) -> List[str]:
         """
@@ -65,13 +60,13 @@ class LookupModule(LookupBase):
         if len(terms) > 1:
             raise AnsibleLookupError(f"Only one term is allowed for lookup, got {len(terms)}, {terms}")
 
-        if variables is not None:
-            self._templar.available_variables = variables
-        variables_ = getattr(self._templar, "_available_variables", {})
-
-        is_file = self.get_option("is_file", True)
         use_cache = self.get_option("use_cache")
-        if use_cache:
-            return [_creds_manager.get_with_cache(terms[0], is_file)]
+        if not use_cache and variables:
+            use_cache = str(variables.get("get_homelab_creds_use_cache"))
 
-        return [_creds_manager.get(terms[0], is_file)]  # type: ignore
+        use_cache_bool = use_cache.lower() == "true" if use_cache else False
+
+        if use_cache_bool:
+            return [_credential_manager.get_with_cache(terms[0])]
+
+        return [_credential_manager.get(terms[0])]

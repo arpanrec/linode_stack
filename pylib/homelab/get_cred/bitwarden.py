@@ -102,12 +102,12 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
         return attachment_id
 
     @cachier()
-    def get_with_cache(self, path: str, is_file: bool = False) -> str:
+    def get_with_cache(self, path: str) -> str:
         """
         Get the secret from Bitwarden with caching.
         """
 
-        return self.get(path, is_file)
+        return self.get(path)
 
     def clear_cache(self) -> None:
         """
@@ -116,7 +116,7 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
         self.get_with_cache.clear_cache()
 
     # pylint: disable=too-many-locals
-    def get(self, path: str, is_file: bool = False) -> str:
+    def get(self, path: str) -> str:
         """
         Get the secret from Bitwarden without caching.
         """
@@ -166,11 +166,5 @@ class Bitwarden:  # pylint: disable=too-few-public-methods
 
         if ret == "":
             raise ValueError(f"No field or attachment found with the name {field_or_attachment_name}")
-
-        if is_file:
-            attachment_file = tempfile.NamedTemporaryFile(delete=False)  # pylint: disable=consider-using-with
-            attachment_file.write(ret.encode())
-            attachment_file.close()
-            ret = attachment_file.name
 
         return ret
