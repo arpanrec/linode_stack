@@ -1,7 +1,6 @@
 import json
 import os
 import subprocess  # nosec B404
-import tempfile
 from typing import Dict, List, Optional
 
 try:
