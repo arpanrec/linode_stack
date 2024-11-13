@@ -7,7 +7,7 @@ no_implicit_optional = true
 
 [tool.pylint."FORMAT"]
 max-line-length = 120
-indent-string = '    '
+indent-string = "    "
 
 [tool.isort]
 profile = "black"
