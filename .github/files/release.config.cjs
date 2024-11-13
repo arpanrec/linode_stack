@@ -32,8 +32,6 @@ module.exports = {
                     'poetry export --without-hashes --format=requirements.txt --without dev -o requirements.txt',
                     'poetry export --without-hashes --format=requirements.txt --with dev -o requirements-dev.txt',
                 ].join(' && '),
-                // successCmd:
-                //     'ansible-galaxy collection publish arpanrec-nebula-${nextRelease.version}.tar.gz --api-key ${process.env.GALAXY_API_KEY}',
             },
         ],
         [
