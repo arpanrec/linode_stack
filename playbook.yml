@@ -111,7 +111,7 @@
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Nextcloud | Test cs_nc_protocol
-        tags: always
+        tags: never,nextcloud
         ansible.builtin.assert:
             that:
                 - "cs_nc_protocol in ['http', 'https']"
