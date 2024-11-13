@@ -23,5 +23,4 @@ cs_mail_smtphost: "{{ vault_cred_cs_mail_smtphost }}"
 cs_mail_smtpname: "{{ vault_cred_cs_mail_smtpname }}"
 cs_mail_smtppassword: "{{ vault_cred_cs_mail_smtppassword }}"
 
-cs_vm_ssh_service_user_id: "svc_admin"
 cs_vm_ssh_local_key_file: "/tmp/nextcloud.pem"
