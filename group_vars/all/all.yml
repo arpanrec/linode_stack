@@ -1,13 +1,10 @@
 ---
-cs_vm_ssh_priv_id_ecdsa: "{{ lookup('get_homelab_creds', 'bwsharedorg/ansible_access/OPENSSH ID_ECDSA/id_ecdsa') }}"
-cs_vm_ssh_priv_id_ecdsa_password: "{{ lookup('get_homelab_creds', 'bwsharedorg/ansible_access/OPENSSH ID_ECDSA/\
-    OPENSSH_KEY_PASSPHRASE') }}"
+cs_vm_ssh_priv_id_ecdsa: "{{ vault_cred_cs_vm_ssh_priv_id_ecdsa }}"
+cs_vm_ssh_priv_id_ecdsa_password: "{{ vault_cred_cs_vm_ssh_priv_id_ecdsa_password }}"
 
-cs_root_ca_privkey_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY',
-    'attachments', 'privkey.pem') }}"
-cs_root_ca_privkey_pass_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY',
-    'attachments', 'privkey.pass') }}"
-cs_root_ca_cert_pem_file: "{{ lookup('viczem.keepass.keepass', 'CERTIFICATE_AUTHORITY', 'attachments', 'cert.pem') }}"
+cs_root_ca_privkey_pem: "{{ vault_cred_cs_root_ca_privkey_pem }}"
+cs_root_ca_privkey_pass: "{{ vault_cred_cs_root_ca_privkey_pass }}"
+cs_root_ca_cert_pem: "{{ vault_cred_cs_root_ca_cert_pem }}"
 
 cs_rb4_m1_ip: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/servers', 'custom_properties', 'cs_rb4_m1_ip') }}"
 cs_rb4_m2_ip: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/servers', 'custom_properties', 'cs_rb4_m2_ip') }}"
