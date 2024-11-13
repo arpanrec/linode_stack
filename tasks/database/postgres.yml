@@ -72,12 +72,9 @@
       path: "{{ cs_postgres_certs_cert_file }}"
       csr_path: "{{ cs_postgres_certs_csr_file }}"
       provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
+      ownca_content: "{{ cs_root_ca_cert_pem }}"
       mode: "0644"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
@@ -85,7 +82,7 @@
 
 - name: Database | Postgres | Write CA certificate
   ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
+      content: "{{ cs_root_ca_cert_pem }}"
       dest: "{{ cs_postgres_certs_chain_file }}"
       mode: "0644"
       owner: "{{ cs_postgres_run_user }}"
@@ -161,12 +158,9 @@
       path: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ item.value.user }}.pem"
       csr_path: "{{ cs_postgres_client_certs_dir }}/client-csr-{{ item.value.user }}.pem"
       provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
+      ownca_content: "{{ cs_root_ca_cert_pem }}"
       mode: "0644"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
@@ -176,7 +170,7 @@
 
 - name: Database | Postgres | Client | Write CA certificate
   ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
+      content: "{{ cs_root_ca_cert_pem }}"
       dest: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
       mode: "0644"
       owner: "{{ cs_postgres_run_user }}"
@@ -338,12 +332,9 @@
       path: "{{ cs_postgres_pg_admin_certs_cert_file }}"
       csr_path: "{{ cs_postgres_pg_admin_certs_csr_file }}"
       provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
+      ownca_content: "{{ cs_root_ca_cert_pem }}"
       mode: "0644"
       return_content: true
       owner: "{{ cs_postgres_pg_admin_run_user }}"
@@ -354,7 +345,7 @@
   ansible.builtin.copy:
       content: |+
           {{ cs_db_postgresql_pgadmin_ssl_cert.certificate | trim }}
-          {{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file, lstrip=false, rstrip=false) }}
+          {{ cs_root_ca_cert_pem }}
       dest: "{{ cs_postgres_pg_admin_certs_fullchain_file }}"
       mode: "0644"
       owner: "{{ cs_postgres_pg_admin_run_user }}"

@@ -3,11 +3,8 @@ cs_nfs_server_ip: "{{ cs_rb4_m3_ip }}"
 cs_nfs_client_ips:
     - "{{ cs_rb4_m1_ip }}"
     - "{{ cs_rb4_m2_ip }}"
-cs_nfs_external_drive_luks_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nfs-server',
-    'custom_properties', 'cs_nfs_external_drive_luks_password') }}"
-cs_nfs_external_drive_luks_key_file: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nfs-server',
-    'attachments', 'cs_nfs_external_drive_luks_key_file') }}"
-cs_nfs_external_drive_uuid: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/nfs-server',
-    'custom_properties', 'cs_nfs_external_drive_uuid') }}"
+cs_nfs_external_drive_luks_password: "{{ vault_cred_cs_nfs_external_drive_luks_password }}"
+cs_nfs_external_drive_luks_key_base64: "{{ vault_cred_cs_nfs_external_drive_luks_key_base64 }}"
+cs_nfs_external_drive_uuid: "{{ vault_cred_cs_nfs_external_drive_uuid }}"
 cs_nfs_external_drive_crypt_open_name: nfsstorage5tbcd
 cs_nfs_external_drive_mount_path: /mnt/{{ cs_nfs_external_drive_crypt_open_name }}

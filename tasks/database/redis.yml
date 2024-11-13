@@ -58,18 +58,15 @@
       path: "{{ cs_redis_certs_cert_file }}"
       csr_path: "{{ cs_redis_certs_csr_file }}"
       provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
+      ownca_content: "{{ cs_root_ca_cert_pem }}"
       mode: "0644"
       return_content: true
 
 - name: Database | Redis | Write CA certificate
   ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
+      content: "{{ cs_root_ca_cert_pem }}"
       dest: "{{ cs_redis_certs_chain_file }}"
       mode: "0644"
       remote_src: false
@@ -121,16 +118,13 @@
       path: "{{ cs_redis_client_certs_cert_file }}"
       csr_path: "{{ cs_redis_client_certs_csr_file }}"
       provider: ownca
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
+      ownca_content: "{{ cs_root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
 
 - name: Database | Redis | Test | Write client CA certificate
   ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
+      content: "{{ cs_root_ca_cert_pem }}"
       dest: "{{ cs_redis_client_certs_ca_file }}"
       mode: "0644"
       remote_src: false

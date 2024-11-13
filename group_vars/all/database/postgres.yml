@@ -20,21 +20,16 @@ cs_postgres_host_public_domain: "localhost"
 cs_postgres_host_private_domain: "localhost"
 cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
 
-cs_postgres_user: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_user') }}"
+cs_postgres_user: "{{ vault_cred_cs_postgres_user }}"
 
 cs_postgres_docker_image: docker.io/library/postgres
 cs_postgres_docker_image_tag: 16.3
 
-cs_postgres_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_port') }}"
-cs_postgres_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_password') }}"
-cs_postgres_db: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_db') }}"
+cs_postgres_port: "{{ vault_cred_cs_postgres_port }}"
+cs_postgres_password: "{{ vault_cred_cs_postgres_password }}"
+cs_postgres_db: "{{ vault_cred_cs_postgres_db }}"
 
-cs_postgres_apps_dict: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_apps_dict') | from_json }}"
+cs_postgres_apps_dict: "{{ vault_cred_cs_postgres_apps_dict | from_json }}"
 
 cs_postgres_pg_admin_run_user: "5050"
 cs_postgres_pg_admin_run_group: "5050"
@@ -57,7 +52,5 @@ ps_postgres_pg_admin_docker_image_tag: 8.9
 
 cs_postgres_pg_admin_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
-cs_postgres_pg_admin_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_pg_admin_password') }}"
-cs_postgres_pg_admin_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/database/postgres',
-    'custom_properties', 'cs_postgres_pg_admin_port') }}"
+cs_postgres_pg_admin_password: "{{ vault_cred_cs_postgres_pg_admin_password }}"
+cs_postgres_pg_admin_port: "{{ vault_cred_cs_postgres_pg_admin_port }}"

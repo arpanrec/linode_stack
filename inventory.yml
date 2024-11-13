@@ -4,6 +4,11 @@ all:
         cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
         cs_no_log: "{{ not cs_env_debug }}"
 
+        cs_vm_ssh_service_user_id: "svc_admin"
+
+        ansible_user: svc_admin
+        ansible_ssh_private_key_file: "{{ cs_vm_ssh_local_key_file }}"
+
     children:
         patchservers:
             hosts:
