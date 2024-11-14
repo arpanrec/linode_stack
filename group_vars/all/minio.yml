@@ -44,16 +44,11 @@ cs_mini0_mini0_container_name: mini0
 cs_mini0_mini0_image: docker.io/minio/minio
 cs_mini0_mini0_version: RELEASE.2024-07-26T20-48-21Z
 cs_mini0_mini0_default_kms_key_id: my-minio-key
-cs_mini0_mini0_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/mini0',
-    'custom_properties', 'cs_mini0_mini0_port') }}"
-cs_mini0_mini0_console_port: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/mini0',
-    'custom_properties', 'cs_mini0_mini0_console_port') }}"
-cs_mini0_mini0_root_user: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/mini0',
-    'custom_properties', 'cs_mini0_mini0_root_user') }}"
-cs_mini0_mini0_root_password: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/mini0',
-    'custom_properties', 'cs_mini0_mini0_root_password') }}"
-cs_mini0_mini0_region: "{{ lookup('viczem.keepass.keepass', 'home-lab/blr/mini0',
-    'custom_properties', 'cs_mini0_mini0_region') }}"
+cs_mini0_mini0_port: "{{ vault_cred_cs_mini0_mini0_port }}"
+cs_mini0_mini0_console_port: "{{ vault_cred_cs_mini0_mini0_console_port }}"
+cs_mini0_mini0_root_user: "{{ vault_cred_cs_mini0_mini0_root_user }}"
+cs_mini0_mini0_root_password: "{{ vault_cred_cs_mini0_mini0_root_password }}"
+cs_mini0_mini0_region: "{{ vault_cred_cs_mini0_mini0_region }}"
 cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_mini0_mini0_private_ip: "{{ cs_rb4_m2_ip }}"
 cs_mini0_mini0_public_ip: "{{ cs_public_ingress_ip }}"

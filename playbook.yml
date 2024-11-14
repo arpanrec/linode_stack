@@ -8,7 +8,7 @@
   tasks:
       - name: Access Key | Write SSH Private Key
         ansible.builtin.copy:
-            content: "{{ lookup('ansible.builtin.file', cs_vm_ssh_priv_id_ecdsa_file, lstrip=false, rstrip=false)
+            content: "{{ cs_vm_ssh_priv_id_ecdsa
                 | get_unencrypted_id_ecdsa(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
             mode: "0600"
             dest: "{{ cs_vm_ssh_local_key_file }}"
@@ -124,7 +124,7 @@
   no_log: "{{ cs_no_log }}"
   tasks:
       - name: Nextcloud | Test cs_nc_protocol
-        tags: always
+        tags: never,nextcloud
         ansible.builtin.assert:
             that:
                 - "cs_nc_protocol in ['http', 'https']"

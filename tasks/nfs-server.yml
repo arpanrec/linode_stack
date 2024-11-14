@@ -6,7 +6,7 @@
 
 - name: NFS Server | Mount Disk | Unencrypted | Copy key file
   ansible.builtin.copy:
-      src: "{{ cs_nfs_external_drive_luks_key_file }}"
+      content: "{{ cs_nfs_external_drive_luks_key_base64 | b64decode }}"
       dest: /root/.nfs-luks-key
       mode: "0000"
       remote_src: false
