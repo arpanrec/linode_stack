@@ -29,7 +29,7 @@ cs_postgres_port: "{{ vault_cred_cs_postgres_port }}"
 cs_postgres_password: "{{ vault_cred_cs_postgres_password }}"
 cs_postgres_db: "{{ vault_cred_cs_postgres_db }}"
 
-cs_postgres_apps_dict: "{{ vault_cred_cs_postgres_apps_dict | from_json }}"
+cs_postgres_apps_dict: "{{ vault_cred_cs_postgres_apps_dict }}"
 
 cs_postgres_pg_admin_run_user: "5050"
 cs_postgres_pg_admin_run_group: "5050"
