@@ -225,12 +225,9 @@
       path: "{{ cs_nc_cert_cert_file }}"
       csr_path: "{{ cs_nc_cert_cert_csr_file }}"
       provider: ownca
-      ownca_privatekey_content: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pem_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_privatekey_passphrase: "{{ lookup('ansible.builtin.file', cs_root_ca_privkey_pass_file,
-          lstrip=false, rstrip=false) }}"
-      ownca_content: "{{ lookup('ansible.builtin.file', cs_root_ca_cert_pem_file,
-          lstrip=false, rstrip=false) }}"
+      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
+      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
+      ownca_content: "{{ cs_root_ca_cert_pem }}"
       mode: "0644"
       return_content: true
       owner: "{{ cs_nc_run_user }}"
@@ -238,7 +235,7 @@
 
 - name: Nextcloud | Prepare | Server Certificate | Write CA certificate
   ansible.builtin.copy:
-      src: "{{ cs_root_ca_cert_pem_file }}"
+      content: "{{ cs_root_ca_cert_pem }}"
       dest: "{{ cs_nc_cert_chain_file }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
