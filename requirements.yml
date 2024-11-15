@@ -27,7 +27,7 @@ collections:
     - name: arpanrec.nebula
       source: https://github.com/arpanrec/arpanrec.nebula.git
       type: git
-      version: 1.10.10
+      version: 1.10.14
 roles:
     - name: geerlingguy.docker
       scm: git
