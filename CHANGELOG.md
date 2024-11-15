@@ -1,11 +1,6 @@
-# [1.2.0](https://github.com/arpanrec/home-lab/compare/1.1.0...1.2.0) (2024-11-14)
+## [1.2.1](https://github.com/arpanrec/home-lab/compare/1.2.0...1.2.1) (2024-11-15)
 
 
 ### Bug Fixes
 
-* package mode ([ea2216d](https://github.com/arpanrec/home-lab/commit/ea2216d9409b0208330aa68b31e55496238b1eda))
-
-
-### Features
-
-* Change credential source ([#26](https://github.com/arpanrec/home-lab/issues/26)) ([ec5a147](https://github.com/arpanrec/home-lab/commit/ec5a1476ab02be47720d5759e60f52909b13b1f7))
+* update arpanrec.nebula version to 1.10.10 ([d9e69df](https://github.com/arpanrec/home-lab/commit/d9e69df76d2fa303a0065d33b7b2d56faa56b92a))
