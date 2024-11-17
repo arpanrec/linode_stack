@@ -5,6 +5,8 @@ name: Release
 
 jobs:
     release:
+        timeout-minutes: 500
+        cancel-timeout-minutes: 500
         name: release
         runs-on: ubuntu-latest
         steps:
@@ -38,7 +40,7 @@ jobs:
               with:
                   python-version: "3.12"
                   cache: "poetry"
-                  # cache-dependency-path: pyproject.toml
+                  cache-dependency-path: poetry.lock
 
             - name: Install python dependencies
               run: poetry install
@@ -50,7 +52,8 @@ jobs:
                       @semantic-release/release-notes-generator@14.0.1 \
                       @semantic-release/changelog@6.0.3 \
                       @semantic-release/exec@6.0.3 \
-                      @semantic-release/git@10.0.1 -D
+                      @semantic-release/git@10.0.1 \
+                      @semantic-release/github@11.0.1 -D
 
             - name: Release
               run: |+

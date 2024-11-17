@@ -1,11 +1,6 @@
-# [1.2.0](https://github.com/arpanrec/home-lab/compare/1.1.0...1.2.0) (2024-11-14)
+## [1.2.3](https://github.com/arpanrec/home-lab/compare/1.2.2...1.2.3) (2024-11-17)
 
 
 ### Bug Fixes
 
-* package mode ([ea2216d](https://github.com/arpanrec/home-lab/commit/ea2216d9409b0208330aa68b31e55496238b1eda))
-
-
-### Features
-
-* Change credential source ([#26](https://github.com/arpanrec/home-lab/issues/26)) ([ec5a147](https://github.com/arpanrec/home-lab/commit/ec5a1476ab02be47720d5759e60f52909b13b1f7))
+* update GitHub workflows to include timeout settings and cache dependency paths ([633de92](https://github.com/arpanrec/home-lab/commit/633de921f9df068e4f4fc312261f9e144a68e489))
