@@ -16,6 +16,8 @@ concurrency:
 
 jobs:
     black:
+        timeout-minutes: 60
+        cancel-timeout-minutes: 60
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -34,7 +36,7 @@ jobs:
               with:
                   python-version: "${{ matrix.python-version }}"
                   cache: "poetry"
-                  # cache-dependency-path: pyproject.toml
+                  cache-dependency-path: poetry.lock
 
             - name: Install dependencies
               run: poetry install --with dev
