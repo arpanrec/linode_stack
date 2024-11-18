@@ -1,3 +1,19 @@
+"""
+This module provides custom Ansible filter plugins to handle ECDSA key pairs.
+
+Functions:
+    get_encrypted_id_ecdsa_pub_key(id_ecdsa: str, password: str) -> str:
+        Get the public key of an ECDSA key pair from an encrypted private key.
+
+    get_unencrypted_id_ecdsa(id_ecdsa: str, password: str) -> str:
+        Get the unencrypted private key of an ECDSA key pair.
+
+Classes:
+    FilterModule:
+        Custom Ansible filter plugin to get the public key of an ECDSA key pair.
+
+"""
+
 from typing import Callable, Dict
 
 from cryptography.hazmat.backends import default_backend
