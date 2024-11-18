@@ -23,7 +23,7 @@ cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
 cs_postgres_user: "{{ vault_cred_cs_postgres_user }}"
 
 cs_postgres_docker_image: docker.io/library/postgres
-cs_postgres_docker_image_tag: postgres:17.1-bookworm
+cs_postgres_docker_image_tag: 17.1-bookworm
 
 cs_postgres_port: "{{ vault_cred_cs_postgres_port }}"
 cs_postgres_password: "{{ vault_cred_cs_postgres_password }}"
