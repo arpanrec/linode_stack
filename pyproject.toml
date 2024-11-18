@@ -36,9 +36,6 @@ bcrypt = "4.2.0"
 black = "24.10.0"
 pylint = "3.3.1"
 mypy = "1.13.0"
-molecule-plugins = "23.5.3"
-molecule = "24.9.0"
-docker = "7.1.0"                                                                 # Needed for molecule docker driver
 ansible-lint = { version = "24.10.0", markers = "platform_system != 'Windows'" }
 poetry-plugin-export = "1.8.0"
 pyright = "1.1.389"
