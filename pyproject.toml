@@ -28,15 +28,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 ansible = "10.6.0"
-linode-api4 = "5.23.0"
-ansible-specdoc = "0.0.17"
-godaddypy = "2.5.1"
-configloader = "1.0.1"
-dnspython = "2.7.0"
-maturin = "1.7.4" # Needed for bitwarden-sdk
-bcrypt = "4.2.0"
-jmespath = "1.0.1"
-cachier = "3.1.2"
+linode-cli = "5.54.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
@@ -44,7 +36,7 @@ pylint = "3.3.1"
 mypy = "1.13.0"
 molecule-plugins = "23.5.3"
 molecule = "24.9.0"
-docker = "7.1.0" # Needed for molecule docker driver
+docker = "7.1.0"                                                                 # Needed for molecule docker driver
 ansible-lint = { version = "24.10.0", markers = "platform_system != 'Windows'" }
 poetry-plugin-export = "1.8.0"
 pyright = "1.1.389"
