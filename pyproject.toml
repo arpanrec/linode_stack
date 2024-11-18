@@ -29,6 +29,7 @@ package-mode = false
 python = "^3.10"
 ansible = "10.6.0"
 linode-cli = "5.54.0"
+jmespath = "1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
