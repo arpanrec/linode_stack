@@ -211,6 +211,7 @@
                   {{ ps_postgres_pg_admin_docker_container_name }} \
                   {{ redis_container_name }} {{ cs_elasticsearch_docker_container_name }} \
                   {{ cs_nc_imaginary_docker_container_name }} {{ cs_collabora_container_name }}
+                docker system prune -af --volumes
 
                 apt-get clean
                 apt-get autoremove -y
