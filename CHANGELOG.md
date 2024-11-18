@@ -1,6 +1,6 @@
-## [1.2.3](https://github.com/arpanrec/home-lab/compare/1.2.2...1.2.3) (2024-11-17)
+## [1.2.4](https://github.com/arpanrec/home-lab/compare/1.2.3...1.2.4) (2024-11-18)
 
 
 ### Bug Fixes
 
-* update GitHub workflows to include timeout settings and cache dependency paths ([633de92](https://github.com/arpanrec/home-lab/commit/633de921f9df068e4f4fc312261f9e144a68e489))
+* update ansible-lint to version 24.10.0 and pyright to version 1.1.389 ([0e72c4d](https://github.com/arpanrec/home-lab/commit/0e72c4d3ab183fec74c757d6cf164661b258c744))

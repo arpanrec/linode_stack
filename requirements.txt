@@ -10,7 +10,7 @@ cffi==1.17.1 ; python_version >= "3.10" and python_version < "4.0" and platform_
 charset-normalizer==3.4.0 ; python_version >= "3.10" and python_version < "4.0"
 configloader==1.0.1 ; python_version >= "3.10" and python_version < "4.0"
 cryptography==43.0.3 ; python_version >= "3.10" and python_version < "4.0"
-deprecated==1.2.14 ; python_version >= "3.10" and python_version < "4.0"
+deprecated==1.2.15 ; python_version >= "3.10" and python_version < "4.0"
 dnspython==2.7.0 ; python_version >= "3.10" and python_version < "4.0"
 godaddypy==2.5.1 ; python_version >= "3.10" and python_version < "4.0"
 idna==3.10 ; python_version >= "3.10" and python_version < "4.0"
