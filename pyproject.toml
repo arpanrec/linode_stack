@@ -45,9 +45,9 @@ mypy = "1.13.0"
 molecule-plugins = "23.5.3"
 molecule = "24.9.0"
 docker = "7.1.0" # Needed for molecule docker driver
-ansible-lint = { version = "24.9.2", markers = "platform_system != 'Windows'" }
+ansible-lint = { version = "24.10.0", markers = "platform_system != 'Windows'" }
 poetry-plugin-export = "1.8.0"
-pyright = "1.1.388"
+pyright = "1.1.389"
 types-requests = "2.32.0.20241016"
 types-pyyaml = "6.0.12.20240917"
 isort = "5.13.2"
