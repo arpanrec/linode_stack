@@ -23,7 +23,7 @@ cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
 cs_postgres_user: "{{ vault_cred_cs_postgres_user }}"
 
 cs_postgres_docker_image: docker.io/library/postgres
-cs_postgres_docker_image_tag: 16.3
+cs_postgres_docker_image_tag: postgres:17.1-bookworm
 
 cs_postgres_port: "{{ vault_cred_cs_postgres_port }}"
 cs_postgres_password: "{{ vault_cred_cs_postgres_password }}"
@@ -48,7 +48,7 @@ ps_postgres_pg_admin_entrypoint_file: "{{ cs_postgres_pg_admin_dir }}/entrypoint
 
 ps_postgres_pg_admin_docker_container_name: pgadmin
 ps_postgres_pg_admin_docker_image: docker.io/dpage/pgadmin4
-ps_postgres_pg_admin_docker_image_tag: 8.9
+ps_postgres_pg_admin_docker_image_tag: 8.13
 
 cs_postgres_pg_admin_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
