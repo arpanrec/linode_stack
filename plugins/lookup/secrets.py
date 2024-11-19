@@ -44,10 +44,10 @@ class LookupModule(LookupBase):
         return value
 
     def __get_attachment(self, attachment_name: Optional[str], attachment_id: Optional[str]) -> str:
-        item_dict: Dict[str, Any]
+        item_dict: Optional[Dict[str, Any]] = None
         item_id: str
         if self.__search == "name":
-            item_dict = json.loads(self.__bw_exec(["get", "item", self.__item]))
+            item_dict = dict(json.loads(self.__bw_exec(["get", "item", self.__item])))
             item_id = str(item_dict.get("id"))
         elif self.__search == "id":
             item_id = self.__item
@@ -56,7 +56,7 @@ class LookupModule(LookupBase):
 
         if not attachment_id:
             if not item_dict:
-                item_dict = json.loads(self.__bw_exec(["get", "item", self.__item]))
+                item_dict = dict(json.loads(self.__bw_exec(["get", "item", item_id])))
             if not attachment_id and attachment_name:
                 attachments: List[Dict[str, Any]] = item_dict["attachments"]
                 for att in attachments:
