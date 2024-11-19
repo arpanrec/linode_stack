@@ -4,13 +4,13 @@ vault_cred_cs_vm_ssh_priv_id_ecdsa: "{{ lookup('secrets', 'OPENSSH ID_ECDSA', at
 vault_cred_cs_vm_ssh_priv_id_ecdsa_password: "{{ lookup('secrets', 'OPENSSH ID_ECDSA',
     field='OPENSSH_KEY_PASSPHRASE') }}"
 
-vault_cred_cs_root_ca_privkey_pem: "{{ lookup('secrets', 'CERTIFICATE_AUTHORITY',  attachment_name='privkey.pem') }}"
+vault_cred_cs_root_ca_privkey_pem: "{{ lookup('secrets', 'CERTIFICATE_AUTHORITY', attachment_name='privkey.pem') }}"
 
-vault_cred_cs_root_ca_privkey_pass: "{{ lookup('secrets', 'CERTIFICATE_AUTHORITY',  attachment_name='privkey.pass') }}"
-vault_cred_cs_root_ca_cert_pem: "{{ lookup('secrets', 'CERTIFICATE_AUTHORITY',  attachment_name='cert.pem') }}"
+vault_cred_cs_root_ca_privkey_pass: "{{ lookup('secrets', 'CERTIFICATE_AUTHORITY', attachment_name='privkey.pass') }}"
+vault_cred_cs_root_ca_cert_pem: "{{ lookup('secrets', 'CERTIFICATE_AUTHORITY', attachment_name='cert.pem') }}"
 
-vault_cred_cs_rb4_m1_ip: "{{ lookup('secrets', 'rb4-m1',  field='ip') }}"
-vault_cred_cs_rb4_m2_ip: "{{ lookup('secrets', 'rb4-m2',  field='ip') }}"
-vault_cred_cs_rb4_m3_ip: "{{ lookup('secrets', 'rb4-m3',  field='ip') }}"
-vault_cred_cs_public_ingress_ip: "{{ lookup('secrets', 'BLR Flat - Router',  field='ip') }}"
-vault_cred_cs_public_ingress_dns_entry: "{{ lookup('secrets', 'BLR Flat - Router',  field='dns') }}"
+vault_cred_cs_rb4_m1_ip: "{{ lookup('secrets', 'rb4-m1', field='ip') }}"
+vault_cred_cs_rb4_m2_ip: "{{ lookup('secrets', 'rb4-m2', field='ip') }}"
+vault_cred_cs_rb4_m3_ip: "{{ lookup('secrets', 'rb4-m3', field='ip') }}"
+vault_cred_cs_public_ingress_ip: "{{ lookup('secrets', 'BLR Flat - Router', field='ip') }}"
+vault_cred_cs_public_ingress_dns_entry: "{{ lookup('secrets', 'BLR Flat - Router', field='dns') }}"
