@@ -5,7 +5,17 @@
   gather_facts: false
   no_log: "{{ cs_no_log }}"
   tags: always
+  vars:
+      test_key_1: "from vars"
   tasks:
+      - name: Debug
+        ansible.builtin.debug:
+            msg: "{{ lookup('secrets', 'cs_vm_ssh_priv_id_ecdsa', test_key_1='direct') }}"
+
+      - name: Hard Fail
+        ansible.builtin.fail:
+            msg: "Hard Fail"
+
       - name: Access Key | Write SSH Private Key
         ansible.builtin.copy:
             content: "{{ cs_vm_ssh_priv_id_ecdsa
