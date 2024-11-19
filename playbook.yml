@@ -10,7 +10,8 @@
   tasks:
       - name: Debug
         ansible.builtin.debug:
-            msg: "{{ lookup('secrets', 'cs_vm_ssh_priv_id_ecdsa', test_key_1='direct') }}"
+            msg: "{{ lookup('secrets', 'cb35eaf2-3175-4df9-9ac2-af3000728039',
+                attachment_name='github.com', search='id') }}"
 
       - name: Hard Fail
         ansible.builtin.fail:
