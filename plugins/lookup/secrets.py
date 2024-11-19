@@ -10,14 +10,18 @@ import json
 import os
 import subprocess  # nosec B404
 from typing import Any, Dict, List, Optional
-
-from cachier import cachier
-
-# pylint: disable=invalid-name
-__metaclass__ = type
-
 from ansible.errors import AnsibleLookupError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
+from ansible.utils.display import Display  # type: ignore
+
+try:
+    from cachier import cachier
+except ImportError as e:
+    raise AnsibleLookupError("Please install cachier with 'pip install cachier'") from e
+
+display = Display()
+# pylint: disable=invalid-name
+__metaclass__ = type
 
 
 class LookupModule(LookupBase):
@@ -75,7 +79,7 @@ class LookupModule(LookupBase):
         return attachment_str
 
     @staticmethod
-    @cachier(stale_after=datetime.timedelta(minutes=5))
+    # @cachier(stale_after=datetime.timedelta(minutes=5))
     def __bw_exec(
         cmd: List[str],
         ret_encoding: str = "UTF-8",
@@ -92,6 +96,8 @@ class LookupModule(LookupBase):
 
         if env_vars is not None:
             cli_env_vars.update(env_vars)
+
+        display.vvv(f"Executing Bitwarden CLI command: {' '.join(cmd)}")
         command_out = subprocess.run(
             cmd, capture_output=True, check=False, encoding=ret_encoding, env=cli_env_vars, timeout=10
         )  # nosec B603
