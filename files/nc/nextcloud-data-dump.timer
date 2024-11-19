@@ -4,7 +4,7 @@ Description=Nextcloud Data Dump Timer
 [Timer]
 Persistent=true
 OnBootSec=300s
-OnUnitActiveSec=43200
+OnUnitActiveSec=43200s
 Unit=nextcloud-data-dump.service
 
 [Install]
