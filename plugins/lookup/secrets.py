@@ -5,10 +5,13 @@ Ansible lookup plugin to get secrets
 
 from __future__ import absolute_import, division, print_function
 
+import datetime
 import json
 import os
 import subprocess  # nosec B404
 from typing import Any, Dict, List, Optional
+
+from cachier import cachier
 
 # pylint: disable=invalid-name
 __metaclass__ = type
@@ -72,6 +75,7 @@ class LookupModule(LookupBase):
         return attachment_str
 
     @staticmethod
+    @cachier(stale_after=datetime.timedelta(minutes=5))
     def __bw_exec(
         cmd: List[str],
         ret_encoding: str = "UTF-8",
@@ -88,7 +92,6 @@ class LookupModule(LookupBase):
 
         if env_vars is not None:
             cli_env_vars.update(env_vars)
-        print(" ".join(cmd))
         command_out = subprocess.run(
             cmd, capture_output=True, check=False, encoding=ret_encoding, env=cli_env_vars, timeout=10
         )  # nosec B603
