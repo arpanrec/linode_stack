@@ -72,7 +72,7 @@ cs_nc_redis_ca_file: "{{ cs_nc_redis_cert_dir }}/redis.ca"
 cs_nc_redis_csr_file: "{{ cs_nc_redis_cert_dir }}/redis.csr"
 cs_nc_redis_host: "{{ cs_redis_private_ip }}"
 cs_nc_redis_port: "{{ cs_redis_tls_port }}"
-cs_nc_redis_password: "{{ cs_redis_password }}"
+cs_nc_redis_password: "{{ cs_redis_admin_password }}"
 
 cs_nc_imaginary_docker_container_name: imaginary
 cs_nc_imaginary_docker_image: docker.io/nextcloud/aio-imaginary
@@ -86,7 +86,7 @@ cs_nc_imaginary_protocol: http
 cs_nc_imaginary_key: "{{ vault_cred_cs_nc_imaginary_key }}"
 cs_nc_imaginary_port: "{{ vault_cred_cs_nc_imaginary_port }}"
 cs_nc_imaginary_domain: "{{ vault_cred_cs_nc_imaginary_domain }}"
-cs_nc_fts_elasticsearch_password: "{{ cs_elasticsearch_password }}"
+cs_nc_fts_elasticsearch_password: "{{ cs_elasticsearch_root_password }}"
 cs_nc_fts_elasticsearch_servlet_port: "{{ cs_elasticsearch_servlet_port }}"
 cs_nc_fts_elasticsearch_host: "{{ cs_elasticsearch_host }}"
 cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch

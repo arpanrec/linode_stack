@@ -46,7 +46,7 @@
   community.crypto.openssl_csr:
       path: "{{ cs_postgres_certs_csr_file }}"
       privatekey_path: "{{ cs_postgres_certs_privkey_file }}"
-      common_name: "{{ cs_postgres_user }}"
+      common_name: "{{ cs_postgres_maintenance_user }}"
       subject_alt_name:
           - "IP:{{ cs_postgres_host_public_ip }}"
           - "DNS:{{ cs_postgres_host_public_domain }}"
@@ -54,7 +54,7 @@
           - "IP:{{ cs_postgres_host_private_ip }}"
           - "DNS:localhost"
           - "IP:127.0.0.1"
-          - "DNS:{{ cs_postgres_user }}"
+          - "DNS:{{ cs_postgres_maintenance_user }}"
           - "DNS:{{ cs_postgres_container_name }}"
       key_usage:
           - "digitalSignature"
@@ -122,9 +122,9 @@
       ports:
           - "{{ cs_postgres_port }}:{{ cs_postgres_port }}"
       env:
-          POSTGRES_PASSWORD: "{{ cs_postgres_password }}"
-          POSTGRES_USER: "{{ cs_postgres_user }}"
-          POSTGRES_DB: "{{ cs_postgres_db }}"
+          POSTGRES_PASSWORD: "{{ cs_postgres_maintenance_password }}"
+          POSTGRES_USER: "{{ cs_postgres_maintenance_user }}"
+          POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
           TZ: Asia/Kolkata
 
 - name: Database | Postgres | Client | Create SSL Private key
@@ -150,8 +150,8 @@
       mode: "0644"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
-      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Sign SSL CSR
   community.crypto.x509_certificate:
@@ -165,8 +165,8 @@
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
       return_content: true
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
-      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Write CA certificate
   ansible.builtin.copy:
@@ -180,13 +180,13 @@
 - name: Database | Postgres | Wait for service to start
   community.postgresql.postgresql_ping:
       login_host: "{{ cs_postgres_host_private_ip }}"
-      login_password: "{{ cs_postgres_password }}"
-      login_user: "{{ cs_postgres_user }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
       login_port: "{{ cs_postgres_port }}"
-      login_db: "{{ cs_postgres_db }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
       ssl_mode: verify-full
       ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_user }}.pem"
+      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
       ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
   register: is_postgres_up
   until: is_postgres_up.is_available
@@ -199,13 +199,13 @@
       password: "{{ item.value.password }}"
       state: "present"
       login_host: "{{ cs_postgres_host_private_ip }}"
-      login_password: "{{ cs_postgres_password }}"
-      login_user: "{{ cs_postgres_user }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
       login_port: "{{ cs_postgres_port }}"
-      login_db: "{{ cs_postgres_db }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
       ssl_mode: verify-full
       ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_user }}.pem"
+      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
       ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
   with_items: "{{ cs_postgres_apps_dict | dict2items }}"
 
@@ -217,12 +217,12 @@
       template: "template0"
       owner: "{{ item.value.user }}"
       login_host: "{{ cs_postgres_host_private_ip }}"
-      login_password: "{{ cs_postgres_password }}"
-      login_user: "{{ cs_postgres_user }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
       login_port: "{{ cs_postgres_port }}"
       ssl_mode: verify-full
       ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_user }}.pem"
+      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
       ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
   with_items: "{{ cs_postgres_apps_dict | dict2items }}"
 
@@ -269,12 +269,12 @@
       owner: "{{ cs_postgres_pg_admin_run_user }}"
       group: "{{ cs_postgres_pg_admin_run_group }}"
 
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
-      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
 
 - name: Database | Postgres | pgAdmin | Set Server json fact
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_db: {'database': cs_postgres_db, 'password':
-      cs_postgres_password, 'user': cs_postgres_user}}) | dict2items }}"
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
   loop_control:
       index_var: index
   vars:
