@@ -12,6 +12,7 @@
                 | get_unencrypted_id_ecdsa(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
             mode: "0600"
             dest: "{{ cs_vm_ssh_local_key_file }}"
+        changed_when: false
 
 - name: Patch Cloud System
   hosts: patchservers
@@ -207,14 +208,26 @@
         become_user: root
         ansible.builtin.shell:
             cmd: |+
+                echo "Removing docker containers {{ cs_postgres_container_name }} \
+                    {{ ps_postgres_pg_admin_docker_container_name }} \
+                    {{ redis_container_name }} {{ cs_elasticsearch_docker_container_name }} \
+                    {{ cs_nc_imaginary_docker_container_name }} {{ cs_collabora_container_name }}"
+
                 docker rm -f {{ cs_postgres_container_name }} \
-                  {{ ps_postgres_pg_admin_docker_container_name }} \
-                  {{ redis_container_name }} {{ cs_elasticsearch_docker_container_name }} \
-                  {{ cs_nc_imaginary_docker_container_name }} {{ cs_collabora_container_name }}
+                    {{ ps_postgres_pg_admin_docker_container_name }} \
+                    {{ redis_container_name }} {{ cs_elasticsearch_docker_container_name }} \
+                    {{ cs_nc_imaginary_docker_container_name }} {{ cs_collabora_container_name }}
 
+                echo "Docker system prune -af --volumes"
+                docker system prune -af --volumes
+
+                echo "Apt autopurge"
                 apt-get clean
-                apt-get autoremove -y
+                apt-get autopurge -y
 
+                echo "Disable systemd services and timers {{ cs_nc_cron_system_timer_name }} \
+                    {{ cs_nc_fts_elasticsearch_systemd }} {{ cs_nc_files_scanner_systemd_timer_name }} \
+                    nextcloud-data-dump"
                 systemctl disable --now {{ cs_nc_cron_system_timer_name }}.timer || true
                 systemctl disable --now {{ cs_nc_cron_system_timer_name }}.service || true
                 systemctl disable --now {{ cs_nc_fts_elasticsearch_systemd }}.service || true
@@ -223,13 +236,13 @@
                 systemctl disable --now nextcloud-data-dump.timer || true
                 systemctl disable --now nextcloud-data-dump.service || true
 
+                echo "Remove systemd services and timers files from /etc/systemd/system/nextcloud*"
                 rm -rf /etc/systemd/system/nextcloud*
 
-                rm -rf {{ cs_nc_root_dir }}
-                rm -rf {{ cs_postgres_dir }}
-                rm -rf {{ cs_redis_dir }}
-                rm -rf {{ cs_elasticsearch_dir }}
-                rm -rf {{ cs_collabora_dir }}
+                echo "Remove directories {{ cs_nc_root_dir }} {{ cs_postgres_dir }} \
+                    {{ cs_redis_dir }} {{ cs_elasticsearch_dir }} {{ cs_collabora_dir }}"
+                rm -rf {{ cs_nc_root_dir }} {{ cs_postgres_dir }} {{ cs_redis_dir }} {{ cs_elasticsearch_dir }} \
+                    {{ cs_collabora_dir }}
 
             executable: /bin/bash
         changed_when: true
@@ -237,4 +250,4 @@
 
       - name: Delete all | Debug
         ansible.builtin.debug:
-            var: delete_all
+            msg: "{{ delete_all.stdout_lines | default([]) + delete_all.stderr_lines | default([]) }}"

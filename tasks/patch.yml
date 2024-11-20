@@ -10,7 +10,7 @@
       state: present
       update_cache: true
 
-- name: Patch Cloud System | Create ssh user
+- name: Patch Cloud System | Create ssh user when expected user is not root
   when: cs_vm_ssh_service_user_id != "root"
   ansible.builtin.import_role:
       name: arpanrec.nebula.user_add

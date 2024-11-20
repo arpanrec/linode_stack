@@ -20,7 +20,7 @@ cs_nc_db_cert_csr_file: "{{ cs_nc_db_cert_dir }}/db_cert.csr"
 
 cs_nc_cron_system_timer_name: nextcloud-cron
 
-cs_nc_version: 29.0.4
+cs_nc_version: 30.0.2
 cs_nc_run_user: www-data
 cs_nc_run_group: www-data
 cs_nc_log_file: "{{ cs_nc_data_dir }}/nextcloud.log"
@@ -43,6 +43,8 @@ cs_nc_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_nc_port: "{{ vault_cred_cs_nc_port }}"
 
 cs_nc_db_type: pgsql
+cs_nc_db_version: "{{ cs_postgres_docker_image_tag }}"
+cs_nc_db_docker_image: "{{ cs_postgres_docker_image }}"
 cs_nc_db_user: "{{ cs_postgres_apps_dict.nextcloud.user }}"
 cs_nc_db_password: "{{ cs_postgres_apps_dict.nextcloud.password }}"
 cs_nc_db_database: "{{ cs_postgres_apps_dict.nextcloud.database }}"
@@ -90,7 +92,7 @@ cs_nc_fts_elasticsearch_host: "{{ cs_elasticsearch_host }}"
 cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
 cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
 
-cs_nc_users_dict: "{{ vault_cred_cs_nc_users_dict | from_json }}"
+cs_nc_users_dict: "{{ vault_cred_cs_nc_users_dict | from_yaml }}"
 
 cs_nc_protocol: https
 
