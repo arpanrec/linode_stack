@@ -65,6 +65,8 @@ class LookupModule(LookupBase):
             if not item_dict:
                 item_dict = dict(json.loads(self.__bw_exec(["get", "item", item_id])))
             if not attachment_id and attachment_name:
+                if "attachments" not in item_dict:
+                    raise AnsibleLookupError("No attachments found")
                 attachments: List[Dict[str, Any]] = item_dict["attachments"]
                 for att in attachments:
                     if attachment_name and att["fileName"] == attachment_name:
@@ -79,7 +81,7 @@ class LookupModule(LookupBase):
         return attachment_str
 
     @staticmethod
-    @cachier(stale_after=datetime.timedelta(minutes=5))
+    @cachier(stale_after=datetime.timedelta(minutes=5), cache_dir="/tmp/.ansible-cachier")
     def __bw_exec(
         cmd: List[str],
         ret_encoding: str = "UTF-8",
@@ -165,4 +167,6 @@ class LookupModule(LookupBase):
         if not self.__ret or len(self.__ret) == 0:
             raise AnsibleLookupError("No available fields found")
 
-        return [self.__ret]
+        # display.vvvvvv(f"Secrets: {self.__ret}, type: {type(self.__ret)}")
+
+        return [str(self.__ret)]

@@ -92,7 +92,7 @@ cs_nc_fts_elasticsearch_host: "{{ cs_elasticsearch_host }}"
 cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
 cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
 
-cs_nc_users_dict: "{{ vault_cred_cs_nc_users_dict | from_json }}"
+cs_nc_users_dict: "{{ vault_cred_cs_nc_users_dict | from_yaml }}"
 
 cs_nc_protocol: https
 
