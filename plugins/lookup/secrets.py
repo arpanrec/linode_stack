@@ -33,7 +33,6 @@ class LookupModule(LookupBase):
     __item: str
     __ret: Optional[str] = None
     __search: str = "name"
-    __cache_location: str = "/tmp/ansible_secrets_lookup_cache"
     __cache_enabled: bool = False
 
     def __get_custom_field(self, field_name: str) -> str:
