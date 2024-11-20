@@ -79,7 +79,7 @@ class LookupModule(LookupBase):
         return attachment_str
 
     @staticmethod
-    # @cachier(stale_after=datetime.timedelta(minutes=5))
+    @cachier(stale_after=datetime.timedelta(minutes=5))
     def __bw_exec(
         cmd: List[str],
         ret_encoding: str = "UTF-8",
