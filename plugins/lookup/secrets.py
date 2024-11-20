@@ -83,7 +83,7 @@ class LookupModule(LookupBase):
         attachment_str = self.__bw_exec(["get", "attachment", attachment_id, "--itemid", item_id])
         return attachment_str
 
-    @cachier(stale_after=datetime.timedelta(minutes=5), cache_dir=__cache_location)
+    @cachier(stale_after=datetime.timedelta(minutes=60))
     def __bw_exec_with_cache(
         self,
         cmd: List[str],
