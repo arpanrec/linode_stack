@@ -150,7 +150,8 @@
       mode: "0644"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict |
+      combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
       cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Sign SSL CSR
@@ -165,7 +166,8 @@
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
       return_content: true
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
+      {'database': cs_postgres_maintenance_db, 'password':
       cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
 
 - name: Database | Postgres | Client | Write CA certificate
@@ -269,11 +271,13 @@
       owner: "{{ cs_postgres_pg_admin_run_user }}"
       group: "{{ cs_postgres_pg_admin_run_group }}"
 
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
+      {'database': cs_postgres_maintenance_db, 'password':
       cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
 
 - name: Database | Postgres | pgAdmin | Set Server json fact
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
+  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
+      {'database': cs_postgres_maintenance_db, 'password':
       cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
   loop_control:
       index_var: index
