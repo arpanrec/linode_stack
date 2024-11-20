@@ -10,6 +10,7 @@ import json
 import os
 import subprocess  # nosec B404
 from typing import Any, Dict, List, Optional
+
 from ansible.errors import AnsibleLookupError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
 from ansible.utils.display import Display  # type: ignore
