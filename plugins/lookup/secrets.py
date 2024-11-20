@@ -32,6 +32,7 @@ class LookupModule(LookupBase):
     __item: str
     __ret: Optional[str] = None
     __search: str = "name"
+    __cache_location: Optional[str] = None
 
     def __get_custom_field(self, field_name: str) -> str:
         item_dict = json.loads(self.__bw_exec(["get", "item", self.__item]))
@@ -80,9 +81,31 @@ class LookupModule(LookupBase):
         attachment_str = self.__bw_exec(["get", "attachment", attachment_id, "--itemid", item_id])
         return attachment_str
 
+    @cachier(stale_after=datetime.timedelta(minutes=5), cache_dir=__cache_location)
+    def __bw_exec_with_cache(
+        self,
+        cmd: List[str],
+        ret_encoding: str = "UTF-8",
+        env_vars: Optional[Dict[str, str]] = None,
+    ) -> str:
+        """
+        Executes a Bitwarden CLI command and returns the output as a string.
+        """
+        return self.__bw_exec_subprocess(cmd, ret_encoding, env_vars)
+
+    def __bw_exec_without_cache(
+        self,
+        cmd: List[str],
+        ret_encoding: str = "UTF-8",
+        env_vars: Optional[Dict[str, str]] = None,
+    ) -> str:
+        """
+        Executes a Bitwarden CLI command and returns the output as a string.
+        """
+        return self.__bw_exec_subprocess(cmd, ret_encoding, env_vars)
+
     @staticmethod
-    @cachier(stale_after=datetime.timedelta(minutes=5), cache_dir="/tmp/.ansible-cachier")
-    def __bw_exec(
+    def __bw_exec_subprocess(
         cmd: List[str],
         ret_encoding: str = "UTF-8",
         env_vars: Optional[Dict[str, str]] = None,
@@ -109,6 +132,17 @@ class LookupModule(LookupBase):
             )
         return command_out.stdout
 
+    def __bw_exec(
+        self,
+        cmd: List[str],
+        ret_encoding: str = "UTF-8",
+        env_vars: Optional[Dict[str, str]] = None,
+    ) -> str:
+
+        if self.__cache_location:
+            return self.__bw_exec_with_cache(cmd, ret_encoding, env_vars)
+        return self.__bw_exec_without_cache(cmd, ret_encoding, env_vars)
+
     # pylint: disable=too-many-branches
     def run(
         self, terms: Optional[List[str]], variables: Optional[Dict[str, Any]] = None, **kwargs: Optional[Dict[str, Any]]
@@ -129,6 +163,9 @@ class LookupModule(LookupBase):
         attachment_name: Optional[str] = None
         attachment_id: Optional[str] = None
 
+        if variables and len(variables) > 1 and "secrets_lookup_cache_location" in variables:
+            self.__cache_location = str(variables["secrets_lookup_cache_location"])
+
         if kwargs:
 
             if "field" in kwargs:
@@ -142,6 +179,9 @@ class LookupModule(LookupBase):
 
             if "search" in kwargs:
                 self.__search = str(kwargs["search"])
+
+            if "secrets_lookup_cache_location" in kwargs:
+                self.__cache_location = str(kwargs["secrets_lookup_cache_location"])
 
         if self.__search not in ["name", "id"]:
             raise AnsibleLookupError("Invalid search type, only 'name' or 'id' is allowed")
