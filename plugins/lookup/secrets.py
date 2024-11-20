@@ -33,7 +33,8 @@ class LookupModule(LookupBase):
     __item: str
     __ret: Optional[str] = None
     __search: str = "name"
-    __cache_location: Optional[str] = None
+    __cache_location: str = "/tmp/ansible_secrets_lookup_cache"
+    __cache_enabled: bool = False
 
     def __get_custom_field(self, field_name: str) -> str:
         item_dict = json.loads(self.__bw_exec(["get", "item", self.__item]))
@@ -140,8 +141,13 @@ class LookupModule(LookupBase):
         env_vars: Optional[Dict[str, str]] = None,
     ) -> str:
 
-        if self.__cache_location:
+        if self.__cache_enabled:
+            display.warning(
+                f"Using cache location: '{self.__bw_exec_with_cache.cache_dpath()}',"
+                " Make sure to remove the directory after execution.\n"
+            )
             return self.__bw_exec_with_cache(cmd, ret_encoding, env_vars)
+        display.vvv("No cache location provided")
         return self.__bw_exec_without_cache(cmd, ret_encoding, env_vars)
 
     # pylint: disable=too-many-branches
@@ -164,8 +170,13 @@ class LookupModule(LookupBase):
         attachment_name: Optional[str] = None
         attachment_id: Optional[str] = None
 
-        if variables and len(variables) > 1 and "secrets_lookup_cache_location" in variables:
-            self.__cache_location = str(variables["secrets_lookup_cache_location"])
+        if (
+            variables
+            and len(variables) > 1
+            and ("secrets_lookup_cache_enabled" in variables)
+            and (str(variables["secrets_lookup_cache_enabled"]).lower() in ["true", "yes", "1"])
+        ):
+            self.__cache_enabled = True
 
         if kwargs:
 
@@ -180,9 +191,13 @@ class LookupModule(LookupBase):
 
             if "search" in kwargs:
                 self.__search = str(kwargs["search"])
-
-            if "secrets_lookup_cache_location" in kwargs:
-                self.__cache_location = str(kwargs["secrets_lookup_cache_location"])
+            if (
+                kwargs
+                and len(kwargs) > 1
+                and ("secrets_lookup_cache_enabled" in kwargs)
+                and (str(kwargs["secrets_lookup_cache_enabled"]).lower() in ["true", "yes", "1"])
+            ):
+                self.__cache_enabled = True
 
         if self.__search not in ["name", "id"]:
             raise AnsibleLookupError("Invalid search type, only 'name' or 'id' is allowed")
