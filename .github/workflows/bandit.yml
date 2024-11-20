@@ -15,6 +15,7 @@ name: "Bandit: A security linter from PyCQA"
             - ".github/workflows/bandit.yml"
             - "poetry.lock"
             - "pyproject.toml"
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true

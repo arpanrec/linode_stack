@@ -15,6 +15,7 @@ name: isort
             - ".github/workflows/isort.yml"
             - "poetry.lock"
             - "pyproject.toml"
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true

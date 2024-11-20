@@ -15,6 +15,7 @@ name: Black
             - ".github/workflows/black.yml"
             - "poetry.lock"
             - "pyproject.toml"
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
