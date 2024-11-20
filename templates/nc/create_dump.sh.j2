@@ -23,7 +23,7 @@ docker run --rm \
     -e PGSSLROOTCERT=/ca-certificates.crt -e PGSSLCERT=/client-cert.pem -e PGSSLKEY=/client-key.pem \
     -e PGUSER={{ cs_nc_db_user }} -e PGHOST={{ cs_nc_db_host }} -e PGPORT={{ cs_nc_db_port }} \
     --entrypoint "" \
-    docker.io/library/postgres:16.3 pg_dump -F tar -f /backup/{{ cs_nc_db_type }}-db.tar
+    {{ cs_nc_db_docker_image }}:{{ cs_nc_db_version }} pg_dump -F tar -f /backup/{{ cs_nc_db_type }}-db.tar
 
 echo "${backup_id}:: Creating database dump in plain text"
 docker run --rm \
@@ -35,7 +35,7 @@ docker run --rm \
     -e PGSSLROOTCERT=/ca-certificates.crt -e PGSSLCERT=/client-cert.pem -e PGSSLKEY=/client-key.pem \
     -e PGUSER={{ cs_nc_db_user }} -e PGHOST={{ cs_nc_db_host }} -e PGPORT={{ cs_nc_db_port }} \
     --entrypoint "" \
-    docker.io/library/postgres:16.3 pg_dump -f /backup/{{ cs_nc_db_type }}-db.sql
+    {{ cs_nc_db_docker_image }}:{{ cs_nc_db_version }} pg_dump -f /backup/{{ cs_nc_db_type }}-db.sql
 
 echo "${backup_id}:: Turning off maintenance mode"
 sudo -u {{ cs_nc_run_user }} php {{ cs_nc_web_dir }}/occ maintenance:mode --off

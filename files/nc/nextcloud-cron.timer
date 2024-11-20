@@ -3,8 +3,8 @@ Description=Run Nextcloud cron every 15 minutes
 
 [Timer]
 Persistent=true
-OnBootSec=5min
-OnUnitActiveSec=15min
+OnBootSec=300s
+OnUnitActiveSec=900s
 Unit=nextcloud-cron.service
 
 [Install]
