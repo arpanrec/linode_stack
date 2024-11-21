@@ -17,7 +17,7 @@ redis_container_name: redis
 redis_docker_image: "docker.io/library/redis"
 redis_docker_image_tag: "7.4.1"
 
-cs_redis_password: "{{ vault_cred_cs_redis_password }}"
+cs_redis_admin_password: "{{ vault_cred_cs_redis_admin_password }}"
 cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
 cs_redis_tls_port: "{{ vault_cred_cs_redis_tls_port }}"
 cs_redis_tls_privkey_pass: "{{ vault_cred_cs_redis_tls_privkey_pass }}"

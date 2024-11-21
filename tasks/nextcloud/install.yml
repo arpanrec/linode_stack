@@ -12,6 +12,7 @@
             url: "https://download.nextcloud.com/server/releases/nextcloud-{{ cs_nc_version }}.zip"
             dest: "/tmp/nextcloud-{{ cs_nc_version }}.zip"
             mode: "0644"
+            checksum: "sha512:{{ cs_nc_version_sha512 }}"
 
       - name: Nextcloud | Install | Download New | Create unzip directory and web directory
         ansible.builtin.file:
@@ -35,11 +36,25 @@
             owner: "{{ cs_nc_run_user }}"
             group: "{{ cs_nc_run_group }}"
             mode: "0755"
+  rescue:
+      - name: Nextcloud | Install | Download New | Fail | Cleanup
+        ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+            force: true
+        with_items:
+            - "/tmp/nextcloud-{{ cs_nc_version }}.zip"
+            - "/tmp/nextcloud-{{ cs_nc_version }}"
+            - "{{ cs_nc_web_dir }}"
+      - name: Nextcloud | Install | Download New | Fail
+        ansible.builtin.fail:
+            msg: "Failed to download/install Nextcloud {{ cs_nc_version }}
+                Please check the logs for more information"
 
-      - name: Nextcloud | Install | Download New | Remove AD
-        ansible.builtin.command:
-            cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
-        changed_when: true
+- name: Nextcloud | Install | Download New | Remove AD
+  ansible.builtin.command:
+      cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
+  changed_when: true
 
 - name: Nextcloud | Install | Create Nextcloud directory
   ansible.builtin.file:
@@ -163,6 +178,26 @@
       chdir: "{{ cs_nc_web_dir }}"
   register: nc_install_output
   changed_when: true
+
+- name: Nextcloud | Install | Get Status
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ status --output=json"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: false
+  register: nc_status
+
+- name: Nextcloud | Install | Test if Nextcloud is installed correctly
+  ansible.builtin.assert:
+      that:
+          - nc_current_status.installed
+          - nc_current_status.versionstring == cs_nc_version
+          - not nc_current_status.needsDbUpgrade
+      fail_msg: "Nextcloud is not installed correctly {{ nc_current_status }}"
+      success_msg: "Nextcloud is installed"
+  vars:
+      nc_current_status: "{{ nc_status.stdout | from_json }}"
 
 - name: Nextcloud | Install | Enable Featured Apps encryption admin_audit bruteforcesettings files_external
       suspicious_login twofactor_totp user_ldap

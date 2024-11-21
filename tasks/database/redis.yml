@@ -85,7 +85,7 @@
       ports:
           - "{{ cs_redis_tls_port }}:{{ cs_redis_tls_port }}"
       command: redis-server --save 20 1 --loglevel warning
-          --requirepass "{{ cs_redis_password }}" --port 0
+          --requirepass "{{ cs_redis_admin_password }}" --port 0
           --tls-port "{{ cs_redis_tls_port }}" --tls-cert-file /server.crt --tls-auth-clients yes
           --tls-key-file /server.key --tls-ca-cert-file /ca.crt
           --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
@@ -131,7 +131,7 @@
 
 - name: Database | Redis | Wait for service to start
   ansible.builtin.command:
-      cmd: "redis-cli -a {{ cs_redis_password }} -p {{ cs_redis_tls_port }} --no-auth-warning
+      cmd: "redis-cli -a {{ cs_redis_admin_password }} -p {{ cs_redis_tls_port }} --no-auth-warning
           --tls --cert {{ cs_redis_client_certs_cert_file }}
           --key {{ cs_redis_client_certs_key_file }}
           --cacert {{ cs_redis_client_certs_ca_file }} ping"
