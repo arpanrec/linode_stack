@@ -1,6 +1,6 @@
-# [1.3.0](https://github.com/arpanrec/home-lab/compare/1.2.4...1.3.0) (2024-11-20)
+## [1.3.1](https://github.com/arpanrec/home-lab/compare/1.3.0...1.3.1) (2024-11-21)
 
 
-### Features
+### Bug Fixes
 
-* Get secrets from bitwarden ([#30](https://github.com/arpanrec/home-lab/issues/30)) ([dcaedc0](https://github.com/arpanrec/home-lab/commit/dcaedc0ba6c062607e95a4886d7ff0221a9402bc))
+* update requirements and remove secrets lookup plugin ([#33](https://github.com/arpanrec/home-lab/issues/33)) ([2f35ba8](https://github.com/arpanrec/home-lab/commit/2f35ba869a78da13bd0a5e715c5ba4445f952bfd))
