@@ -87,3 +87,8 @@
       cmd: "php occ config:import /tmp/nc_redis_cache_config.json"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
+
+- name: Nextcloud | Cache | Remove temp config
+  ansible.builtin.file:
+      path: "/tmp/nc_redis_cache_config.json"
+      state: absent

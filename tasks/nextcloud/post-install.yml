@@ -82,6 +82,14 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
 
+- name: Nextcloud | Post Install | Maintenance repair
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ maintenance:repair --include-expensive"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+
 - name: Nextcloud | Post Install | Disable admin user
   become: true
   become_user: "{{ cs_nc_run_user }}"

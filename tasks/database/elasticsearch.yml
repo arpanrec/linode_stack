@@ -38,7 +38,7 @@
           "transport.port": "{{ cs_elasticsearch_transport_port | string }}"
           "logger.org.elasticsearch.discovery": WARN
           ELASTIC_CONTAINER: "true"
-          FULLTEXTSEARCH_PASSWORD: "{{ cs_elasticsearch_password }}"
+          FULLTEXTSEARCH_PASSWORD: "{{ cs_elasticsearch_root_password }}"
       ulimits:
           - "memlock:-1:-1"
 
@@ -53,7 +53,7 @@
 
 - name: Database | Elasticsearch | Wait for service to start
   ansible.builtin.uri:
-      url: "http://elastic:{{ cs_elasticsearch_password }}@{{ cs_elasticsearch_host }}:{{
+      url: "http://elastic:{{ cs_elasticsearch_root_password }}@{{ cs_elasticsearch_host }}:{{
           cs_elasticsearch_servlet_port }}"
       method: GET
       status_code: [200]
