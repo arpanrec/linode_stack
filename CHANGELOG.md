@@ -1,6 +1,6 @@
-## [1.4.1](https://github.com/arpanrec/home-lab/compare/1.4.0...1.4.1) (2024-11-23)
+# [1.5.0](https://github.com/arpanrec/home-lab/compare/1.4.1...1.5.0) (2024-11-23)
 
 
-### Bug Fixes
+### Features
 
-* Fix Linters ([#37](https://github.com/arpanrec/home-lab/issues/37)) ([adea869](https://github.com/arpanrec/home-lab/commit/adea869abda5dc59e06587b7946494d89dd951a8))
+* Refactor patching tasks and rename to 'Patch System' ([c63bb47](https://github.com/arpanrec/home-lab/commit/c63bb47420f1b7015a3af990359429d07f0baef7))
