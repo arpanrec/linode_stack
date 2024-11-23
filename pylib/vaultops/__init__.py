@@ -4,19 +4,19 @@ This module provides functions for initializing and interacting with HashiCorp V
 """
 
 
-class VaultOpsRetryError(Exception):
+class VaultOpsRetryError(ValueError):
     """
     Exception raised when the init_unseal process is to be tried.
     """
 
-    def __init__(self, *args, **kwargs):  # real signature unknown
+    def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
 
 
-class VaultOpsSafeExit(Exception):
+class VaultOpsSafeExit(ValueError):
     """
     Exit the program safely.
     """
 
-    def __init__(self, *args, **kwargs):  # real signature unknown
+    def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
