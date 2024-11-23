@@ -1,19 +1,4 @@
 ---
-- name: Access Key
-  hosts: localhost
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tags: always
-  tasks:
-      - name: Access Key | Write SSH Private Key
-        ansible.builtin.copy:
-            content: "{{ cs_vm_ssh_priv_id_ecdsa
-                | get_unencrypted_id_ecdsa(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
-            mode: "0600"
-            dest: "{{ cs_vm_ssh_local_key_file }}"
-        changed_when: false
-
 - name: Patch Cloud System
   hosts: patchservers
   become: true

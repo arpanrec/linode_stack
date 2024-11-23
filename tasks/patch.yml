@@ -19,8 +19,7 @@
       user_add_rv_user_default_shell: "/bin/zsh"
       user_add_rv_user_extra_groups: ["wheel"]
       user_add_rv_ssh_access_public_key_content_list:
-          - "{{ cs_vm_ssh_priv_id_ecdsa
-            | get_encrypted_id_ecdsa_pub_key(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
+          - "{{ ansible_ssh_public_key_content }}"
 
 - name: Patch Cloud System | Linux Patching
   ansible.builtin.import_role:
