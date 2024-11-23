@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel, Field
 
@@ -73,10 +73,10 @@ class VaultSecrets(BaseModel):
     github_details: GithubDetails = Field(description="The GitHub details.")
     root_pki_details: RootPkiDetails = Field(description="The root PKI details.")
     vault_admin_userpass_details: VaultAdminUserpassDetails = Field(description="The Vault admin userpass details.")
-    external_services: Dict[str, Union[str, bool, int, Dict]] = Field(
+    external_services: Dict[str, Union[str, bool, int, Dict[str, Any], List[Any]]] = Field(
         default={}, description="The external services required for the Vault HA cluster."
     )
-    ansible_inventory: Dict[str, Union[str, bool, int, Dict]] = Field(
+    ansible_inventory: Dict[str, Union[str, bool, int, Dict[str, Any], List[Any]]] = Field(
         default={}, description="The Ansible inventory details."
     )
     bot_gpg_key: BotGpgDetails = Field(description="The GitHub Actions GPG key details.")

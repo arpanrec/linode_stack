@@ -28,3 +28,4 @@ class VaultServer(BaseModel):
     ansible_opts: Dict[str, str] = Field(default={})
     host_keys: List[str] = Field(default=[])
     root_ca_key_pem_as_ansible_priv_ssh_key: bool = Field(default=True)
+    ansible_inventory_extra_groups: List[str] = Field(default=[])

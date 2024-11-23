@@ -174,7 +174,9 @@ class InventoryModule(BaseInventoryPlugin):
         vault_servers: Dict[str, VaultServer] = vault_config.vault_servers
         for vault_server_name, vault_server_details in vault_servers.items():
             self.inventory.add_host(vault_server_name, group=self.ansible_vault_server_group_name)
-
+            for ansible_inventory_extra_group in vault_server_details.ansible_inventory_extra_groups:
+                self.inventory.add_group(ansible_inventory_extra_group)
+                self.inventory.add_host(vault_server_name, group=ansible_inventory_extra_group)
             self.inventory.set_variable(vault_server_name, "host_keys", vault_server_details.host_keys)
             for ansible_opt_key, ansible_opt_value in vault_server_details.ansible_opts.items():
                 self.inventory.set_variable(vault_server_name, ansible_opt_key, ansible_opt_value)

@@ -1,20 +1,24 @@
 ---
-all:
-    children:
-        patchservers:
-            hosts:
-                rb4-m1:
-                rb4-m2:
-                rb4-m3:
-    hosts:
-        localhost:
-        rb4-m1:
-            ansible_host: "{{ cs_rb4_m1_ip }}"
-            # ansible_user: root
-            # ansible_ssh_password: password
-            # ansible_become_method: su
-            # ansible_become_password: root
-        rb4-m2:
-            ansible_host: "{{ cs_rb4_m2_ip }}"
-        rb4-m3:
-            ansible_host: "{{ cs_rb4_m3_ip }}"
+# all:
+#     children:
+#         patchservers:
+#             hosts:
+#                 rb4-m1:
+#                 rb4-m2:
+#                 rb4-m3:
+#     hosts:
+#         localhost:
+#         rb4-m1:
+#             ansible_host: "{{ cs_rb4_m1_ip }}"
+#             # ansible_user: root
+#             # ansible_ssh_password: password
+#             # ansible_become_method: su
+#             # ansible_become_password: root
+#         rb4-m2:
+#             ansible_host: "{{ cs_rb4_m2_ip }}"
+#         rb4-m3:
+#             ansible_host: "{{ cs_rb4_m3_ip }}"
+plugin: vault_inventory_builder
+vaultops_tmp_dir_path: /tmp/vaultops
+storage_config: /home/arpan/google-drive/Work/Project Files/vaultops-homelab/storage_config.yml
+vault_config: /home/arpan/google-drive/Work/Project Files/vaultops-homelab/vault_config.yml

@@ -21,4 +21,4 @@ cs_no_log: "{{ not cs_env_debug }}"
 
 cs_vm_ssh_service_user_id: "svc_admin"
 
-ansible_user: svc_admin
+ansible_user: "{{ cs_vm_ssh_service_user_id }}"
