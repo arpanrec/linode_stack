@@ -1,3 +1,15 @@
+# *-* coding: utf-8 *-*
+"""
+This module contains functions to manage GPG keys for a GitHub bot using Vault for secret management.
+
+Functions:
+    add_gpg_to_bot_github(vault_ha_client: VaultHaClient) -> None:
+        Adds a GPG public key to the GitHub account of the bot.
+
+    get_gpg_public_key_from_private_key(private_key: str, passphrase: str) -> Tuple[str, str]:
+        Retrieves the GPG public key from a given private key and passphrase.
+
+"""
 import logging
 import os
 import tempfile
@@ -11,7 +23,7 @@ from ..models.ha_client import VaultHaClient
 LOGGER = logging.getLogger(__name__)
 
 
-def add_gpg_to_bot_github(vault_ha_client: VaultHaClient):
+def add_gpg_to_bot_github(vault_ha_client: VaultHaClient) -> None:
     """
     This function will GPG public key to the GitHub account.
     Args:

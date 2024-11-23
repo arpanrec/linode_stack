@@ -1,3 +1,16 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides a utility function to perform CRUD operations on GitHub Action Secrets and Variables.
+
+The `github_variable` function allows for the creation, reading, updating, and deletion of secrets and variables
+in GitHub repositories or organizations. It supports various parameters to customize the operation, including
+personal access tokens, repository names, organization names, environment names, and visibility settings.
+
+Functions:
+    github_variable: Performs CRUD operations on GitHub Action Secrets and Variables based on the provided parameters.
+
+"""
+
 import base64
 from typing import Optional
 

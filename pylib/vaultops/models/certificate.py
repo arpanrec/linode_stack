@@ -1,3 +1,23 @@
+# -*- coding: utf-8 -*-
+"""
+This module provides classes and data structures for handling certificates.
+
+Classes:
+    GeneratedCertificate: Represents a generated certificate with its attributes.
+    CertificateDetailsKeyUsage: Represents the key usage details of a certificate.
+    CertificateDetailsBasicConstraints: Represents the basic constraints of a certificate.
+    CertificateDetails: Represents the details of a certificate.
+    CertificateProperties: Represents the properties of a certificate.
+
+Dependencies:
+    - dataclasses
+    - typing (Dict, List, Optional)
+    - cryptography.x509 (Certificate, NameOID)
+    - cryptography.x509.oid (ExtendedKeyUsageOID)
+    - pydantic (BaseModel, Field)
+
+"""
+
 import dataclasses
 from typing import Dict, List, Optional
 
@@ -99,10 +119,12 @@ class CertificateDetails(BaseModel):
     authority_key_identifier_critical: bool = Field(default=False, description="Set authority key identifier critical")
     subject_key_identifier: bool = Field(default=False, description="Set subject key identifier of the certificate")
     subject_key_identifier_critical: bool = Field(default=False, description="Set subject key identifier critical")
-    key_usage: CertificateDetailsKeyUsage = Field(default=None, description="Set key usage of the certificate")
+    key_usage: Optional[CertificateDetailsKeyUsage] = Field(
+        default=None, description="Set key usage of the certificate"
+    )
     key_usage_critical: bool = Field(default=False, description="Set key usage critical")
     extended_key_usage: List[str] = Field(
-        default=None,
+        default=[],
         description="Set extended key usage of the certificate, available options: "
         + ", ".join(
             [
@@ -113,12 +135,12 @@ class CertificateDetails(BaseModel):
         ),
     )
     extended_key_usage_critical: bool = Field(default=False, description="Set extended key usage critical")
-    basic_constraints: CertificateDetailsBasicConstraints = Field(
+    basic_constraints: Optional[CertificateDetailsBasicConstraints] = Field(
         None, description="Set basic constraints of the certificate"
     )
     basic_constraints_critical: bool = Field(default=False, description="Set basic constraints critical")
     subject_alternative_name: List[str] = Field(
-        default=None,
+        default=[],
         description="Set subject alternative name of the certificate, "
         "example: DNS:example.com, URI:https://example.com, IP:127.0.0.1",
     )

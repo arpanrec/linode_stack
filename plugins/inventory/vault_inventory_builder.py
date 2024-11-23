@@ -38,53 +38,53 @@ from vaultops.models.vault_server import VaultServer
 from vaultops.vault_setup import VaultHaClient, create_ha_client
 
 DOCUMENTATION = r"""
-    name: instance
-    author:
-        - Arpan Mandal
-    requirements:
-        - python >= 3.10
-    description:
-        - This plugin allows users to use Cloud as a dynamic inventory source.
-        - Localhost is added to the inventory.
-        - If ansible_inventory_extra_group is provided, then the group is added to the inventory.
-        - This module provides the following variables
-            - root_ca_key_passphrase: Root CA key passphrase
-            - root_ca_key_pem: Root CA key PEM
-            - root_ca_cert_pem: Root CA certificate PEM
-            - vault_vm_server_ssh_user_known_hosts_file: Path to the known hosts file
-            - ansible_ssh_public_key_content: SSH Public key from the Root CA key
-            - vault_ha_client: Vault HA client for vault operations
-            - ansible_ssh_private_key_file: Path to the SSH private key file
-            - pv_vault_dr_lost_quorum_recovery_nodes: Vault Disaster Recovery lost quorum recovery nodes
-            - pv_vault_raft_node_details: Vault Raft node details.
-            - pv_vault_raft_nodes_in_host: Vault Raft nodes in host.
-            - host_keys: Host keys
-        - Change the root CA key to ssh private key and add it to the inventory under `ansible_ssh_private_key_file`
-    extends_documentation_fragment:
-        - constructed
-    options:
-        plugin:
-            description: Name of the plugin
-            required: true
-            choices: ["vault_inventory_builder"]
-            type: str
-            default: vault_inventory_builder
-        vaultops_tmp_dir_path:
-            description: Path to the temporary directory for storing Vault configuration files.
-            required: true
-            type: srt
-        storage_config:
-            description:
-                - Vault Storage configuration.
-                - This can be dict or path to the file containing the storage configuration. 
-            required: true
-            type: dict | str
-        vault_config:
-            description:
-                - Vault configuration.
-                - This can be dict or path to the file containing the Vault configuration.
-            required: true
-            type: dict | str
+name: instance
+author:
+    - Arpan Mandal
+requirements:
+    - python >= 3.10
+description:
+    - This plugin allows users to use Cloud as a dynamic inventory source.
+    - Localhost is added to the inventory.
+    - If ansible_inventory_extra_group is provided, then the group is added to the inventory.
+    - This module provides the following variables:
+          - root_ca_key_passphrase: Root CA key passphrase
+          - root_ca_key_pem: Root CA key PEM
+          - root_ca_cert_pem: Root CA certificate PEM
+          - vault_vm_server_ssh_user_known_hosts_file: Path to the known hosts file
+          - ansible_ssh_public_key_content: SSH Public key from the Root CA key
+          - vault_ha_client: Vault HA client for vault operations
+          - ansible_ssh_private_key_file: Path to the SSH private key file
+          - pv_vault_dr_lost_quorum_recovery_nodes: Vault Disaster Recovery lost quorum recovery nodes
+          - pv_vault_raft_node_details: Vault Raft node details.
+          - pv_vault_raft_nodes_in_host: Vault Raft nodes in host.
+          - host_keys: Host keys
+    - Change the root CA key to ssh private key and add it to the inventory under `ansible_ssh_private_key_file`
+extends_documentation_fragment:
+    - constructed
+options:
+    plugin:
+        description: Name of the plugin
+        required: true
+        choices: ["vault_inventory_builder"]
+        type: str
+        default: vault_inventory_builder
+    vaultops_tmp_dir_path:
+        description: Path to the temporary directory for storing Vault configuration files.
+        required: true
+        type: srt
+    storage_config:
+        description:
+            - Vault Storage configuration.
+            - This can be dict or path to the file containing the storage configuration.
+        required: true
+        type: dict | str
+    vault_config:
+        description:
+            - Vault configuration.
+            - This can be dict or path to the file containing the Vault configuration.
+        required: true
+        type: dict | str
 """
 
 _display = Display()

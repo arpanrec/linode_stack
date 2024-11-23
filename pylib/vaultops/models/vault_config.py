@@ -1,3 +1,25 @@
+# *-* coding: utf-8 *-*
+"""
+This module defines the VaultConfig class, which represents the configuration and secrets required for 
+interacting with HashiCorp Vault.
+
+Classes:
+    VaultConfig: A Pydantic-based settings class that encapsulates the configuration and secrets for Vault operations.
+
+    VaultConfig.vaultops_tmp_dir_path (str): The root directory for storing temporary files.
+    VaultConfig.storage_config (StorageConfig): The storage configuration.
+    VaultConfig.vault_config (Dict[str, Any]): The Vault configuration dictionary.
+    VaultConfig.run_id (str): The unique identifier for the current run.
+
+Methods:
+    vault_ha_hostname_san_entry: Returns the Subject Alternative Name (SAN) entry for the Vault HA hostname.
+    vault_secrets: Returns the secrets stored in the file.
+    vault_servers: Returns the Vault servers.
+    tf_state: Returns the Terraform state file content if present.
+    unseal_keys: Returns the Vault unseal keys.
+    save_raft_snapshot: Saves the Raft snapshot to the specified file path.
+"""
+
 import ipaddress
 import os
 from typing import Any, Dict, Optional

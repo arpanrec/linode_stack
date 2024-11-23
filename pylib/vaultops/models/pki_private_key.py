@@ -1,3 +1,18 @@
+# *-* coding: utf-8 *-*
+"""
+This module defines models related to private key operations in a Public Key Infrastructure (PKI) system.
+Classes:
+    PrivateKeyProperties: A Pydantic model representing the properties of a private key.
+    GeneratedPrivateKey: A dataclass representing a generated private key.
+
+Dependencies:
+    - dataclasses
+    - typing.Optional
+    - cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    - pydantic.BaseModel, pydantic.Field
+
+"""
+
 import dataclasses
 from typing import Optional
 
