@@ -1,6 +1,6 @@
-## [1.3.2](https://github.com/arpanrec/home-lab/compare/1.3.1...1.3.2) (2024-11-21)
+# [1.4.0](https://github.com/arpanrec/home-lab/compare/1.3.2...1.4.0) (2024-11-23)
 
 
-### Bug Fixes
+### Features
 
-* password fields from bitwarden ([3da2aa9](https://github.com/arpanrec/home-lab/commit/3da2aa999253f56fb3425d2a9e98040df38b6cb8))
+* Added vaultops ([#36](https://github.com/arpanrec/home-lab/issues/36)) ([b0be74d](https://github.com/arpanrec/home-lab/commit/b0be74de61342d6502c88402e108f6e15d8169fd))
