@@ -18,6 +18,7 @@ class VaultServer(BaseModel):
         ansible_opts (Dict[str, str], optional): Additional Ansible options for the Vault server.
         host_keys (List[str], optional): A list of host keys for the Vault server.
         root_ca_key_pem_as_ansible_priv_ssh_key (bool): Whether to use the root CA key as an Ansible private SSH key.
+        ansible_inventory_extra_groups (List[str], optional): A list of extra groups to add to the Ansible inventory.
     """
 
     cluster_addr_fqdn: Optional[str] = Field(default=None)
