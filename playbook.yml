@@ -1,22 +1,6 @@
 ---
-- name: Vaultops | Prepare
-  hosts: localhost
-  gather_facts: false
-  become: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tags: vault,vault_system_install,vault_dr,never
-  tasks:
-      - name: Vaultops | Prepare | Download Vault binary
-        ansible.builtin.get_url:
-            dest: "{{ vaultops_tmp_dir_path }}/vault_{{ vault_rv_version }}_linux_{{ item.key }}.zip"
-            mode: "0o644"
-            checksum: sha256:{{ item.value['sha256sum'][vault_rv_version] }}
-            url: "https://releases.hashicorp.com/vault/{{ vault_rv_version }}/\
-                vault_{{ vault_rv_version }}_linux_{{ item.value['vault_arch'] }}.zip"
-        loop: "{{ pv_vault_info_map | dict2items }}"
-
-- name: Vaultops | Add Host Keys
-  hosts: vault_vm_servers,vault_nodes_servers
+- name: Add Host Keys
+  hosts: all
   gather_facts: false
   become: false
   timeout: 100
@@ -34,6 +18,23 @@
         delegate_to: localhost
         loop: "{{ host_keys }}"
         throttle: 1
+        when: ansible_host != 'localhost'
+
+- name: Vaultops | Prepare
+  hosts: localhost
+  gather_facts: false
+  become: false
+  no_log: "{{ cs_no_log | default('true') }}"
+  tags: vault,vault_system_install,vault_dr,never
+  tasks:
+      - name: Vaultops | Prepare | Download Vault binary
+        ansible.builtin.get_url:
+            dest: "{{ vaultops_tmp_dir_path }}/vault_{{ vault_rv_version }}_linux_{{ item.key }}.zip"
+            mode: "0o644"
+            checksum: sha256:{{ item.value['sha256sum'][vault_rv_version] }}
+            url: "https://releases.hashicorp.com/vault/{{ vault_rv_version }}/\
+                vault_{{ vault_rv_version }}_linux_{{ item.value['vault_arch'] }}.zip"
+        loop: "{{ pv_vault_info_map | dict2items }}"
 
 - name: Vaultops | Vault
   hosts: vault_vm_servers
