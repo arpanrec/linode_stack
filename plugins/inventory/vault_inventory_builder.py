@@ -175,6 +175,16 @@ class InventoryModule(BaseInventoryPlugin):
         for vault_server_name, vault_server_details in vault_servers.items():
             self.inventory.add_host(vault_server_name, group=self.ansible_vault_server_group_name)
             for ansible_inventory_extra_group in vault_server_details.ansible_inventory_extra_groups:
+                if ansible_inventory_extra_group in [
+                    "all",
+                    "ungrouped",
+                    self.ansible_vault_server_group_name,
+                    self.ansible_vault_node_servers_group_name,
+                ]:
+                    raise ValueError(
+                        f"Invalid ansible_inventory_extra_group: {ansible_inventory_extra_group}"
+                        f" for Vault Server: {vault_server_name}, Its a reserved group name"
+                    )
                 self.inventory.add_group(ansible_inventory_extra_group)
                 self.inventory.add_host(vault_server_name, group=ansible_inventory_extra_group)
             self.inventory.set_variable(vault_server_name, "host_keys", vault_server_details.host_keys)
