@@ -118,16 +118,16 @@
       path: "{{ cs_nc_db_cert_pem_file }}"
       csr_path: "{{ cs_nc_db_cert_csr_file }}"
       provider: ownca
-      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
-      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
-      ownca_content: "{{ cs_root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
+      ownca_content: "{{ root_ca_cert_pem }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
 
 - name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
   ansible.builtin.copy:
-      content: "{{ cs_root_ca_cert_pem }}"
+      content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_nc_db_chain_pem_file }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"
@@ -136,7 +136,7 @@
 
 - name: Nextcloud | Install | Write ownca CA certificate
   ansible.builtin.copy:
-      content: "{{ cs_root_ca_cert_pem }}"
+      content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_nc_root_ca_chain_pem_file }}"
       mode: "0644"
       owner: "{{ cs_nc_run_user }}"

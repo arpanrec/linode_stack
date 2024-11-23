@@ -1,8 +1,4 @@
 ---
-cs_root_ca_privkey_pem: "{{ vault_cred_cs_root_ca_privkey_pem }}"
-cs_root_ca_privkey_pass: "{{ vault_cred_cs_root_ca_privkey_pass }}"
-cs_root_ca_cert_pem: "{{ vault_cred_cs_root_ca_cert_pem }}"
-
 cs_rb4_m1_ip: "{{ vault_cred_cs_rb4_m1_ip }}"
 cs_rb4_m2_ip: "{{ vault_cred_cs_rb4_m2_ip }}"
 cs_rb4_m3_ip: "{{ vault_cred_cs_rb4_m3_ip }}"
