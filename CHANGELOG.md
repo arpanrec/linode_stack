@@ -1,6 +1,6 @@
-# [1.4.0](https://github.com/arpanrec/home-lab/compare/1.3.2...1.4.0) (2024-11-23)
+## [1.4.1](https://github.com/arpanrec/home-lab/compare/1.4.0...1.4.1) (2024-11-23)
 
 
-### Features
+### Bug Fixes
 
-* Added vaultops ([#36](https://github.com/arpanrec/home-lab/issues/36)) ([b0be74d](https://github.com/arpanrec/home-lab/commit/b0be74de61342d6502c88402e108f6e15d8169fd))
+* Fix Linters ([#37](https://github.com/arpanrec/home-lab/issues/37)) ([adea869](https://github.com/arpanrec/home-lab/commit/adea869abda5dc59e06587b7946494d89dd951a8))

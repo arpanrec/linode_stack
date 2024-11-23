@@ -101,6 +101,7 @@ subprocess-tee==0.4.2 ; python_version >= "3.11" and python_version < "4.0" and 
 tomlkit==0.13.2 ; python_version >= "3.11" and python_version < "4.0"
 trove-classifiers==2024.10.21.16 ; python_version >= "3.11" and python_version < "4.0"
 types-awscrt==0.23.0 ; python_version >= "3.11" and python_version < "4.0"
+types-jmespath==1.0.2.20240106 ; python_version >= "3.11" and python_version < "4.0"
 types-pyyaml==6.0.12.20240917 ; python_version >= "3.11" and python_version < "4.0"
 types-requests==2.32.0.20241016 ; python_version >= "3.11" and python_version < "4.0"
 types-s3transfer==0.10.4 ; python_version >= "3.11" and python_version < "4.0"
