@@ -94,13 +94,6 @@ def main() -> None:
             LOGGER.info("Operation completed successfully, %s", str(e))
             sys.exit(0)
 
-        except KeyboardInterrupt as e:  # pylint: disable=broad-except
-            LOGGER.info("Operation interrupted by user, %s", str(e))
-            sys.exit(1)
-
-        except Exception as e:  # pylint: disable=broad-except
-            raise VaultOpsRetryError("Error occurred while setting vault, retries exhausted") from e
-
 
 if __name__ == "__main__":
     main()
