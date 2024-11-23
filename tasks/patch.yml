@@ -19,14 +19,24 @@
       user_add_rv_user_default_shell: "/bin/zsh"
       user_add_rv_user_extra_groups: ["wheel"]
       user_add_rv_ssh_access_public_key_content_list:
-          - "{{ cs_vm_ssh_priv_id_ecdsa
-            | get_encrypted_id_ecdsa_pub_key(password=cs_vm_ssh_priv_id_ecdsa_password) }}"
+          - "{{ ansible_ssh_public_key_content }}"
+
+- name: Patch Cloud System | BeautifyTerminal
+  become: true
+  become_user: "{{ cs_vm_ssh_service_user_id }}"
+  ansible.builtin.import_role:
+      name: arpanrec.nebula.terminal
 
 - name: Patch Cloud System | Linux Patching
   ansible.builtin.import_role:
       name: arpanrec.nebula.linux_patching
   vars:
-      linux_patching_rv_install_devel_packages: true
+      linux_patching_rv_extra_packages:
+          - python3-docker
+          - python3-cryptography
+          - davfs2
+      linux_patching_rv_install_devel_packages: false
+      linux_patching_rv_root_ca_pem_content: "{{ root_ca_cert_pem }}"
 
 - name: Patch Cloud System | Fail if service user is root
   ansible.builtin.fail:

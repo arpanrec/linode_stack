@@ -52,9 +52,9 @@
       path: "{{ cs_collabora_cert_pem_file }}"
       csr_path: "{{ cs_collabora_cert_dir }}/csr.pem"
       provider: ownca
-      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
-      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
-      ownca_content: "{{ cs_root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
+      ownca_content: "{{ root_ca_cert_pem }}"
       mode: "0644"
       return_content: true
       owner: "{{ cs_collabora_run_user_id }}"
@@ -65,7 +65,7 @@
   ansible.builtin.copy:
       content: |+
           {{ cs_collabora_ssl_cert.certificate | trim }}
-          {{ cs_root_ca_cert_pem }}
+          {{ root_ca_cert_pem }}
       dest: "{{ cs_collabora_fullchain_pem_file }}"
       mode: "0644"
       owner: "{{ cs_collabora_run_user_id }}"
@@ -73,7 +73,7 @@
 
 - name: Collabora | Write ownca CA certificate
   ansible.builtin.copy:
-      content: "{{ cs_root_ca_cert_pem }}"
+      content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_collabora_chain_pem_file }}"
       mode: "0644"
       remote_src: false
