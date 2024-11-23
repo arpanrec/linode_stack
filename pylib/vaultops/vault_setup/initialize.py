@@ -21,7 +21,7 @@ from ..models.vault_raft_node_hvac import VaultRaftNodeHvac
 LOGGER = logging.getLogger(__name__)
 
 
-def initialize_vault(all_raft_nodes: Dict[str, VaultRaftNodeHvac], vault_config: VaultConfig):
+def initialize_vault(all_raft_nodes: Dict[str, VaultRaftNodeHvac], vault_config: VaultConfig) -> None:
     """
     Initializes Vault on the first node in the raft_nodes list if it is not already initialized.
     Saves the initialization secrets to the specified file.

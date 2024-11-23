@@ -19,7 +19,7 @@ from ..models.vault_raft_node_hvac import VaultRaftNodeHvac
 LOGGER = logging.getLogger(__name__)
 
 
-def update_client_with_root_token(all_raft_nodes: Dict[str, VaultRaftNodeHvac], new_root_token: str):
+def update_client_with_root_token(all_raft_nodes: Dict[str, VaultRaftNodeHvac], new_root_token: str) -> None:
     """
     Creates or updates a client in the OAuth2 provider with the specified client ID, client secret, scopes,
     redirect URIs, and API base URL.

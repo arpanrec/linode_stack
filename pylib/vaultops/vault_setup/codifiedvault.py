@@ -28,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
 def terraform_apply(  # pylint: disable=too-many-locals
     vault_config: VaultConfig,
     vault_ha_client: VaultHaClient,
-):
+) -> None:
     """
     Create terraform vars file for codifiedvault
     """

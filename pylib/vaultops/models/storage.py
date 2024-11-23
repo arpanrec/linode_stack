@@ -1,3 +1,19 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides functionality for interacting with different storage backends,
+such as Amazon S3 and local file storage. It defines the `StorageConfig` class, which
+encapsulates the configuration and operations for these storage backends.
+
+Classes:
+    StorageConfig: Represents the configuration and operations for storage backends.
+
+Functions:
+    StorageConfig.storage_ops: Perform storage operations based on the storage type.
+    StorageConfig.__s3_storage_ops: Perform S3 storage operations.
+    StorageConfig.__local_storage_ops: Perform local file storage operations.
+    StorageConfig.add_to_ansible_inventory: Add the Vault configuration to the Ansible inventory file.
+"""
+
 import base64
 import os
 from typing import Any, Dict, Optional

@@ -1,3 +1,11 @@
+# *-* coding: utf-8 *-*
+"""
+This module defines the VaultRaftNode class, which represents the details of a Vault Raft node.
+
+Classes:
+    VaultRaftNode: A class that encapsulates the details and operations of a Vault Raft node.
+"""
+
 import os
 from typing import Any, Dict, List, Optional, Set
 

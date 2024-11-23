@@ -56,6 +56,7 @@ types-requests = "2.32.0.20241016"
 types-pyyaml = "6.0.12.20240917"
 isort = "5.13.2"
 bandit = "1.7.10"
+types-jmespath = "1.0.2.20240106"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,3 +1,23 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides functionality to set up GitHub access for both bot and user repositories
+using Vault for secret management.
+
+Functions:
+    setup_github(vault_ha_client: VaultHaClient) -> None:
+        Sets up GitHub access for the bot and users by adding vault access to GitHub user repositories
+        and adding a GPG key to the bot GitHub account.
+
+Modules:
+    github:
+        Contains functions to add vault access to GitHub user repositories.
+    github_bot:
+        Contains functions to add GPG keys to the bot GitHub account.
+    models.ha_client:
+        Contains the VaultHaClient class used for interacting with Vault.
+
+"""
+
 import logging
 
 from ..models.ha_client import VaultHaClient
@@ -7,7 +27,7 @@ from .github_bot import add_gpg_to_bot_github
 LOGGER = logging.getLogger(__name__)
 
 
-def setup_github(vault_ha_client: VaultHaClient):
+def setup_github(vault_ha_client: VaultHaClient) -> None:
     """
     Setup GitHub access for the bot and users.
     """

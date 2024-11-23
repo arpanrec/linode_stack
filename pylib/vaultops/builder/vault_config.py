@@ -1,3 +1,24 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides functionality to build a VaultConfig object from a given
+Ansible inventory configuration. The configuration can be provided as a file path
+or a dictionary. The module ensures that necessary directories exist and reads
+additional configuration from specified file paths if needed.
+
+Functions:
+    build_vault_config(ansible_inventory: Union[str, Dict[str, Any]]) -> VaultConfig:
+        Builds and returns a VaultConfig object from the given Ansible inventory configuration.
+
+Modules:
+    logging: Provides logging capabilities.
+    os: Provides functions for interacting with the operating system.
+    time: Provides time-related functions.
+    typing: Provides type hints for function signatures.
+    yaml: Provides YAML parsing and serialization.
+    ..models.vault_config: Provides the VaultConfig model for validation and configuration.
+
+"""
+
 import logging
 import os
 import time

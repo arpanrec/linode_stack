@@ -1,5 +1,25 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides the `VaultHaClient` class for interacting with HashiCorp Vault in a high-availability (HA) setup.
+
+Classes:
+    VaultHaClient: A Pydantic model that represents a client for interacting with HashiCorp Vault in an HA setup.
+
+Dependencies:
+    - base64
+    - typing.Optional
+    - hvac
+    - requests
+    - yaml
+    - pydantic.BaseModel, pydantic.ConfigDict, pydantic.Field, pydantic.PrivateAttr
+    - requests.sessions.HTTPAdapter
+    - urllib3.Retry
+    - ..models.vault_config.VaultConfig
+
+"""
+
 import base64
-from typing import Optional
+from typing import Optional, ParamSpecKwargs
 
 import hvac  # type: ignore
 import requests
@@ -35,7 +55,7 @@ class VaultHaClient(BaseModel):
     vault_client_key_file: Optional[str] = Field(default=None)
     _hvac_client: hvac.Client = PrivateAttr()
 
-    def __init__(self, vault_config: Optional[VaultConfig] = None, **data):
+    def __init__(self, vault_config: Optional[VaultConfig] = None, **data: ParamSpecKwargs) -> None:
         super().__init__(**data)
         if not vault_config:
             return

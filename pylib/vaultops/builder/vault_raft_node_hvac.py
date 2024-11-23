@@ -1,3 +1,21 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides functionality to create HVAC clients for Vault raft nodes.
+
+Functions:
+    create_raft_node_hvac(vault_config: VaultConfig, rsa_root_ca_key: PrivateKeyTypes, rsa_root_ca_cert: Certificate, vault_root_ca_cert_file: str) -> Dict[str, VaultRaftNodeHvac]:
+
+Imports:
+    logging: Standard Python logging module.
+    Dict: Type hint for dictionaries.
+    PrivateKeyTypes: Type hint for private key types from the cryptography library.
+    Certificate: Type hint for certificates from the cryptography library.
+    VaultConfig: Custom model for Vault configuration.
+    VaultRaftNode: Custom model for Vault raft node.
+    VaultRaftNodeHvac: Custom model for Vault raft node HVAC.
+    build_raft_server_nodes_map: Function to build a map of raft server nodes.
+
+"""
 import logging
 from typing import Dict
 

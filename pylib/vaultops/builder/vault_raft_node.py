@@ -1,3 +1,17 @@
+# *-* coding: utf-8 *-*
+"""
+This module provides functionality to build a map of Vault Raft nodes for each Vault server.
+
+Functions:
+    build_raft_server_nodes_map(vault_config: VaultConfig) -> Dict[str, Dict[str, VaultRaftNode]]:
+        Builds a map of raft nodes for each Vault server based on the provided Vault configuration.
+
+Exceptions:
+    ValueError:
+        Raised when an invalid IP address is encountered, or required fields are missing,
+          or there are duplicate node ports or node IDs.
+"""
+
 import ipaddress
 from typing import Dict, Optional, Set
 

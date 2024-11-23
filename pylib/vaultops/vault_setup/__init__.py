@@ -1,3 +1,39 @@
+# -*- coding: utf-8 -*-
+"""
+This module provides functionality to set up a Vault cluster using various configurations and operations.
+
+The main function `vault_setup` initializes and configures a Vault cluster based on the provided inventory file.
+It handles tasks such as loading root CA keys and certificates, creating raft nodes, initializing and unsealing the Vault,
+setting up service admin access, codifying the Vault configuration, revoking tokens, updating secrets, and taking raft snapshots.
+
+Functions:
+    vault_setup(inventory_file_name: str) -> VaultHaClient
+        Sets up a Vault cluster using the specified inventory file.
+
+Modules:
+    - builder.vault_config: Contains functions to build Vault configuration.
+    - builder.vault_raft_node_hvac: Contains functions to create raft nodes.
+    - models.ha_client: Contains the VaultHaClient model.
+    - models.vault_config: Contains the VaultConfig model.
+    - admin_user: Contains functions to add admin user policies.
+    - codifiedvault: Contains functions to apply Terraform configurations.
+    - find_ready: Contains functions to find a ready Vault node.
+    - ha_client: Contains functions to create HA clients.
+    - initialize: Contains functions to initialize the Vault.
+    - raft_node_hvac: Contains functions to manage raft nodes and update clients with root tokens.
+    - raft_nodes_join: Contains functions to manage raft node operations.
+    - raft_snapshot: Contains functions to take raft snapshots.
+    - root_token: Contains functions to manage root tokens.
+    - unseal: Contains functions to unseal the Vault.
+    - vault_pki_root_ca: Contains functions to set up root PKI.
+    - vault_secrets: Contains functions to update Vault secrets.
+
+Constants:
+    LOGGER: Logger instance for logging messages.
+
+"""
+
+
 import logging
 import os
 from typing import Dict

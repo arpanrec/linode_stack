@@ -1,3 +1,12 @@
+# *- encoding: utf-8 -*
+"""
+This module defines the VaultServer model using Pydantic for data validation and parsing.
+
+Classes:
+    VaultServer: Represents the details of a Vault server, including its cluster and API addresses,
+                 Vault nodes, Ansible options, host keys, and additional Ansible inventory groups.
+
+"""
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field

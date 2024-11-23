@@ -1,5 +1,27 @@
+# *- encoding: utf-8 -*
+"""
+This module defines the `VaultRaftNodeHvac` class, which represents a Vault Raft node with HVAC client configuration.
+
+Classes:
+    VaultRaftNodeHvac: A class that extends `VaultRaftNode` to include HVAC client configuration.
+
+    model_config (ConfigDict): The model configuration allowing arbitrary types.
+    _vault_client (Optional[hvac.Client]): The HVAC client instance, initially set to None.
+
+Methods:
+    __init__(self, rsa_root_ca_key: PrivateKeyTypes, rsa_root_ca_cert: Certificate, **data):
+        Initializes the VaultRaftNodeHvac instance, generates a private key and certificate for the Vault client.
+
+    client_cert_path(self) -> str:
+
+    client_key_path(self) -> str:
+
+    hvac_client(self) -> hvac.Client:
+        Returns the HVAC client instance, creating it if it does not already exist.
+"""
+
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import hvac  # type: ignore
 import requests
@@ -38,7 +60,7 @@ class VaultRaftNodeHvac(VaultRaftNode):
         default=..., description="The path to the file containing the root CA certificate."
     )
 
-    def __init__(self, rsa_root_ca_key: PrivateKeyTypes, rsa_root_ca_cert: Certificate, **data):
+    def __init__(self, rsa_root_ca_key: PrivateKeyTypes, rsa_root_ca_cert: Certificate, **data: Any) -> None:
         super().__init__(**data)
         generated_vault_client_private_key: GeneratedPrivateKey = generate_private_key(PrivateKeyProperties())
         with open(self.client_key_path, "w", encoding="utf-8") as f:

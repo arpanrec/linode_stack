@@ -1,3 +1,12 @@
+# *-* coding: utf-8 *-*
+"""
+This module defines the VaultNode model using Pydantic's BaseModel.
+
+Classes:
+    VaultNode: Represents the details of a Vault server node, including ports, addresses, and retry join nodes.
+"""
+
+
 from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
