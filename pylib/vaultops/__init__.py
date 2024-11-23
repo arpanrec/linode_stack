@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module provides functions for initializing and interacting with HashiCorp Vault.

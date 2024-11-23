@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Module for interacting with HashiCorp Vault in a high-availability (HA) setup.

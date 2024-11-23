@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module provides classes and functions for interacting with HashiCorp Vault using the HVAC client.

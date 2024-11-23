@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module contains functions for managing authentication and generating root tokens in HashiCorp Vault.

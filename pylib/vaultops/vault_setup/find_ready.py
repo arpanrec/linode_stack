@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module contains the function to find the first ready raft node from the given list of raft nodes.

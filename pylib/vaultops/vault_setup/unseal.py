@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module provides a function to unseal Vault on all sealed nodes in a raft cluster using the provided unseal keys.

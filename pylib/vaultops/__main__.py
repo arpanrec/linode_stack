@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This module is responsible for initializing and unsealing a HashiCorp Vault cluster.
