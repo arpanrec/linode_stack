@@ -6,7 +6,7 @@ Look for the word `TODO` in the file, and change the value to your value.
 
 ## Tools and Services
 
-* [Python 3.10](https://www.python.org/downloads/release/python-3100/) or higher installed
+* [Python 3.11](https://www.python.org/downloads/release/python-3100/) or higher installed
   * [Poetry - PYTHON PACKAGING AND DEPENDENCY MANAGEMENT MADE EASY](https://python-poetry.org/)
 * [Terraform](https://www.terraform.io/) installed
 

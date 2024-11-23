@@ -65,6 +65,12 @@ DOCUMENTATION = r"""
                 - This can be dict or path to the file containing the storage configuration. 
             required: true
             type: dict | str
+        vault_config:
+            description:
+                - Vault configuration.
+                - This can be dict or path to the file containing the Vault configuration.
+            required: true
+            type: dict | str
 """
 
 _display = Display()
