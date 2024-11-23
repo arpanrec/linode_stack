@@ -3,8 +3,10 @@
 This module provides functionality to set up a Vault cluster using various configurations and operations.
 
 The main function `vault_setup` initializes and configures a Vault cluster based on the provided inventory file.
-It handles tasks such as loading root CA keys and certificates, creating raft nodes, initializing and unsealing the Vault,
-setting up service admin access, codifying the Vault configuration, revoking tokens, updating secrets, and taking raft snapshots.
+It handles tasks such as loading root CA keys and certificates, creating raft nodes, initializing
+ and unsealing the Vault,
+setting up service admin access, codifying the Vault configuration, revoking tokens, updating secrets,
+ and taking raft snapshots.
 
 Functions:
     vault_setup(inventory_file_name: str) -> VaultHaClient
