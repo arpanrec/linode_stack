@@ -19,7 +19,7 @@ Dependencies:
 """
 
 import base64
-from typing import Optional, Any
+from typing import Any, Optional
 
 import hvac  # type: ignore
 import requests
