@@ -4,11 +4,12 @@
   gather_facts: false
   become: false
   timeout: 100
-  tags: patch,patch_install,patch_beautify,vault,vault_system_install,vault_node_install,vault_dr,never
+  tags: always
   any_errors_fatal: true
   no_log: "{{ cs_no_log | default('true') }}"
+  serial: 1
   tasks:
-      - name: Vaultops | Add Host Keys | Add keys to known_hosts file /tmp/vault_vm_server_ssh_known_hosts
+      - name: Add Host Keys | Add keys to known_hosts file /tmp/vault_vm_server_ssh_known_hosts
         become: false
         ansible.builtin.known_hosts:
             name: "{{ ansible_host }}"
@@ -19,6 +20,18 @@
         loop: "{{ host_keys }}"
         throttle: 1
         when: ansible_host != 'localhost'
+
+- name: Patch System
+  hosts: patchservers
+  become: true
+  become_user: root
+  gather_facts: true
+  no_log: "{{ cs_no_log }}"
+  tags: never,patch
+  tasks:
+      - name: Patch System
+        ansible.builtin.import_tasks:
+            file: tasks/patch.yml
 
 - name: Vaultops | Prepare
   hosts: localhost
@@ -83,18 +96,6 @@
         tags: downstream,never,downstream_github
         ansible.builtin.import_tasks:
             file: tasks/vaultops/github.yml
-
-- name: Patch Cloud System
-  hosts: patchservers
-  become: true
-  become_user: root
-  gather_facts: true
-  no_log: "{{ cs_no_log }}"
-  tags: never,patch
-  tasks:
-      - name: Patch Cloud System
-        ansible.builtin.import_tasks:
-            file: tasks/patch.yml
 
 - name: NFS Server
   hosts: rb4-m3
