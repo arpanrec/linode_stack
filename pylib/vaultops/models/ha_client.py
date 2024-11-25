@@ -49,6 +49,7 @@ class VaultHaClient(BaseModel):
     client_cert_p12_base64: str = Field(default=...)
     client_cert_p12_passphrase: str = Field(default=...)
     root_ca_cert_pem: str = Field(default=...)
+    token: Optional[str] = Field(default=None)
 
     vault_root_ca_cert_file: Optional[str] = Field(default=None)
     vault_client_cert_file: Optional[str] = Field(default=None)
@@ -95,3 +96,9 @@ class VaultHaClient(BaseModel):
                 username=self.admin_user, password=self.admin_password, mount_point=self.userpass_mount
             )
         return self._hvac_client
+
+    def evaluate_token(self) -> None:
+        """
+        Sets the token for the client
+        """
+        self.token = self.hvac_client().token
