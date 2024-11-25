@@ -25,7 +25,6 @@ import sys
 import time
 
 from . import VaultOpsRetryError, VaultOpsSafeExit, vault_setup
-from .github_setup import setup_github
 from .models.ha_client import VaultHaClient
 
 IS_DEBUG: bool = False
@@ -72,14 +71,8 @@ def main() -> None:
         max_vaultops_retries -= 1
         try:
             LOGGER.info("Initializing and unsealing vault")
-            vault_ha_client: VaultHaClient = vault_setup.vault_setup(args.inventory)
+            _: VaultHaClient = vault_setup.vault_setup(args.inventory)
             LOGGER.info("Vault setup completed successfully")
-
-            if args.github:
-                # Add vault access to GitHub user repositories
-                LOGGER.info("Adding vault access to GitHub user repositories")
-                setup_github(vault_ha_client=vault_ha_client)
-
             break
 
         except VaultOpsRetryError as e:  # pylint: disable=broad-except

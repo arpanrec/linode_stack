@@ -23,7 +23,7 @@ description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
 package-mode = true
-packages = [{ include = "vaultops", from = "pylib" }]
+packages = [{ include = "vaultops", from = "pylib" }, { include = "github_bot", from = "pylib" }]
 scripts = { "vaultops" = "vaultops.__main__:main" }
 
 [tool.poetry.dependencies]
