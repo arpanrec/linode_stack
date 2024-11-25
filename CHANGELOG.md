@@ -1,6 +1,6 @@
-# [1.6.0](https://github.com/arpanrec/home-lab/compare/1.5.0...1.6.0) (2024-11-25)
+## [1.6.1](https://github.com/arpanrec/home-lab/compare/1.6.0...1.6.1) (2024-11-25)
 
 
-### Features
+### Bug Fixes
 
-* Add token evaluation to VaultHaClient and update inventory variable setting ([42b027a](https://github.com/arpanrec/home-lab/commit/42b027a5a1752ddb5fb2e58b0b77f993aeb04fb9))
+* Create SECURITY.md ([c9e4361](https://github.com/arpanrec/home-lab/commit/c9e4361653f9bcfc48318dd017d9dd411fbc230e))
