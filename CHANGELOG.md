@@ -1,6 +1,6 @@
-# [1.5.0](https://github.com/arpanrec/home-lab/compare/1.4.1...1.5.0) (2024-11-23)
+# [1.6.0](https://github.com/arpanrec/home-lab/compare/1.5.0...1.6.0) (2024-11-25)
 
 
 ### Features
 
-* Refactor patching tasks and rename to 'Patch System' ([c63bb47](https://github.com/arpanrec/home-lab/commit/c63bb47420f1b7015a3af990359429d07f0baef7))
+* Add token evaluation to VaultHaClient and update inventory variable setting ([42b027a](https://github.com/arpanrec/home-lab/commit/42b027a5a1752ddb5fb2e58b0b77f993aeb04fb9))
