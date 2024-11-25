@@ -1060,7 +1060,7 @@ test-randomorder = ["pytest-randomly"]
 type = "git"
 url = "https://github.com/pyca/cryptography.git"
 reference = "HEAD"
-resolved_reference = "644dcafecf47dfd598302b35dbd53c6af3189fca"
+resolved_reference = "7971c6b3e0143e761037b58bd53775bd2446d58e"
 
 [[package]]
 name = "deprecated"
