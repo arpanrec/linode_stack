@@ -39,5 +39,5 @@ def find_ready(all_raft_nodes: Dict[str, VaultRaftNodeHvac]) -> Tuple[str, Vault
             LOGGER.info("%s:: Vault is ready.", raft_node_id)
             return raft_node_id, raft_node_details
 
-        LOGGER.error("%s:: Vault is not ready.", raft_node_id)
+        LOGGER.info("%s:: Node is not ready.", raft_node_id)
     raise VaultOpsRetryError("No ready node found.")
