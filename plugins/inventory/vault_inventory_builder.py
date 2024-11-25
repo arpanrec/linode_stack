@@ -166,6 +166,7 @@ class InventoryModule(BaseInventoryPlugin):
             rsa_root_ca_key=rsa_root_ca_key,
             rsa_root_ca_cert=None,
         )
+        vault_ha_client.evaluate_token()
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
 
