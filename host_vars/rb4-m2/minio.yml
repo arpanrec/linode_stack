@@ -1,3 +1,6 @@
 ---
 minio_kes_hostnames: ["localhost"]
 minio_kes_ips: ["127.0.0.1", "{{ cs_rb4_m2_ip }}"]
+minio_server_hostnames: ["localhost", "{{ cs_public_ingress_dns_entry }}"]
+minio_server_ips: ["127.0.0.1", "{{ cs_rb4_m2_ip }}", "{{ cs_public_ingress_ip }}"]
+minio_server_kes_endpoint: "https://localhost:3000"
