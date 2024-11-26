@@ -28,8 +28,8 @@ from github.AuthenticatedUser import AuthenticatedUser
 from github.NamedUser import NamedUser
 from hvac.exceptions import InvalidPath  # type: ignore
 
-from ..models.ha_client import VaultHaClient
-from ..utils.github_variable import github_variable
+from vaultops.models.ha_client import VaultHaClient
+from .utils.github_variable import github_variable
 
 LOGGER = logging.getLogger(__name__)
 
