@@ -58,3 +58,17 @@ cs_mini0_mini0_region: "{{ vault_cred_cs_mini0_mini0_region }}"
 cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_mini0_mini0_private_ip: "{{ cs_rb4_m2_ip }}"
 cs_mini0_mini0_public_ip: "{{ cs_public_ingress_ip }}"
+
+minio_kes_bin_info_map:
+    x86_64:
+        minio_kes_arch: amd64
+        sha256sum:
+            "2024-04-12T13-50-00Z": 1549cadb384c093ab7a9b778006a60063884b31311fc7cafd3c92f2145b9a916
+            "2024-06-17T15-47-05Z": 7646c12d83d4fb24de556a6cfc52a056165beb5d70534dd4c9db0820d48d6488
+            "2024-10-31T07-42-41Z": 902fec19bea990bcef9b6ad4ba61602c675ca0f36d3a782c785494364e60f41d
+    aarch64:
+        minio_kes_arch: arm64
+        sha256sum:
+            "2024-04-12T13-50-00Z": 251d7182df96b111008ff98f4c6bdb3b3e06ef9ea2d3b6c9fcbea9a8a80579cd
+            "2024-06-17T15-47-05Z": f37515c25cdf5152cfbe03ab32fa7eaf3f22073646668e1913ae8a4a5339c048
+            "2024-10-31T07-42-41Z": 90a1216f0f4bbf9568e429312bf8a8dd091bde374cb86049b510a4299f9023f2

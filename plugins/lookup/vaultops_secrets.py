@@ -20,7 +20,7 @@ Functions:
 from __future__ import absolute_import, division, print_function
 
 import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import hvac  # type: ignore
 from ansible.errors import AnsibleLookupError  # type: ignore
@@ -56,7 +56,7 @@ class LookupModule(LookupBase):
 
     def run(
         self, terms: List[str], variables: Optional[Dict[str, Any]] = None, **kwargs: Optional[Dict[str, Any]]
-    ) -> List[str]:
+    ) -> Union[List[str], List[Dict[str, Any]]]:
         self.set_options(var_options=variables, direct=kwargs)
         self.__variable_options = variables
         if len(terms) != 1:
@@ -67,13 +67,19 @@ class LookupModule(LookupBase):
 
         term: str = terms[0]
         display.warning(
-            f"vaultops_secrets: Using cache location: '{self.__lookup_token.cache_dpath()}',"
+            f"vaultops_secrets: Using cache location: '{self.__lookup.cache_dpath()}',"
             " Make sure to remove the directory after execution.\n"
         )
-        return self.__lookup_token(term)
+        return [self.__lookup(term, variables.get("get_unparsed", False))]
 
     @cachier(stale_after=datetime.timedelta(minutes=60))
-    def __lookup_token(self, term: str) -> List[str]:
+    def __lookup(self, term: str, get_unparsed: bool = False) -> Union[str, Dict[str, Any]]:
+
+        if not get_unparsed:
+            return self.__lookup_token(term)
+        return {}
+
+    def __lookup_token(self, term: str) -> str:
         if not self.__variable_options or len(self.__variable_options) == 0:
             raise AnsibleLookupError("No variables provided")
 
@@ -99,6 +105,6 @@ class LookupModule(LookupBase):
             secret_version_response = client.secrets.kv.v2.read_secret_version(mount_point=mount_path, path=item_path)
             if json_key not in secret_version_response["data"]["data"]:
                 raise AnsibleLookupError(f"Secret key {json_key} not found in Vault")
-            return [secret_version_response["data"]["data"][json_key]]
+            return secret_version_response["data"]["data"][json_key]
         except InvalidPath as ex:
             raise AnsibleLookupError(f"Secret path {item_path} not found in Vault") from ex
