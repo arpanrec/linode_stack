@@ -28,7 +28,7 @@ from ansible.plugins.lookup import LookupBase  # type: ignore
 from ansible.utils.display import Display  # type: ignore
 from vaultops.models.ha_client import VaultHaClient
 
-__metaclass__ = type
+__metaclass__ = type  # pylint: disable=invalid-name
 display = Display()
 
 
