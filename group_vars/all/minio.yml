@@ -63,6 +63,7 @@ cs_mini0_mini0_region: "{{ vault_cred_cs_mini0_mini0_region }}"
 cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_mini0_mini0_private_ip: "{{ cs_rb4_m2_ip }}"
 cs_mini0_mini0_public_ip: "{{ cs_public_ingress_ip }}"
+minio_server_systemd_service_name: minio.service
 
 minio_kes_bin_info_map:
     x86_64:
@@ -77,3 +78,17 @@ minio_kes_bin_info_map:
             "2024-04-12T13-50-00Z": 251d7182df96b111008ff98f4c6bdb3b3e06ef9ea2d3b6c9fcbea9a8a80579cd
             "2024-06-17T15-47-05Z": f37515c25cdf5152cfbe03ab32fa7eaf3f22073646668e1913ae8a4a5339c048
             "2024-10-31T07-42-41Z": 90a1216f0f4bbf9568e429312bf8a8dd091bde374cb86049b510a4299f9023f2
+
+minio_server_bin_info_map:
+    x86_64:
+        minio_server_arch: amd64
+        sha256sum:
+            "RELEASE.2024-05-10T01-41-38Z": bd3a3e65c48d35613fe1c556e77a18bccb8aee911b6293ca5f6112f73376c105
+            "RELEASE.2024-06-13T22-53-53Z": 1568c0d8ab09eebaf444f78ec9cd85ce62b1a2aacbd92ec29c1ec779864811bc
+            "RELEASE.2024-11-07T00-52-20Z": c27873d791b56d33518de11f12c5bfae4be88ebac00e12c6dd0027b08123fd80
+    aarch64:
+        minio_server_arch: arm64
+        sha256sum:
+            "RELEASE.2024-05-10T01-41-38Z": b830c0862eadd2adb0db07118858fb917ac8002a9fde7a8eb0cc5234699ba40d
+            "RELEASE.2024-06-13T22-53-53Z": e30af0de3db096a35d594e7e7fa501efd686cb3a3335f8576f36c7359ecde5a3
+            "RELEASE.2024-11-07T00-52-20Z": 4c5ed5a8563b92a15c41a1cb9b382c448a72dc09026faecb4afb3eb44f10375b

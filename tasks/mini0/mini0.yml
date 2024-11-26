@@ -47,3 +47,34 @@
   ansible.builtin.assert:
       that:
           - minio_server_kes_endpoint | urlsplit('port') == minio_server_kes_secret_dict.secret.port
+
+- name: Minio | Install | Gather Facts
+  ansible.builtin.setup:
+
+- name: Minio | Install | Create group
+  ansible.builtin.group:
+      name: "{{ cs_mini0_mini0_group_name }}"
+      state: present
+      system: true
+  register: minio_server_tmp_group_creation
+
+- name: Minio | Install | Create User
+  ansible.builtin.user:
+      name: "{{ cs_mini0_mini0_user_name }}"
+      group: "{{ cs_mini0_mini0_group_name }}"
+      state: present
+      create_home: false
+      system: true
+      shell: /bin/false
+  register: minio_server_tmp_user_creation
+
+- name: Minio | Install | Download binary
+  ansible.builtin.get_url:
+      dest: "/usr/local/bin/minio"
+      mode: "0755"
+      owner: root
+      group: root
+      checksum: "sha256:{{ minio_server_bin_info_map[ansible_architecture]['sha256sum'][cs_mini0_mini0_version] }}"
+      url: "https://dl.min.io/server/minio/release/linux-\
+          {{ minio_server_bin_info_map[ansible_architecture]['minio_server_arch'] }}/archive/minio.\
+          {{ cs_mini0_mini0_version }}"
