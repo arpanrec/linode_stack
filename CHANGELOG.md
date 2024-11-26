@@ -1,6 +1,6 @@
-# [1.8.0](https://github.com/arpanrec/home-lab/compare/1.7.1...1.8.0) (2024-11-26)
+## [1.8.1](https://github.com/arpanrec/home-lab/compare/1.8.0...1.8.1) (2024-11-26)
 
 
-### Features
+### Bug Fixes
 
-* Postgres password from vault ([#38](https://github.com/arpanrec/home-lab/issues/38)) ([addecb3](https://github.com/arpanrec/home-lab/commit/addecb321b492696d5665a0c25829b8b42aa3f35))
+* Update Get credentials from vault ([#41](https://github.com/arpanrec/home-lab/issues/41)) ([a07c02e](https://github.com/arpanrec/home-lab/commit/a07c02e450588046e2ae4eba008b4c660dcdc547))
