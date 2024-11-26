@@ -30,7 +30,7 @@ from ansible.template import Templar  # type: ignore
 from ansible.utils.display import Display  # type: ignore
 from cryptography.hazmat.backends import default_backend  # type: ignore
 from cryptography.hazmat.primitives import serialization
-from hvac.exceptions import VaultDown
+from hvac.exceptions import VaultDown  # type: ignore
 from pydantic_core import to_jsonable_python
 from vaultops.builder.vault_config import build_vault_config
 from vaultops.builder.vault_raft_node import build_raft_server_nodes_map
