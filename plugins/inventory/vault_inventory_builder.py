@@ -220,7 +220,7 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.add_host(vault_server_name, group=ansible_inventory_extra_group)
             self.inventory.set_variable(vault_server_name, "host_keys", vault_server_details.host_keys)
             self.inventory.set_variable(
-                vault_server_name,
+                "all",
                 f"cs_{vault_server_name.replace('-', '_')}_ip",
                 vault_server_details.ansible_opts["ansible_host"],
             )

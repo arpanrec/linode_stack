@@ -67,7 +67,7 @@ class LookupModule(LookupBase):
 
         term: str = terms[0]
         display.warning(
-            f"Using cache location: '{self.__lookup_token.cache_dpath()}',"
+            f"vaultops_secrets: Using cache location: '{self.__lookup_token.cache_dpath()}',"
             " Make sure to remove the directory after execution.\n"
         )
         return self.__lookup_token(term)
@@ -88,9 +88,9 @@ class LookupModule(LookupBase):
         ):
             raise AnsibleLookupError(f"Invalid secret path format: {term}")
 
-        display.v(f"mount_path: {mount_path}")
-        display.v(f"secret_path: {item_path}")
-        display.v(f"secret_json_key: {json_key}")
+        display.v(f"vaultops_secrets: mount_path: {mount_path}")
+        display.v(f"vaultops_secrets: secret_path: {item_path}")
+        display.v(f"vaultops_secrets: secret_json_key: {json_key}")
 
         vault_ha_client: VaultHaClient = VaultHaClient.model_validate(self.__variable_options["vault_ha_client"])
         client: hvac.Client = vault_ha_client.hvac_client()
