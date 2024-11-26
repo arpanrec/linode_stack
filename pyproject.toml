@@ -18,19 +18,35 @@ line-length = 120
 
 [tool.poetry]
 name = "home-lab"
-version = "1.3.2"
+version = "1.7.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
-package-mode = false
-# packages = [{ include = "homelab", from = "pylib" }]
+package-mode = true
+packages = [
+    { include = "vaultops", from = "pylib" },
+    { include = "github_bot", from = "pylib" },
+]
+scripts = { "vaultops" = "vaultops.__main__:main" }
 
 [tool.poetry.dependencies]
 python = "^3.11"
 ansible = "11.0.0"
 bcrypt = "4.2.1"
+hvac = "2.3.0"
+passlib = "1.7.4"
 jmespath = "1.0.1"
+pydantic = "2.10.1"
+pydantic-settings = "2.6.1"
+prettytable = "3.12.0"
+python-terraform = "0.10.1"
+pygithub = "2.5.0"
+python-gnupg = "0.5.3"
+boto3 = "1.35.69"
+boto3-stubs = { extras = ["s3"], version = "1.35.69" } # extras = ["all"]
 cachier = "3.1.2"
+# https://github.com/pyca/cryptography/issues/11927#issuecomment-2469615317
+cryptography = "42.0.8" # {git = "https://github.com/pyca/cryptography.git#b8e5bfd4d7b35ba8d18b8052266e2cdae4963970"}
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
@@ -43,6 +59,7 @@ types-requests = "2.32.0.20241016"
 types-pyyaml = "6.0.12.20240917"
 isort = "5.13.2"
 bandit = "1.7.10"
+types-jmespath = "1.0.2.20240106"
 
 [build-system]
 requires = ["poetry-core"]

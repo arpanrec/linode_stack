@@ -93,9 +93,9 @@
       path: "{{ cs_mini0_mini0_cert_file }}"
       csr_path: "{{ cs_mini0_mini0_csr_file }}"
       provider: ownca
-      ownca_privatekey_content: "{{ cs_root_ca_privkey_pem }}"
-      ownca_privatekey_passphrase: "{{ cs_root_ca_privkey_pass }}"
-      ownca_content: "{{ cs_root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
+      ownca_content: "{{ root_ca_cert_pem }}"
       mode: "0644"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
@@ -106,7 +106,7 @@
   ansible.builtin.copy:
       content: |+
           {{ mini0_mini0_cert_file_create.certificate | trim }}
-          {{ cs_root_ca_cert_pem }}
+          {{ root_ca_cert_pem }}
       dest: "{{ cs_mini0_mini0_fullchain_file }}"
       mode: "0644"
       owner: "{{ cs_mini0_mini0_user_name }}"
@@ -115,7 +115,7 @@
 
 - name: Mini0 | Mini0 | Write CA Chain certificate
   ansible.builtin.copy:
-      content: "{{ cs_root_ca_cert_pem }}"
+      content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_mini0_mini0_chain_file }}"
       mode: "0644"
       owner: "{{ cs_mini0_mini0_user_name }}"

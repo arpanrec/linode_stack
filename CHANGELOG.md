@@ -1,6 +1,6 @@
-## [1.3.2](https://github.com/arpanrec/home-lab/compare/1.3.1...1.3.2) (2024-11-21)
+# [1.7.0](https://github.com/arpanrec/home-lab/compare/1.6.1...1.7.0) (2024-11-26)
 
 
-### Bug Fixes
+### Features
 
-* password fields from bitwarden ([3da2aa9](https://github.com/arpanrec/home-lab/commit/3da2aa999253f56fb3425d2a9e98040df38b6cb8))
+* Rename and reorganize GitHub-related modules and update imp… ([#39](https://github.com/arpanrec/home-lab/issues/39)) ([36a2014](https://github.com/arpanrec/home-lab/commit/36a2014f65d183ea00be5fe8c9558385385da3b3))
