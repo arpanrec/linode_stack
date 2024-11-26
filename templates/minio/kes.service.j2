@@ -1,0 +1,22 @@
+[Unit]
+Description=KES
+Documentation=https://github.com/minio/kes/wiki
+Wants=network-online.target
+After=network-online.target
+AssertFileIsExecutable=/usr/local/bin/kes
+
+[Service]
+WorkingDirectory={{ minio_kes_home }}
+AmbientCapabilities=CAP_IPC_LOCK
+User={{ minio_kes_user }}
+Group={{ minio_kes_group }}
+ProtectProc=invisible
+ExecStart=/usr/local/bin/kes server --config="{{ minio_kes_config_file }}"
+Restart=always
+LimitNOFILE=65536
+TasksMax=infinity
+TimeoutStopSec=infinity
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target

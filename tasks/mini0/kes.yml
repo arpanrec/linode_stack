@@ -88,11 +88,11 @@
   loop:
       - content: "{{ minio_kes_tmp_server_cert.data.data.certificate }}\n\
             {{ minio_kes_tmp_server_cert.data.data.ca_chain | join('\n') }}"
-        dest: "{{ minio_kes_server_cert }}"
+        dest: "{{ cs_mini0_kes_cert_file }}"
       - content: "{{ minio_kes_tmp_server_cert.data.data.private_key }}"
-        dest: "{{ minio_kes_server_key }}"
+        dest: "{{ cs_mini0_kes_cert_key_file }}"
       - content: "{{ minio_kes_tmp_server_cert.data.data.ca_chain | join('\n') }}"
-        dest: "{{ minio_kes_server_ca }}"
+        dest: "{{ cs_mini0_kes_cert_ca }}"
 
 - name: KES | Install | Get Admin Client Certificates from Vault
   become: false
@@ -147,7 +147,7 @@
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       data:
-          common_name: "{{ hashicorp_vault_kv2_inventory.hvac_client_configuration.url | urlsplit('hostname') }}"
+          common_name: "{{ vault_ha_client.vault_ha_hostname }}"
   register: kes_tmp_vault_client_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -230,10 +230,10 @@
           version: v1
           address: "0.0.0.0:{{ cs_mini0_kes_port }}"
           tls:
-              key: "{{ minio_kes_server_key }}"
-              cert: "{{ minio_kes_server_cert }}"
+              key: "{{ cs_mini0_kes_cert_key_file }}"
+              cert: "{{ cs_mini0_kes_cert_file }}"
               auth: "on"
-              ca: "{{ minio_kes_server_ca }}"
+              ca: "{{ cs_mini0_kes_cert_ca }}"
           admin:
               identity: "{{ minio_kes_tmp_admin_key_id.stdout }}"
           log:
@@ -257,7 +257,7 @@
                       - /v1/log/error
           keystore:
               vault:
-                  endpoint: "{{ hashicorp_vault_kv2_inventory.hvac_client_configuration.url }}"
+                  endpoint: "{{ vault_ha_client.vault_ha_hostname }}"
                   engine: "secret" # "kv"
                   version: "v2" # "v1"
                   prefix: "minio/kes/kms"
@@ -274,14 +274,14 @@
 - name: KES | Install | Write Config
   ansible.builtin.copy:
       content: "---\n{{ minio_kes_config | to_nice_yaml(sort_keys=false) }}"
-      dest: "{{ minio_kes_config_file }}"
+      dest: "{{ cs_mini0_kes_config_file }}"
       owner: "{{ cs_mini0_kes_user_name }}"
       group: "{{ cs_mini0_kes_group_name }}"
       mode: "0777"
 
 - name: KES | Install | Create Systemd Service
   ansible.builtin.template:
-      src: "templates/{{ minio_kes_systemd_service_name }}.j2"
+      src: "templates/minio/{{ minio_kes_systemd_service_name }}.j2"
       dest: "/etc/systemd/system/{{ minio_kes_systemd_service_name }}"
       owner: root
       group: root

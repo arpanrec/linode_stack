@@ -14,11 +14,16 @@ cs_mini0_kes_working_dir: "{{ cs_mini0_working_dir }}/kes"
 cs_mini0_kes_keystore_dir: "{{ cs_mini0_kes_working_dir }}/keystore"
 cs_mini0_kes_config_file: "{{ cs_mini0_kes_working_dir }}/config.json"
 cs_mini0_docker_network_name: mini0
+minio_kes_systemd_service_name: kes.service
 
 cs_mini0_kes_cert_dir: "{{ cs_mini0_kes_working_dir }}/certs"
 cs_mini0_kes_cert_file: "{{ cs_mini0_kes_cert_dir }}/cert.pem"
 cs_mini0_kes_cert_key_file: "{{ cs_mini0_kes_cert_dir }}/cert-key.pem"
+cs_mini0_kes_cert_ca: "{{ cs_mini0_kes_cert_dir }}/server-ca.pem"
 cs_mini0_kes_cert_id_file: "{{ cs_mini0_kes_cert_dir }}/cert-id"
+minio_kes_vault_client_cert: "{{ cs_mini0_kes_cert_dir }}/vault-client-cert.pem"
+minio_kes_vault_client_key: "{{ cs_mini0_kes_cert_dir }}/vault-client-key.pem"
+minio_kes_vault_ca_cert: "{{ cs_mini0_kes_cert_dir }}/vault-ca-cert.pem"
 
 cs_mini0_kes_container_name: kes
 cs_mini0_kes_image: docker.io/minio/kes
