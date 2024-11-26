@@ -110,6 +110,10 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
+- name: Hard Fail
+  ansible.builtin.fail:
+      msg: "Hard Fail"
+
 - name: Minio | Install | Write Server Certificates
   ansible.builtin.copy:
       content: "{{ item.content }}"
@@ -120,9 +124,9 @@
   loop:
       - content: "{{ minio_server_tmp_certificate.data.data.certificate }}\n\
             {{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}"
-        dest: "{{ minio_server_cert }}"
+        dest: "{{ cs_mini0_mini0_cert_file }}"
       - content: "{{ minio_server_tmp_certificate.data.data.private_key }}"
-        dest: "{{ minio_server_key }}"
+        dest: "{{ cs_mini0_mini0_private_key }}"
       - content: "{{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}"
         dest: "{{ minio_server_ca }}"
 
