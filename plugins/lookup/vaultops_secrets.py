@@ -18,13 +18,14 @@ Functions:
 """
 
 from __future__ import absolute_import, division, print_function
+
 import json
 from typing import Any, Dict, List, Optional
 
+import hvac  # type: ignore
 from ansible.errors import AnsibleError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
 from ansible.utils.display import Display  # type: ignore
-import hvac  # type: ignore
 from vaultops.models.ha_client import VaultHaClient
 
 __metaclass__ = type
