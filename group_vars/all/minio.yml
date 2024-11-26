@@ -1,5 +1,11 @@
 ---
-cs_mini0_working_dir: /app/mini0
+cs_mini0_external_disk_enc_key_base64: "{{ vault_cred_cs_mini0_external_disk_enc_key_base64 }}"
+cs_mini0_external_disk_enc_password: "{{ vault_cred_cs_mini0_external_disk_enc_password }}"
+cs_mini0_external_disk_uuid: "{{ vault_cred_cs_mini0_external_disk_uuid }}"
+cs_mini0_external_disk_crypt_open_name: mini0cryptdevice
+cs_mini0_external_disk_mount_path: "/mnt/{{ cs_mini0_external_disk_crypt_open_name }}"
+
+cs_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/app/minio"
 
 cs_mini0_kes_group_name: kes
 cs_mini0_kes_user_name: "{{ cs_mini0_kes_group_name }}"
@@ -16,7 +22,7 @@ cs_mini0_kes_cert_id_file: "{{ cs_mini0_kes_cert_dir }}/cert-id"
 
 cs_mini0_kes_container_name: kes
 cs_mini0_kes_image: docker.io/minio/kes
-cs_mini0_kes_version: 2024-06-17T15-47-05Z
+cs_mini0_kes_version: 2024-10-31T07-42-41Z
 cs_mini0_kes_port: 3000
 
 cs_mini0_mini0_group_name: mini0
@@ -42,7 +48,7 @@ cs_mini0_mini0_kes_endpoint: https://{{ cs_mini0_kes_container_name }}:{{ cs_min
 
 cs_mini0_mini0_container_name: mini0
 cs_mini0_mini0_image: docker.io/minio/minio
-cs_mini0_mini0_version: RELEASE.2024-07-26T20-48-21Z
+cs_mini0_mini0_version: RELEASE.2024-11-07T00-52-20Z
 cs_mini0_mini0_default_kms_key_id: my-minio-key
 cs_mini0_mini0_port: "{{ vault_cred_cs_mini0_mini0_port }}"
 cs_mini0_mini0_console_port: "{{ vault_cred_cs_mini0_mini0_console_port }}"

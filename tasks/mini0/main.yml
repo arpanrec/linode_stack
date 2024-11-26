@@ -1,4 +1,8 @@
 ---
+- name: Mini0 | Disk
+  ansible.builtin.import_tasks:
+      file: tasks/mini0/disk.yml
+
 - name: Mini0 | KES
   ansible.builtin.import_tasks:
       file: tasks/mini0/kes.yml
