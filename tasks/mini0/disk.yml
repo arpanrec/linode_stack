@@ -30,7 +30,7 @@
   ansible.builtin.lineinfile:
       path: /etc/crypttab
       line: "{{ cs_mini0_external_disk_crypt_open_name }} UUID={{ cs_mini0_external_disk_uuid }}
-          /root/.nfs-luks-key luks"
+          /root/.minio-luks-key luks"
       create: true
       mode: "0644"
       owner: root
