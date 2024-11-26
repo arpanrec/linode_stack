@@ -22,6 +22,7 @@ import os
 from typing import Any, Dict, List, Union
 from urllib.parse import urlsplit
 
+from ansible.errors import AnsibleParserError
 from ansible.inventory.data import InventoryData  # type: ignore
 from ansible.parsing.dataloader import DataLoader  # type: ignore
 from ansible.plugins.inventory import BaseInventoryPlugin  # type: ignore
@@ -29,6 +30,7 @@ from ansible.template import Templar  # type: ignore
 from ansible.utils.display import Display  # type: ignore
 from cryptography.hazmat.backends import default_backend  # type: ignore
 from cryptography.hazmat.primitives import serialization
+from hvac.exceptions import VaultDown
 from pydantic_core import to_jsonable_python
 from vaultops.builder.vault_config import build_vault_config
 from vaultops.builder.vault_raft_node import build_raft_server_nodes_map
@@ -168,7 +170,11 @@ class InventoryModule(BaseInventoryPlugin):
             rsa_root_ca_key=rsa_root_ca_key,
             rsa_root_ca_cert=None,
         )
-        vault_ha_client.evaluate_token()
+        try:
+            vault_ha_client.evaluate_token()
+        except VaultDown as e:
+            raise AnsibleParserError(f"Vault is down: {e}") from e
+
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
 
