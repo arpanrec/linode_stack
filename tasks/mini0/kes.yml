@@ -25,7 +25,6 @@
       state: directory
   with_items:
       - "{{ cs_mini0_kes_working_dir }}"
-      - "{{ cs_mini0_kes_keystore_dir }}"
       - "{{ cs_mini0_kes_cert_dir }}"
       - "{{ cs_mini0_kes_cert_file | dirname }}"
       - "{{ cs_mini0_kes_cert_key_file | dirname }}"
