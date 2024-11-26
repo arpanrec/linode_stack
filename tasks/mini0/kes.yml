@@ -256,7 +256,7 @@
                       - /v1/log/error
           keystore:
               vault:
-                  endpoint: "{{ vault_ha_client.vault_ha_hostname }}"
+                  endpoint: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
                   engine: "secret" # "kv"
                   version: "v2" # "v1"
                   prefix: "minio/kes/kms"
