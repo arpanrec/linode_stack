@@ -1,6 +1,6 @@
-# [1.7.0](https://github.com/arpanrec/home-lab/compare/1.6.1...1.7.0) (2024-11-26)
+## [1.7.1](https://github.com/arpanrec/home-lab/compare/1.7.0...1.7.1) (2024-11-26)
 
 
-### Features
+### Bug Fixes
 
-* Rename and reorganize GitHub-related modules and update imp… ([#39](https://github.com/arpanrec/home-lab/issues/39)) ([36a2014](https://github.com/arpanrec/home-lab/commit/36a2014f65d183ea00be5fe8c9558385385da3b3))
+* Change log level from error to info for vault readiness check ([2cb11df](https://github.com/arpanrec/home-lab/commit/2cb11df1d295bfa90e85cd30c11bfbf1dfd686c0))
