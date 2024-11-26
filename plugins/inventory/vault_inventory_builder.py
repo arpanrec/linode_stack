@@ -91,7 +91,7 @@ options:
         type: dict | str
 """
 
-_display = Display()
+display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -122,7 +122,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         self.inventory.add_host("localhost")
 
-        _display.v(f"Vault Inventory Builder Plugin: Parsing inventory file: {path}")
+        display.v(f"Vault Inventory Builder Plugin: Parsing inventory file: {path}")
 
         self.inventory.add_group(self.ansible_vault_server_group_name)
         self.inventory.add_group(self.ansible_vault_node_servers_group_name)
@@ -173,7 +173,8 @@ class InventoryModule(BaseInventoryPlugin):
         try:
             vault_ha_client.evaluate_token()
         except VaultDown as e:
-            raise AnsibleParserError(f"Vault is down: {e}") from e
+            # raise AnsibleParserError(f"Vault is down: {e}") from e
+            display.warning(f"Vault ha client is down: {e}")
 
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
