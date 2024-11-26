@@ -22,7 +22,7 @@ import os
 from typing import Any, Dict, List, Union
 from urllib.parse import urlsplit
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError  # type: ignore
 from ansible.inventory.data import InventoryData  # type: ignore
 from ansible.parsing.dataloader import DataLoader  # type: ignore
 from ansible.plugins.inventory import BaseInventoryPlugin  # type: ignore
