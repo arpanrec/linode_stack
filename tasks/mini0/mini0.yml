@@ -110,17 +110,13 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Hard Fail
-  ansible.builtin.fail:
-      msg: "Hard Fail"
-
 - name: Minio | Install | Write Server Certificates
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      mode: "0777"
+      mode: "0600"
   loop:
       - content: "{{ minio_server_tmp_certificate.data.data.certificate }}\n\
             {{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}"
@@ -139,19 +135,15 @@
       mode: "0777"
   loop:
       - content: "{{ minio_server_kes_secret_dict.secret.admin_cert }}\n"
-        dest: "{{ minio_server_kes_client_cert }}"
+        dest: "{{ cs_mini0_mini0_kes_admin_cert }}"
       - content: "{{ minio_server_kes_secret_dict.secret.admin_key }}\n"
-        dest: "{{ minio_server_kes_client_key }}"
+        dest: "{{ cs_mini0_mini0_kes_admin_key }}"
       - content: "{{ minio_server_kes_secret_dict.secret.admin_ca }}\n"
-        dest: "{{ minio_server_kes_client_ca }}"
+        dest: "{{ cs_mini0_mini0_kes_ca_cert }}"
 
-- name: Minio | Install | Write MC Certificates
-  ansible.builtin.copy:
-      content: "{{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}"
-      dest: "{{ minio_mc_config_dir }}/certs/CAs/server-ca.crt"
-      owner: "{{ cs_mini0_mini0_user_name }}"
-      group: "{{ cs_mini0_mini0_group_name }}"
-      mode: "0777"
+- name: Hard Fail
+  ansible.builtin.fail:
+      msg: "Hard Fail"
 
 - name: Minio | Install | Create User and Password
   ansible.builtin.set_fact:
@@ -190,9 +182,9 @@
   ansible.builtin.copy:
       content: |+
           MINIO_KMS_KES_ENDPOINT={{ minio_server_kes_endpoint }}
-          MINIO_KMS_KES_KEY_FILE={{ minio_server_kes_client_key }}
-          MINIO_KMS_KES_CERT_FILE={{ minio_server_kes_client_cert }}
-          MINIO_KMS_KES_CAPATH={{ minio_server_kes_client_ca }}
+          MINIO_KMS_KES_KEY_FILE={{ cs_mini0_mini0_kes_admin_key }}
+          MINIO_KMS_KES_CERT_FILE={{ cs_mini0_mini0_kes_admin_cert }}
+          MINIO_KMS_KES_CAPATH={{ cs_mini0_mini0_kes_ca_cert }}
           MINIO_KMS_KES_KEY_NAME=default
           MINIO_ROOT_USER={{ minio_server_root_user }}
           MINIO_ROOT_PASSWORD={{ minio_server_root_password }}

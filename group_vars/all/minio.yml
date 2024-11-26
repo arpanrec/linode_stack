@@ -40,10 +40,7 @@ cs_mini0_mini0_certs_dir: "{{ cs_mini0_mini0_working_dir }}/certs"
 
 cs_mini0_mini0_private_key: "{{ cs_mini0_mini0_certs_dir }}/private.key"
 cs_mini0_mini0_cert_file: "{{ cs_mini0_mini0_certs_dir }}/cert.pem"
-cs_mini0_mini0_csr_file: "{{ cs_mini0_mini0_certs_dir }}/cert.csr"
-cs_mini0_mini0_chain_file: "{{ cs_mini0_mini0_certs_dir }}/chain.pem"
-cs_mini0_mini0_fullchain_file: "{{ cs_mini0_mini0_certs_dir }}/fullchain.pem"
-
+minio_server_ca: "{{ cs_mini0_mini0_certs_dir }}/CAs/server-ca.crt"
 cs_mini0_mini0_kes_cert_dir: "{{ cs_mini0_mini0_certs_dir }}/kes"
 cs_mini0_mini0_kes_admin_cert: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-admin-cert.pem"
 cs_mini0_mini0_kes_admin_key: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-admin-key.pem"
