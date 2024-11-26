@@ -196,9 +196,8 @@ class InventoryModule(BaseInventoryPlugin):
         vault_servers: Dict[str, VaultServer] = vault_config.vault_servers
         for vault_server_name, vault_server_details in vault_servers.items():
 
-            ip = vault_server_details.ansible_opts["ansible_host"]
-            # Check if the IP is valid
             try:
+                ip = vault_server_details.ansible_opts["ansible_host"]
                 ip_address = ipaddress.ip_address(ip)
                 if ip_address.is_loopback or ip_address.is_link_local or ip_address.is_multicast:
                     raise ValueError(f"Invalid IP address: {ip}")
