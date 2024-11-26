@@ -1,7 +1,4 @@
 ---
-cs_rb4_m1_ip: "{{ vault_cred_cs_rb4_m1_ip }}"
-cs_rb4_m2_ip: "{{ vault_cred_cs_rb4_m2_ip }}"
-cs_rb4_m3_ip: "{{ vault_cred_cs_rb4_m3_ip }}"
 cs_public_ingress_ip: "{{ vault_cred_cs_public_ingress_ip }}"
 cs_public_ingress_dns_entry: "{{ vault_cred_cs_public_ingress_dns_entry }}"
 
