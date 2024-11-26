@@ -1,6 +1,6 @@
-## [1.6.1](https://github.com/arpanrec/home-lab/compare/1.6.0...1.6.1) (2024-11-25)
+# [1.7.0](https://github.com/arpanrec/home-lab/compare/1.6.1...1.7.0) (2024-11-26)
 
 
-### Bug Fixes
+### Features
 
-* Create SECURITY.md ([c9e4361](https://github.com/arpanrec/home-lab/commit/c9e4361653f9bcfc48318dd017d9dd411fbc230e))
+* Rename and reorganize GitHub-related modules and update imp… ([#39](https://github.com/arpanrec/home-lab/issues/39)) ([36a2014](https://github.com/arpanrec/home-lab/commit/36a2014f65d183ea00be5fe8c9558385385da3b3))
