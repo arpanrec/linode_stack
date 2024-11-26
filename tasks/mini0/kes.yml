@@ -16,6 +16,23 @@
 - name: KES | Install | Gather Facts
   ansible.builtin.setup:
 
+- name: KES | Install | Create group
+  ansible.builtin.group:
+      name: "{{ cs_mini0_kes_group_name }}"
+      state: present
+      system: true
+  register: minio_kes_tmp_group_creation
+
+- name: KES | Install | Create User
+  ansible.builtin.user:
+      name: "{{ cs_mini0_kes_user_name }}"
+      group: "{{ cs_mini0_kes_group_name }}"
+      state: present
+      create_home: false
+      system: true
+      shell: /bin/false
+  register: minio_kes_tmp_user_creation
+
 - name: Mini0 | KES | Create Directory
   ansible.builtin.file:
       name: "{{ item }}"
