@@ -68,8 +68,10 @@ class LookupModule(LookupBase):
         vault_ha_client: VaultHaClient = VaultHaClient.model_validate(variables["vault_ha_client"])
         client: hvac.Client = vault_ha_client.hvac_client()
 
-        secret_version_response = client.secrets.kv.v2.read_secret_version(mount_point=mount_path, path=secret_path)
-
-        print(secret_version_response)
-
-        return [""]
+        try:
+            secret_version_response = client.secrets.kv.v2.read_secret_version(mount_point=mount_path, path=secret_path)
+            if secret_json_key not in secret_version_response["data"]["data"]:
+                raise AnsibleError(f"Secret key {secret_json_key} not found in Vault")
+            return [secret_version_response["data"]["data"][secret_json_key]]
+        except hvac.exceptions.InvalidPath as e:
+            raise AnsibleError(f"Secret path {secret_path} not found in Vault") from e
