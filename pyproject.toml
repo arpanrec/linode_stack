@@ -23,7 +23,10 @@ description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
 package-mode = true
-packages = [{ include = "vaultops", from = "pylib" }]
+packages = [
+    { include = "vaultops", from = "pylib" },
+    { include = "github_bot", from = "pylib" },
+]
 scripts = { "vaultops" = "vaultops.__main__:main" }
 
 [tool.poetry.dependencies]
@@ -39,11 +42,11 @@ prettytable = "3.12.0"
 python-terraform = "0.10.1"
 pygithub = "2.5.0"
 python-gnupg = "0.5.3"
-boto3 = "1.35.68"
-boto3-stubs = { extras = ["s3"], version = "1.35.68" } # extras = ["all"]
+boto3 = "1.35.69"
+boto3-stubs = { extras = ["s3"], version = "1.35.69" } # extras = ["all"]
 cachier = "3.1.2"
 # https://github.com/pyca/cryptography/issues/11927#issuecomment-2469615317
-cryptography = {git = "https://github.com/pyca/cryptography.git"}
+cryptography = "42.0.8" # {git = "https://github.com/pyca/cryptography.git#b8e5bfd4d7b35ba8d18b8052266e2cdae4963970"}
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"

@@ -17,8 +17,7 @@ from typing import Tuple
 
 import gnupg  # type: ignore
 import requests
-
-from ..models.ha_client import VaultHaClient
+from vaultops.models.ha_client import VaultHaClient
 
 LOGGER = logging.getLogger(__name__)
 
