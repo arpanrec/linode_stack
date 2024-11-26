@@ -141,10 +141,6 @@
       - content: "{{ minio_server_kes_secret_dict.secret.admin_ca }}\n"
         dest: "{{ cs_mini0_mini0_kes_ca_cert }}"
 
-- name: Hard Fail
-  ansible.builtin.fail:
-      msg: "Hard Fail"
-
 - name: Minio | Install | Create User and Password
   ansible.builtin.set_fact:
       minio_server_root_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
@@ -166,11 +162,9 @@
           root_password: "{{ minio_server_root_password }}"
           ips: "{{ minio_server_ips }}"
           hostnames: "{{ minio_server_hostnames }}"
-          server_port: "{{ minio_server_port }}"
-          console_port: "{{ minio_server_console_port }}"
+          server_port: "{{ cs_mini0_mini0_port }}"
+          console_port: "{{ cs_mini0_mini0_console_port }}"
           server_version: "{{ cs_mini0_mini0_version }}"
-          client_version: "{{ minio_mc_version }}"
-          preferred_mc_host: "{{ minio_server_preferred_mc_host }}"
           ca_cert: "{{ minio_server_kes_secret_dict.secret.admin_ca }}"
           server_cert: "{{ minio_server_kes_secret_dict.secret.admin_cert }}"
   environment:
@@ -190,12 +184,16 @@
           MINIO_ROOT_PASSWORD={{ minio_server_root_password }}
           MINIO_REGION=us-east-1
           MINIO_VOLUMES={{ cs_mini0_mini0_data_dir }}
-          MINIO_OPTS="--address ':{{ minio_server_port }}' --console-address ':{{
-            minio_server_console_port }}' --certs-dir {{ cs_mini0_mini0_certs_dir }}"
+          MINIO_OPTS="--address ':{{ cs_mini0_mini0_port }}' --console-address ':{{
+            cs_mini0_mini0_console_port }}' --certs-dir {{ cs_mini0_mini0_certs_dir }}"
       dest: "{{ minio_env_file }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      mode: "0777"
+      mode: "0600"
+
+- name: Hard Fail
+  ansible.builtin.fail:
+      msg: "Hard Fail"
 
 - name: Minio | Install | Enable UFW
   community.general.ufw:
@@ -204,8 +202,8 @@
       proto: tcp
       comment: "Minio Server"
   loop:
-      - "{{ minio_server_port }}"
-      - "{{ minio_server_console_port }}"
+      - "{{ cs_mini0_mini0_port }}"
+      - "{{ cs_mini0_mini0_console_port }}"
 
 - name: Minio | Install | Create Systemd Service
   ansible.builtin.template:
@@ -229,7 +227,7 @@
 #           - alias
 #           - set
 #           - "{{ inventory_hostname }}"
-#           - "https://{{ minio_server_preferred_mc_host }}:{{ minio_server_port }}"
+#           - "https://{{ minio_server_preferred_mc_host }}:{{ cs_mini0_mini0_port }}"
 #           - "{{ minio_server_root_user }}"
 #           - "{{ minio_server_root_password }}"
 #   changed_when: true
