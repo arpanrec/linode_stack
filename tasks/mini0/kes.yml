@@ -296,7 +296,7 @@
 - name: KES | Install | Start Systemd Service
   ansible.builtin.systemd_service:
       name: "{{ minio_kes_systemd_service_name }}"
-      state: restarted
+      state: started
       daemon_reload: true
       daemon_reexec: true
       enabled: true
