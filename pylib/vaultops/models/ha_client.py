@@ -54,7 +54,7 @@ class VaultHaClient(BaseModel):
     vault_root_ca_cert_file: Optional[str] = Field(default=None)
     vault_client_cert_file: Optional[str] = Field(default=None)
     vault_client_key_file: Optional[str] = Field(default=None)
-    _hvac_client: hvac.Client = PrivateAttr()
+    _hvac_client: Optional[hvac.Client] = PrivateAttr(default=None)
 
     def __init__(self, vault_config: Optional[VaultConfig] = None, **data: Any) -> None:
         super().__init__(**data)
@@ -66,23 +66,25 @@ class VaultHaClient(BaseModel):
         self.vault_root_ca_cert_file = f"{vault_config.vaultops_tmp_dir_path}/vault-ha-root-ca.pem"
         self.vault_client_cert_file = f"{vault_config.vaultops_tmp_dir_path}/vault-ha-client-cert.pem"
         self.vault_client_key_file = f"{vault_config.vaultops_tmp_dir_path}/vault-ha-client-priv.key"
-
-        with open(self.vault_root_ca_cert_file, "w", encoding="utf-8") as f:
-            f.write(self.root_ca_cert_pem)
-
-        with open(self.vault_client_cert_file, "w", encoding="utf-8") as f:
-            f.write(self.client_cert_pem)
-
-        with open(self.vault_client_key_file, "w", encoding="utf-8") as f:
-            f.write(self.client_key_pem)
-
         with open(f"{vault_config.vaultops_tmp_dir_path}/vault-ha-client-cert.p12", "wb") as f:
             f.write(base64.b64decode(self.client_cert_p12_base64))
+
+        self.__prepare__()
+
+    def __prepare__(self) -> None:
+        with open(str(self.vault_root_ca_cert_file), "w", encoding="utf-8") as f:
+            f.write(self.root_ca_cert_pem)
+
+        with open(str(self.vault_client_cert_file), "w", encoding="utf-8") as f:
+            f.write(self.client_cert_pem)
+
+        with open(str(self.vault_client_key_file), "w", encoding="utf-8") as f:
+            f.write(self.client_key_pem)
 
         adapter = HTTPAdapter(max_retries=Retry(total=2, backoff_factor=2))
         session = requests.Session()
         session.verify = self.vault_root_ca_cert_file
-        session.cert = (self.vault_client_cert_file, self.vault_client_key_file)
+        session.cert = (str(self.vault_client_cert_file), str(self.vault_client_key_file))
         session.mount("https://", adapter)
         hvac_client = hvac.Client(url=f"https://{self.vault_ha_hostname}:{self.vault_ha_port}", session=session)
         self._hvac_client = hvac_client
@@ -91,7 +93,9 @@ class VaultHaClient(BaseModel):
         """
         Returns the hvac client object
         """
-        if not self._hvac_client.is_authenticated():
+        if not self._hvac_client:
+            self.__prepare__()
+        if self._hvac_client and not self._hvac_client.is_authenticated():
             self._hvac_client.auth.userpass.login(
                 username=self.admin_user, password=self.admin_password, mount_point=self.userpass_mount
             )
