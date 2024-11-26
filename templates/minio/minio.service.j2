@@ -7,7 +7,7 @@ Requires=network-online.target
 AssertFileIsExecutable=/usr/local/bin/minio
 
 [Service]
-WorkingDirectory={{ minio_server_home }}
+WorkingDirectory={{ cs_mini0_mini0_working_dir }}
 User={{ minio_server_user }}
 Group={{ minio_server_group }}
 ProtectProc=invisible

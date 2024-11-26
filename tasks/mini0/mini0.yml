@@ -191,10 +191,6 @@
       group: "{{ cs_mini0_mini0_group_name }}"
       mode: "0600"
 
-- name: Hard Fail
-  ansible.builtin.fail:
-      msg: "Hard Fail"
-
 - name: Minio | Install | Enable UFW
   community.general.ufw:
       rule: allow
@@ -207,7 +203,7 @@
 
 - name: Minio | Install | Create Systemd Service
   ansible.builtin.template:
-      src: "templates/{{ minio_server_systemd_service_name }}.j2"
+      src: "templates/minio/{{ minio_server_systemd_service_name }}.j2"
       dest: "/etc/systemd/system/{{ minio_server_systemd_service_name }}"
       owner: root
       group: root
@@ -220,17 +216,3 @@
       daemon_reload: true
       daemon_reexec: true
       enabled: true
-# - name: Minio | Install | Add to localhost
-#   ansible.builtin.command:
-#       argv:
-#           - mc
-#           - alias
-#           - set
-#           - "{{ inventory_hostname }}"
-#           - "https://{{ minio_server_preferred_mc_host }}:{{ cs_mini0_mini0_port }}"
-#           - "{{ minio_server_root_user }}"
-#           - "{{ minio_server_root_password }}"
-#   changed_when: true
-#   retries: 3
-#   delay: 5
-# until: "mc alias list | grep -q {{ inventory_hostname }}"
