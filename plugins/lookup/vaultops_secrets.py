@@ -58,30 +58,30 @@ class LookupModule(LookupBase):
         term_split = term.split("/")
 
         mount_path = term_split[0]
-        secret_json_key = term_split[-1]
-        secret_path = "/".join(term_split[1:-1])
+        json_key = term_split[-1]
+        item_path = "/".join(term_split[1:-1])
 
         if (  # pylint: disable=too-many-boolean-expressions
             not mount_path
-            or not secret_path
-            or not secret_json_key
+            or not item_path
+            or not json_key
             or mount_path == ""
-            or secret_path == ""
-            or secret_json_key == ""
+            or item_path == ""
+            or json_key == ""
         ):
             raise AnsibleError(f"Invalid secret path format: {term}")
 
         display.v(f"mount_path: {mount_path}")
-        display.v(f"secret_path: {secret_path}")
-        display.v(f"secret_json_key: {secret_json_key}")
+        display.v(f"secret_path: {item_path}")
+        display.v(f"secret_json_key: {json_key}")
 
         vault_ha_client: VaultHaClient = VaultHaClient.model_validate(variables["vault_ha_client"])
         client: hvac.Client = vault_ha_client.hvac_client()
 
         try:
-            secret_version_response = client.secrets.kv.v2.read_secret_version(mount_point=mount_path, path=secret_path)
-            if secret_json_key not in secret_version_response["data"]["data"]:
-                raise AnsibleError(f"Secret key {secret_json_key} not found in Vault")
-            return [secret_version_response["data"]["data"][secret_json_key]]
+            secret_version_response = client.secrets.kv.v2.read_secret_version(mount_point=mount_path, path=item_path)
+            if json_key not in secret_version_response["data"]["data"]:
+                raise AnsibleError(f"Secret key {json_key} not found in Vault")
+            return [secret_version_response["data"]["data"][json_key]]
         except hvac.exceptions.InvalidPath as e:
-            raise AnsibleError(f"Secret path {secret_path} not found in Vault") from e
+            raise AnsibleError(f"Secret path {item_path} not found in Vault") from e
