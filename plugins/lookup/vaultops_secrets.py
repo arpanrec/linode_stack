@@ -62,12 +62,7 @@ class LookupModule(LookupBase):
         item_path = "/".join(term_split[1:-1])
 
         if (  # pylint: disable=too-many-boolean-expressions
-            not mount_path
-            or not item_path
-            or not json_key
-            or mount_path == ""
-            or item_path == ""
-            or json_key == ""
+            not mount_path or not item_path or not json_key or mount_path == "" or item_path == "" or json_key == ""
         ):
             raise AnsibleError(f"Invalid secret path format: {term}")
 
