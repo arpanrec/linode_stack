@@ -87,9 +87,9 @@
       group: "{{ cs_mini0_mini0_group_name }}"
       mode: "0777"
   loop:
-      - "{{ minio_server_certs_dir }}"
-      - "{{ minio_server_certs_dir }}/CAs"
-      - "{{ minio_server_data_dir }}"
+      - "{{ cs_mini0_mini0_certs_dir }}"
+      - "{{ cs_mini0_mini0_certs_dir }}/CAs"
+      - "{{ cs_mini0_mini0_data_dir }}"
 
 - name: Minio | Install | Get Minio Server Certificates from Vault
   become: false
@@ -193,9 +193,9 @@
           MINIO_ROOT_USER={{ minio_server_root_user }}
           MINIO_ROOT_PASSWORD={{ minio_server_root_password }}
           MINIO_REGION=us-east-1
-          MINIO_VOLUMES={{ minio_server_data_dir }}
+          MINIO_VOLUMES={{ cs_mini0_mini0_data_dir }}
           MINIO_OPTS="--address ':{{ minio_server_port }}' --console-address ':{{
-            minio_server_console_port }}' --certs-dir {{ minio_server_certs_dir }}"
+            minio_server_console_port }}' --certs-dir {{ cs_mini0_mini0_certs_dir }}"
       dest: "{{ minio_env_file }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
