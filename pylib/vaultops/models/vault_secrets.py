@@ -19,42 +19,6 @@ from typing import Any, Dict, List, Union
 from pydantic import BaseModel, Field
 
 
-class GitHubProdDetails(BaseModel):
-    """
-    Represents the GitHub production details.
-    """
-
-    GH_PROD_API_TOKEN: str = Field(description="The GitHub bot API token.")
-
-
-class BotGpgDetails(BaseModel):
-    """
-    Attributes:
-        BOT_GPG_PRIVATE_KEY: str: The GitHub Actions GPG private key.
-        BOT_GPG_PASSPHRASE: str: The GitHub Actions GPG passphrase.
-    """
-
-    BOT_GPG_PRIVATE_KEY: str = Field(description="The GitHub Actions GPG private key.")
-    BOT_GPG_PASSPHRASE: str = Field(description="The GitHub Actions GPG passphrase.")
-
-
-class GitHubBotDetails(BaseModel):
-    """
-    Represents the GitHub bot details.
-    """
-
-    GH_BOT_API_TOKEN: str = Field(description="The GitHub production API token.")
-
-
-class GithubDetails(BaseModel):
-    """
-    Represents the GitHub details.
-    """
-
-    github_bot: GitHubBotDetails = Field(description="The GitHub bot details.")
-    github_prod: GitHubProdDetails = Field(description="The GitHub production details.")
-
-
 class RootPkiDetails(BaseModel):
     """
     Represents the root PKI details.
@@ -86,7 +50,6 @@ class VaultSecrets(BaseModel):
 
     vault_ha_hostname: str = Field(description="The hostname of the Vault HA cluster.")
     vault_ha_port: int = Field(description="The port number of the Vault HA cluster.")
-    github_details: GithubDetails = Field(description="The GitHub details.")
     root_pki_details: RootPkiDetails = Field(description="The root PKI details.")
     vault_admin_userpass_details: VaultAdminUserpassDetails = Field(description="The Vault admin userpass details.")
     external_services: Dict[str, Union[str, bool, int, Dict[str, Any], List[Any]]] = Field(
@@ -95,4 +58,3 @@ class VaultSecrets(BaseModel):
     ansible_inventory: Dict[str, Union[str, bool, int, Dict[str, Any], List[Any]]] = Field(
         default={}, description="The Ansible inventory details."
     )
-    bot_gpg_key: BotGpgDetails = Field(description="The GitHub Actions GPG key details.")
