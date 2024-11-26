@@ -21,6 +21,7 @@ Modules:
 import logging
 
 from vaultops.models.ha_client import VaultHaClient
+
 from .github import add_vault_access_to_github
 from .github_bot import add_gpg_to_bot_github
 
