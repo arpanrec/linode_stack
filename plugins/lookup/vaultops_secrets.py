@@ -19,7 +19,6 @@ Functions:
 
 from __future__ import absolute_import, division, print_function
 
-import json
 from typing import Any, Dict, List, Optional
 
 import hvac  # type: ignore
@@ -61,6 +60,16 @@ class LookupModule(LookupBase):
         mount_path = term_split[0]
         secret_json_key = term_split[-1]
         secret_path = "/".join(term_split[1:-1])
+
+        if (  # pylint: disable=too-many-boolean-expressions
+            not mount_path
+            or not secret_path
+            or not secret_json_key
+            or mount_path == ""
+            or secret_path == ""
+            or secret_json_key == ""
+        ):
+            raise AnsibleError(f"Invalid secret path format: {term}")
 
         display.v(f"mount_path: {mount_path}")
         display.v(f"secret_path: {secret_path}")

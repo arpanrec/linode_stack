@@ -1,17 +1,4 @@
 ---
-- name: Debug
-  ansible.builtin.debug:
-      msg: "{{ lookup('vaultops_secrets', 'secret/abc/abbb/fsafasf/asfasf') }}"
-
-- name: Debug
-  ansible.builtin.debug:
-      msg: "{{ lookup('community.general.random_string', length=12, special=false) }} ||
-          {{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_lowercase', 'digits'], length=16) }}"
-
-- name: Hard fail
-  ansible.builtin.fail:
-      msg: "Hard fail"
-
 - name: Database | Postgres | Install python3-psycopg2
   ansible.builtin.apt:
       name: python3-psycopg2

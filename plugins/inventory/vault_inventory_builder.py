@@ -16,6 +16,7 @@ respectively. It also uses the to_jsonable_python function from pydantic_core fo
 Author: Arpan Mandal
 Requirements: Python 3 or higher
 """
+import ipaddress
 import json
 import os
 from typing import Any, Dict, List, Union
@@ -59,6 +60,7 @@ description:
           - pv_vault_raft_node_details: Vault Raft node details.
           - pv_vault_raft_nodes_in_host: Vault Raft nodes in host.
           - host_keys: Host keys
+          - cs_<vault_server_name, - replaced with _>_ip: Vault server IP
     - Change the root CA key to ssh private key and add it to the inventory under `ansible_ssh_private_key_file`
 extends_documentation_fragment:
     - constructed
@@ -193,6 +195,16 @@ class InventoryModule(BaseInventoryPlugin):
 
         vault_servers: Dict[str, VaultServer] = vault_config.vault_servers
         for vault_server_name, vault_server_details in vault_servers.items():
+
+            ip = vault_server_details.ansible_opts["ansible_host"]
+            # Check if the IP is valid
+            try:
+                ip_address = ipaddress.ip_address(ip)
+                if ip_address.is_loopback or ip_address.is_link_local or ip_address.is_multicast:
+                    raise ValueError(f"Invalid IP address: {ip}")
+            except ValueError as e:
+                raise ValueError(f"Invalid IP address: {ip}") from e
+
             self.inventory.add_host(vault_server_name, group=self.ansible_vault_server_group_name)
             for ansible_inventory_extra_group in vault_server_details.ansible_inventory_extra_groups:
                 if ansible_inventory_extra_group in [
@@ -208,6 +220,11 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.add_group(ansible_inventory_extra_group)
                 self.inventory.add_host(vault_server_name, group=ansible_inventory_extra_group)
             self.inventory.set_variable(vault_server_name, "host_keys", vault_server_details.host_keys)
+            self.inventory.set_variable(
+                vault_server_name,
+                f"cs_{vault_server_name.replace('-', '_')}_ip",
+                vault_server_details.ansible_opts["ansible_host"],
+            )
             for ansible_opt_key, ansible_opt_value in vault_server_details.ansible_opts.items():
                 self.inventory.set_variable(vault_server_name, ansible_opt_key, ansible_opt_value)
             if vault_server_details.root_ca_key_pem_as_ansible_priv_ssh_key:
