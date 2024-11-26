@@ -62,6 +62,7 @@ cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_mini0_mini0_private_ip: "{{ cs_rb4_m2_ip }}"
 cs_mini0_mini0_public_ip: "{{ cs_public_ingress_ip }}"
 minio_server_systemd_service_name: minio.service
+minio_env_file: "{{ cs_mini0_mini0_working_dir }}/.env"
 
 minio_kes_bin_info_map:
     x86_64:
