@@ -71,9 +71,9 @@ options:
     plugin:
         description: Name of the plugin
         required: true
-        choices: ["vault_inventory_builder"]
+        choices: ["blr_home_lab_inv"]
         type: str
-        default: vault_inventory_builder
+        default: blr_home_lab_inv
     vaultops_tmp_dir_path:
         description: Path to the temporary directory for storing Vault configuration files.
         required: true
@@ -100,7 +100,7 @@ class InventoryModule(BaseInventoryPlugin):
     Ansible dynamic inventory plugin for Hashicorp Vault
     """
 
-    NAME = "vault_inventory_builder"  # used internally by Ansible, it should match the file name but not required
+    NAME = "blr_home_lab_inv"  # used internally by Ansible, it should match the file name but not required
     loader: Any
     templar: Templar
     ansible_vault_server_group_name = "vault_vm_servers"
