@@ -1,7 +1,7 @@
 ---
-- name: Database | Postgres | Install python3-psycopg2
-  ansible.builtin.apt:
-      name: python3-psycopg2
+# - name: Database | Postgres | Install python3-psycopg2
+#   ansible.builtin.apt:
+#       name: python3-psycopg2
 
 - name: Database | Postgres | Stop old containers
   community.docker.docker_container:
@@ -28,9 +28,6 @@
       - "{{ cs_postgres_dir }}"
       - "{{ cs_postgres_data_dir }}"
       - "{{ cs_postgres_certs_dir }}"
-      - "{{ cs_postgres_certs_privkey_file | dirname }}"
-      - "{{ cs_postgres_certs_cert_file | dirname }}"
-      - "{{ cs_postgres_certs_chain_file | dirname }}"
       - "{{ cs_postgres_client_certs_dir }}"
 
 - name: Database | Postgres | Get Server Certificates from Vault
@@ -52,13 +49,14 @@
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
 - name: Database | Postgres | Write Server Certificate
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
-      owner: "{{ cs_mini0_kes_user_name }}"
-      group: "{{ cs_mini0_kes_group_name }}"
-      mode: "0777"
+      owner: "{{ cs_postgres_run_user }}"
+      group: "{{ cs_postgres_run_group }}"
+      mode: "0600"
   loop:
       - content: "{{ __postgresql_server_cert.data.data.certificate }}\n\
             {{ __postgresql_server_cert.data.data.ca_chain | join('\n') }}"
@@ -104,6 +102,7 @@
             data:
                 maintenance_user: "{{ cs_postgres_maintenance_user }}"
                 maintenance_password: "{{ cs_postgres_maintenance_password }}"
+                maintenance_db: "{{ cs_postgres_maintenance_db }}"
                 servers:
                     - "{{ cs_postgres_host_private_ip }}"
                     - "{{ cs_postgres_host_public_ip }}"
@@ -125,7 +124,7 @@
             networks:
                 - name: "{{ cs_postgres_network_name }}"
             volumes:
-                - "{{ cs_postgres_data_dir }}:/var/lib/postgresql/data"
+                - "{{ cs_postgres_data_dir }}:/var/lib/postgresql/data:rw"
                 - "{{ cs_postgres_certs_privkey_file }}:/server-privkey.pem:ro"
                 - "{{ cs_postgres_certs_cert_file }}:/server-cert.pem:ro"
                 - "{{ cs_postgres_certs_chain_file }}:/server-chain.pem:ro"
@@ -148,6 +147,26 @@
       - name: Hard fail
         ansible.builtin.fail:
             msg: "Postgres container failed to start"
+
+      - name: Database | Postgres | First Run | Get Client Certificates from Vault
+        become: false
+        delegate_facts: true
+        delegate_to: localhost
+        community.hashi_vault.vault_write:
+            url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+            path: pki/issue/client_certificate
+            token: "{{ vault_ha_client.token }}"
+            validate_certs: true
+            data:
+                common_name: "{{ inventory_hostname }}"
+                alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
+                    {{ cs_postgres_container_name }},localhost"
+                ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
+        register: __postgresql_server_cert
+        environment:
+            VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+            VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+            VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
       - name: Database | Postgres | Client | First Run | Create SSL Private key
         community.crypto.openssl_privatekey:
