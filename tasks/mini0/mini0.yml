@@ -1,178 +1,219 @@
 ---
-- name: Mini0 | Mini0 | Create group
+- name: Minio | Assert | Set minio_server_kes_secret_id_vault
+  ansible.builtin.set_fact:
+      minio_server_kes_secret_id_vault: "{{ minio_server_kes_secret_id_vault | d(inventory_hostname)
+          | mandatory }}"
+
+- name: Minio | Assert | Get KES Admin Key Id from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "managed-secrets"
+      path: "minio/kes/servers/{{ minio_server_kes_secret_id_vault }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: minio_server_kes_secret_dict
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Minio | Assert | minio_server_hostnames
+  ansible.builtin.assert:
+      that:
+          - minio_server_hostnames | type_debug == 'list'
+          - minio_server_hostnames | length > 0
+      fail_msg: "minio_server_hostnames must be a list with at least one element"
+
+- name: Minio | Assert | minio_server_ips
+  ansible.builtin.assert:
+      that:
+          - minio_server_ips | type_debug == 'list'
+          - minio_server_ips | length > 0
+      fail_msg: "minio_server_ips must be a list with at least one element"
+
+- name: Minio | Assert | minio_server_kes_endpoint hostname
+  ansible.builtin.assert:
+      that:
+          - |+
+              minio_server_kes_endpoint | urlsplit('hostname')
+              in
+              (minio_server_kes_secret_dict.secret.hostnames + minio_server_kes_secret_dict.secret.ips)
+      fail_msg: "minio_server_kes_endpoint must be a valid URL with hostname or IP address"
+
+- name: Minio | Assert | minio_server_kes_endpoint port
+  ansible.builtin.assert:
+      that:
+          - minio_server_kes_endpoint | urlsplit('port') == minio_server_kes_secret_dict.secret.port
+
+- name: Minio | Install | Gather Facts
+  ansible.builtin.setup:
+
+- name: Minio | Install | Create group
   ansible.builtin.group:
       name: "{{ cs_mini0_mini0_group_name }}"
       state: present
       system: true
-  register: mini0_mini0_group_name_create
+  register: minio_server_tmp_group_creation
 
-- name: Mini0 | Mini0 | Create User
+- name: Minio | Install | Create User
   ansible.builtin.user:
       name: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      groups:
-          - docker
-      shell: /bin/false
-      system: true
       state: present
-  register: mini0_mini0_user_name_create
+      create_home: false
+      system: true
+      shell: /bin/false
+  register: minio_server_tmp_user_creation
 
-- name: Mini0 | Mini0 | Create Directory
+- name: Minio | Install | Download binary
+  ansible.builtin.get_url:
+      dest: "/usr/local/bin/minio"
+      mode: "0755"
+      owner: root
+      group: root
+      checksum: "sha256:{{ minio_server_bin_info_map[ansible_architecture]['sha256sum'][cs_mini0_mini0_version] }}"
+      url: "https://dl.min.io/server/minio/release/linux-\
+          {{ minio_server_bin_info_map[ansible_architecture]['minio_server_arch'] }}/archive/minio.\
+          {{ cs_mini0_mini0_version }}"
+
+- name: Minio | Install | Create Directories
   ansible.builtin.file:
-      name: "{{ item }}"
+      path: "{{ item }}"
+      state: directory
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      mode: "0755"
-      state: directory
-  with_items:
-      - "{{ cs_mini0_mini0_working_dir }}"
-      - "{{ cs_mini0_mini0_data_dir }}"
+      mode: "0777"
+  loop:
       - "{{ cs_mini0_mini0_certs_dir }}"
-      - "{{ cs_mini0_mini0_private_key | dirname }}"
-      - "{{ cs_mini0_mini0_cert_file | dirname }}"
-      - "{{ cs_mini0_mini0_chain_file | dirname }}"
-      - "{{ cs_mini0_mini0_csr_file | dirname }}"
+      - "{{ cs_mini0_mini0_certs_dir }}/CAs"
+      - "{{ cs_mini0_mini0_data_dir }}"
       - "{{ cs_mini0_mini0_kes_cert_dir }}"
-      - "{{ cs_mini0_mini0_kes_admin_cert | dirname }}"
-      - "{{ cs_mini0_mini0_kes_admin_key | dirname }}"
-      - "{{ cs_mini0_mini0_kes_ca_cert | dirname }}"
-      - "{{ cs_mini0_mini0_fullchain_file | dirname }}"
 
-- name: Mini0 | Mini0 | Remove old Container
-  community.docker.docker_container:
-      name: "{{ cs_mini0_mini0_container_name }}"
-      state: absent
-      force_kill: true
+- name: Minio | Install | Get Minio Server Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/server_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ inventory_hostname }}"
+          alt_names: "{{ minio_server_hostnames | join(',') }}"
+          ip_sans: "{{ minio_server_ips | join(',') }}"
+  register: minio_server_tmp_certificate
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Mini0 | Mini0 | Copy Kes Certs
-  become: true
-  become_user: root
+- name: Minio | Install | Write Server Certificates
   ansible.builtin.copy:
-      src: "{{ item.src }}"
+      content: "{{ item.content }}"
       dest: "{{ item.dest }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
       mode: "0644"
-      remote_src: true
-  with_items:
-      - { src: "{{ cs_mini0_kes_cert_file }}", dest: "{{ cs_mini0_mini0_kes_admin_cert }}" }
-      - { src: "{{ cs_mini0_kes_cert_key_file }}", dest: "{{ cs_mini0_mini0_kes_admin_key }}" }
-      - { src: "{{ cs_mini0_kes_cert_file }}", dest: "{{ cs_mini0_mini0_kes_ca_cert }}" }
+  loop:
+      - content: "{{ minio_server_tmp_certificate.data.data.certificate }}\n\
+            {{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}\n"
+        dest: "{{ cs_mini0_mini0_cert_file }}"
+      - content: "{{ minio_server_tmp_certificate.data.data.private_key }}\n"
+        dest: "{{ cs_mini0_mini0_private_key }}"
+      - content: "{{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}\n"
+        dest: "{{ minio_server_ca }}"
 
-- name: Mini0 | Mini0 | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_mini0_mini0_private_key }}"
-      size: 4096
-      mode: "0600"
+- name: Minio | Install | Write KES Client Admin Certificates
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
+      mode: "0777"
+  loop:
+      - content: "{{ minio_server_kes_secret_dict.secret.admin_cert }}\n"
+        dest: "{{ cs_mini0_mini0_kes_admin_cert }}"
+      - content: "{{ minio_server_kes_secret_dict.secret.admin_key }}\n"
+        dest: "{{ cs_mini0_mini0_kes_admin_key }}"
+      - content: "{{ minio_server_kes_secret_dict.secret.admin_ca }}\n"
+        dest: "{{ cs_mini0_mini0_kes_ca_cert }}"
 
-- name: Mini0 | Mini0 | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_mini0_mini0_csr_file }}"
-      privatekey_path: "{{ cs_mini0_mini0_private_key }}"
-      common_name: "{{ cs_mini0_mini0_domain }}"
-      subject_alt_name:
-          - "IP:{{ cs_mini0_mini0_public_ip }}"
-          - "DNS:{{ cs_mini0_mini0_domain }}"
-          - "DNS:*.{{ cs_mini0_mini0_domain }}"
-          - "IP:{{ cs_mini0_mini0_private_ip }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_mini0_mini0_user_name }}"
-      group: "{{ cs_mini0_mini0_group_name }}"
+- name: Minio | Install | Create User and Password
+  ansible.builtin.set_fact:
+      minio_server_root_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+      minio_server_root_user: "{{ lookup('community.general.random_string', special=false, length=12) }}"
 
-- name: Mini0 | Mini0 | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_mini0_mini0_cert_file }}"
-      csr_path: "{{ cs_mini0_mini0_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      owner: "{{ cs_mini0_mini0_user_name }}"
-      group: "{{ cs_mini0_mini0_group_name }}"
-      return_content: true
-  register: mini0_mini0_cert_file_create
+- name: Minio | Install | Write the Password to Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "minio/clusters/{{ minio_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "managed-secrets"
+      data:
+          root_user: "{{ minio_server_root_user }}"
+          root_password: "{{ minio_server_root_password }}"
+          ips: "{{ minio_server_ips }}"
+          hostnames: "{{ minio_server_hostnames }}"
+          server_port: "{{ cs_mini0_mini0_port }}"
+          console_port: "{{ cs_mini0_mini0_console_port }}"
+          server_version: "{{ cs_mini0_mini0_version }}"
+          ca_cert: "{{ minio_server_kes_secret_dict.secret.admin_ca }}"
+          server_cert: "{{ minio_server_kes_secret_dict.secret.admin_cert }}"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Mini0 | Mini0 | Write Fullchain
+- name: Minio | Install | Create Env File
   ansible.builtin.copy:
       content: |+
-          {{ mini0_mini0_cert_file_create.certificate | trim }}
-          {{ root_ca_cert_pem }}
-      dest: "{{ cs_mini0_mini0_fullchain_file }}"
-      mode: "0644"
+          MINIO_KMS_KES_ENDPOINT={{ minio_server_kes_endpoint }}
+          MINIO_KMS_KES_KEY_FILE={{ cs_mini0_mini0_kes_admin_key }}
+          MINIO_KMS_KES_CERT_FILE={{ cs_mini0_mini0_kes_admin_cert }}
+          MINIO_KMS_KES_CAPATH={{ cs_mini0_mini0_kes_ca_cert }}
+          MINIO_KMS_KES_KEY_NAME=default
+          MINIO_ROOT_USER={{ minio_server_root_user }}
+          MINIO_ROOT_PASSWORD={{ minio_server_root_password }}
+          MINIO_REGION=us-east-1
+          MINIO_VOLUMES={{ cs_mini0_mini0_data_dir }}
+          MINIO_OPTS="--address ':{{ cs_mini0_mini0_port }}' --console-address ':{{
+            cs_mini0_mini0_console_port }}' --certs-dir {{ cs_mini0_mini0_certs_dir }}"
+      dest: "{{ minio_env_file }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      remote_src: false
+      mode: "0777"
 
-- name: Mini0 | Mini0 | Write CA Chain certificate
-  ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_mini0_mini0_chain_file }}"
-      mode: "0644"
-      owner: "{{ cs_mini0_mini0_user_name }}"
-      group: "{{ cs_mini0_mini0_group_name }}"
-      remote_src: false
-
-- name: Mini0 | Mini0 | Start Container
-  become: true
-  become_user: "{{ cs_mini0_mini0_user_name }}"
-  community.docker.docker_container:
-      name: "{{ cs_mini0_mini0_container_name }}"
-      image: "{{ cs_mini0_mini0_image }}:{{ cs_mini0_mini0_version }}"
-      restart_policy: unless-stopped
-      hostname: "{{ cs_mini0_mini0_domain }}"
-      user: "{{ mini0_mini0_user_name_create.uid }}:{{ mini0_mini0_group_name_create.gid }}"
-      ports:
-          - "{{ cs_mini0_mini0_port }}:{{ cs_mini0_mini0_port }}"
-          - "{{ cs_mini0_mini0_console_port }}:{{ cs_mini0_mini0_console_port }}"
-      volumes:
-          - "{{ cs_mini0_mini0_data_dir }}:{{ cs_mini0_mini0_data_dir }}"
-          - "{{ cs_mini0_mini0_kes_admin_key }}:{{ cs_mini0_mini0_kes_admin_key }}"
-          - "{{ cs_mini0_mini0_kes_admin_cert }}:{{ cs_mini0_mini0_kes_admin_cert }}"
-          - "{{ cs_mini0_mini0_kes_ca_cert }}:{{ cs_mini0_mini0_kes_ca_cert }}"
-          - "{{ cs_mini0_mini0_private_key }}:/certs/private.key"
-          - "{{ cs_mini0_mini0_fullchain_file }}:/certs/public.crt"
-          - "{{ cs_mini0_mini0_chain_file }}:/certs/CAs/chain.crt"
-      networks:
-          - name: "{{ cs_mini0_docker_network_name }}"
-      env:
-          MINIO_DOMAIN: "{{ cs_mini0_mini0_domain }}"
-          MINIO_KMS_KES_ENDPOINT: "{{ cs_mini0_mini0_kes_endpoint }}"
-          MINIO_KMS_KES_KEY_FILE: "{{ cs_mini0_mini0_kes_admin_key }}"
-          MINIO_KMS_KES_CERT_FILE: "{{ cs_mini0_mini0_kes_admin_cert }}"
-          MINIO_KMS_KES_CAPATH: "{{ cs_mini0_mini0_kes_ca_cert }}"
-          MINIO_KMS_KES_KEY_NAME: "{{ cs_mini0_mini0_default_kms_key_id }}"
-          MINIO_ROOT_USER: "{{ cs_mini0_mini0_root_user }}"
-          MINIO_ROOT_PASSWORD: "{{ cs_mini0_mini0_root_password }}"
-          MINIO_REGION: "{{ cs_mini0_mini0_region }}"
-      command:
-          - server
-          - "{{ cs_mini0_mini0_data_dir }}"
-          - --address
-          - "{{ cs_mini0_mini0_domain }}:{{ cs_mini0_mini0_port }}"
-          - --console-address
-          - "{{ cs_mini0_mini0_domain }}:{{ cs_mini0_mini0_console_port }}"
-          - --certs-dir
-          - "/certs"
-
-- name: Mini0 | Mini0 | Enable UFW
-  become: true
-  become_user: root
+- name: Minio | Install | Enable UFW
   community.general.ufw:
       rule: allow
       port: "{{ item }}"
       proto: tcp
-      comment: "Allow Mini0 Server"
-      state: enabled
-  with_items:
+      comment: "Minio Server"
+  loop:
       - "{{ cs_mini0_mini0_port }}"
       - "{{ cs_mini0_mini0_console_port }}"
+
+- name: Minio | Install | Create Systemd Service
+  ansible.builtin.template:
+      src: "templates/minio/{{ minio_server_systemd_service_name }}.j2"
+      dest: "/etc/systemd/system/{{ minio_server_systemd_service_name }}"
+      owner: root
+      group: root
+      mode: "0644"
+
+- name: Minio | Install | Start Systemd Service
+  ansible.builtin.systemd_service:
+      name: "{{ minio_server_systemd_service_name }}"
+      state: restarted
+      daemon_reload: true
+      daemon_reexec: true
+      enabled: true

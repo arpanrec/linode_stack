@@ -22,6 +22,7 @@ import os
 from typing import Any, Dict, List, Union
 from urllib.parse import urlsplit
 
+from ansible.errors import AnsibleParserError  # type: ignore
 from ansible.inventory.data import InventoryData  # type: ignore
 from ansible.parsing.dataloader import DataLoader  # type: ignore
 from ansible.plugins.inventory import BaseInventoryPlugin  # type: ignore
@@ -29,7 +30,9 @@ from ansible.template import Templar  # type: ignore
 from ansible.utils.display import Display  # type: ignore
 from cryptography.hazmat.backends import default_backend  # type: ignore
 from cryptography.hazmat.primitives import serialization
+from hvac.exceptions import VaultDown  # type: ignore
 from pydantic_core import to_jsonable_python
+from requests import ConnectTimeout
 from vaultops.builder.vault_config import build_vault_config
 from vaultops.builder.vault_raft_node import build_raft_server_nodes_map
 from vaultops.models.vault_config import VaultConfig
@@ -89,7 +92,7 @@ options:
         type: dict | str
 """
 
-_display = Display()
+display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -120,7 +123,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         self.inventory.add_host("localhost")
 
-        _display.v(f"Vault Inventory Builder Plugin: Parsing inventory file: {path}")
+        display.v(f"Vault Inventory Builder Plugin: Parsing inventory file: {path}")
 
         self.inventory.add_group(self.ansible_vault_server_group_name)
         self.inventory.add_group(self.ansible_vault_node_servers_group_name)
@@ -168,7 +171,13 @@ class InventoryModule(BaseInventoryPlugin):
             rsa_root_ca_key=rsa_root_ca_key,
             rsa_root_ca_cert=None,
         )
-        vault_ha_client.evaluate_token()
+        try:
+            vault_ha_client.evaluate_token()
+        except ConnectTimeout as e:
+            display.warning(f"Vault ha client is down: {e}")
+        except VaultDown as e:
+            raise AnsibleParserError(f"Vault ha client is down: {e}") from e
+
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
 

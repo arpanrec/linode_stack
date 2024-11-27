@@ -1,27 +1,22 @@
 ---
-cs_mini0_external_disk_enc_key_base64: "{{ vault_cred_cs_mini0_external_disk_enc_key_base64 }}"
-cs_mini0_external_disk_enc_password: "{{ vault_cred_cs_mini0_external_disk_enc_password }}"
-cs_mini0_external_disk_uuid: "{{ vault_cred_cs_mini0_external_disk_uuid }}"
-cs_mini0_external_disk_crypt_open_name: mini0cryptdevice
-cs_mini0_external_disk_mount_path: "/mnt/{{ cs_mini0_external_disk_crypt_open_name }}"
-
-cs_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/app/minio"
-
+cs_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/minio"
+# cs_mini0_working_dir: /app/minio
 cs_mini0_kes_group_name: kes
 cs_mini0_kes_user_name: "{{ cs_mini0_kes_group_name }}"
 
 cs_mini0_kes_working_dir: "{{ cs_mini0_working_dir }}/kes"
-cs_mini0_kes_keystore_dir: "{{ cs_mini0_kes_working_dir }}/keystore"
 cs_mini0_kes_config_file: "{{ cs_mini0_kes_working_dir }}/config.json"
-cs_mini0_docker_network_name: mini0
+minio_kes_systemd_service_name: kes.service
 
 cs_mini0_kes_cert_dir: "{{ cs_mini0_kes_working_dir }}/certs"
 cs_mini0_kes_cert_file: "{{ cs_mini0_kes_cert_dir }}/cert.pem"
 cs_mini0_kes_cert_key_file: "{{ cs_mini0_kes_cert_dir }}/cert-key.pem"
+cs_mini0_kes_cert_ca: "{{ cs_mini0_kes_cert_dir }}/server-ca.pem"
 cs_mini0_kes_cert_id_file: "{{ cs_mini0_kes_cert_dir }}/cert-id"
+minio_kes_vault_client_cert: "{{ cs_mini0_kes_cert_dir }}/vault-client-cert.pem"
+minio_kes_vault_client_key: "{{ cs_mini0_kes_cert_dir }}/vault-client-key.pem"
+minio_kes_vault_ca_cert: "{{ cs_mini0_kes_cert_dir }}/vault-ca-cert.pem"
 
-cs_mini0_kes_container_name: kes
-cs_mini0_kes_image: docker.io/minio/kes
 cs_mini0_kes_version: 2024-10-31T07-42-41Z
 cs_mini0_kes_port: 3000
 
@@ -34,27 +29,51 @@ cs_mini0_mini0_data_dir: "{{ cs_mini0_mini0_working_dir }}/data"
 cs_mini0_mini0_certs_dir: "{{ cs_mini0_mini0_working_dir }}/certs"
 
 cs_mini0_mini0_private_key: "{{ cs_mini0_mini0_certs_dir }}/private.key"
-cs_mini0_mini0_cert_file: "{{ cs_mini0_mini0_certs_dir }}/cert.pem"
-cs_mini0_mini0_csr_file: "{{ cs_mini0_mini0_certs_dir }}/cert.csr"
-cs_mini0_mini0_chain_file: "{{ cs_mini0_mini0_certs_dir }}/chain.pem"
-cs_mini0_mini0_fullchain_file: "{{ cs_mini0_mini0_certs_dir }}/fullchain.pem"
-
+cs_mini0_mini0_cert_file: "{{ cs_mini0_mini0_certs_dir }}/public.crt"
+minio_server_ca: "{{ cs_mini0_mini0_certs_dir }}/CAs/server-ca.crt"
 cs_mini0_mini0_kes_cert_dir: "{{ cs_mini0_mini0_certs_dir }}/kes"
 cs_mini0_mini0_kes_admin_cert: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-admin-cert.pem"
 cs_mini0_mini0_kes_admin_key: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-admin-key.pem"
 cs_mini0_mini0_kes_ca_cert: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-ca-cert.pem"
 
-cs_mini0_mini0_kes_endpoint: https://{{ cs_mini0_kes_container_name }}:{{ cs_mini0_kes_port }}
-
 cs_mini0_mini0_container_name: mini0
+minio_cluster_name: mini0
 cs_mini0_mini0_image: docker.io/minio/minio
 cs_mini0_mini0_version: RELEASE.2024-11-07T00-52-20Z
 cs_mini0_mini0_default_kms_key_id: my-minio-key
 cs_mini0_mini0_port: "{{ vault_cred_cs_mini0_mini0_port }}"
 cs_mini0_mini0_console_port: "{{ vault_cred_cs_mini0_mini0_console_port }}"
-cs_mini0_mini0_root_user: "{{ vault_cred_cs_mini0_mini0_root_user }}"
-cs_mini0_mini0_root_password: "{{ vault_cred_cs_mini0_mini0_root_password }}"
 cs_mini0_mini0_region: "{{ vault_cred_cs_mini0_mini0_region }}"
 cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
-cs_mini0_mini0_private_ip: "{{ cs_rb4_m2_ip }}"
+
 cs_mini0_mini0_public_ip: "{{ cs_public_ingress_ip }}"
+minio_server_systemd_service_name: minio.service
+minio_env_file: "{{ cs_mini0_mini0_working_dir }}/.env"
+
+minio_kes_bin_info_map:
+    x86_64:
+        minio_kes_arch: amd64
+        sha256sum:
+            "2024-04-12T13-50-00Z": 1549cadb384c093ab7a9b778006a60063884b31311fc7cafd3c92f2145b9a916
+            "2024-06-17T15-47-05Z": 7646c12d83d4fb24de556a6cfc52a056165beb5d70534dd4c9db0820d48d6488
+            "2024-10-31T07-42-41Z": 902fec19bea990bcef9b6ad4ba61602c675ca0f36d3a782c785494364e60f41d
+    aarch64:
+        minio_kes_arch: arm64
+        sha256sum:
+            "2024-04-12T13-50-00Z": 251d7182df96b111008ff98f4c6bdb3b3e06ef9ea2d3b6c9fcbea9a8a80579cd
+            "2024-06-17T15-47-05Z": f37515c25cdf5152cfbe03ab32fa7eaf3f22073646668e1913ae8a4a5339c048
+            "2024-10-31T07-42-41Z": 90a1216f0f4bbf9568e429312bf8a8dd091bde374cb86049b510a4299f9023f2
+
+minio_server_bin_info_map:
+    x86_64:
+        minio_server_arch: amd64
+        sha256sum:
+            "RELEASE.2024-05-10T01-41-38Z": bd3a3e65c48d35613fe1c556e77a18bccb8aee911b6293ca5f6112f73376c105
+            "RELEASE.2024-06-13T22-53-53Z": 1568c0d8ab09eebaf444f78ec9cd85ce62b1a2aacbd92ec29c1ec779864811bc
+            "RELEASE.2024-11-07T00-52-20Z": c27873d791b56d33518de11f12c5bfae4be88ebac00e12c6dd0027b08123fd80
+    aarch64:
+        minio_server_arch: arm64
+        sha256sum:
+            "RELEASE.2024-05-10T01-41-38Z": b830c0862eadd2adb0db07118858fb917ac8002a9fde7a8eb0cc5234699ba40d
+            "RELEASE.2024-06-13T22-53-53Z": e30af0de3db096a35d594e7e7fa501efd686cb3a3335f8576f36c7359ecde5a3
+            "RELEASE.2024-11-07T00-52-20Z": 4c5ed5a8563b92a15c41a1cb9b382c448a72dc09026faecb4afb3eb44f10375b

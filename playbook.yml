@@ -97,6 +97,33 @@
         ansible.builtin.import_tasks:
             file: tasks/vaultops/github.yml
 
+- name: Mini0
+  hosts: rb4-m1
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Mini0 | Disk
+        tags: never,mini0,mini0_disk
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/mini0/disk.yml
+
+      - name: Mini0 | KES
+        tags: never,mini0,mini0_kes
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/mini0/kes.yml
+
+      - name: Mini0 | Mini0
+        tags: never,mini0,mini0_mini0
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/mini0/mini0.yml
+
 - name: NFS Server
   hosts: rb4-m3
   become: false
@@ -149,19 +176,6 @@
         tags: never,database,elasticsearch
         ansible.builtin.import_tasks:
             file: tasks/database/elasticsearch.yml
-
-- name: Mini0
-  hosts: rb4-m2
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tasks:
-      - name: Mini0
-        tags: never,mini0
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/mini0/main.yml
 
 - name: Collabora
   hosts: rb4-m2

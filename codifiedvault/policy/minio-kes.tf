@@ -5,12 +5,12 @@ data "vault_policy_document" "minio-kes" {
     description  = "All operations on the minio/kes/kms path"
   }
   rule {
-    path         = "secret/data/minio/kes/kms/*"
+    path         = "managed-secrets/data/minio/kes/kms/*"
     capabilities = ["create", "read"]
     description  = "read and write credentials"
   }
   rule {
-    path         = "secret/metadata/minio/kes/kms/*"
+    path         = "managed-secrets/metadata/minio/kes/kms/*"
     capabilities = ["list", "delete"]
     description  = "delete and list credentials"
   }
