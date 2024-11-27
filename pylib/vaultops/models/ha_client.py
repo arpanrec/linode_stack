@@ -1,6 +1,42 @@
 # *-* coding: utf-8 *-*
 """
+This module defines the `VaultHaClient` class, which represents a client for interacting with HashiCorp Vault in a high-availability (HA) setup.
 
+Classes:
+    VaultHaClient: A Pydantic model that encapsulates the configuration and methods required to interact with a HashiCorp Vault HA setup.
+
+Attributes:
+    model_config (ConfigDict): Configuration for the Pydantic model allowing arbitrary types.
+    _vault_client (Optional[hvac.Client]): An optional hvac client instance.
+    admin_user (str): The admin username for Vault authentication.
+    admin_password (str): The admin password for Vault authentication.
+    userpass_mount (str): The mount point for userpass authentication.
+    policy_name (str): The name of the policy to be used.
+    client_cert_pem (str): The client certificate in PEM format.
+    client_key_pem (str): The client key in PEM format.
+    vault_ha_hostname (str): The hostname of the Vault HA instance.
+    vault_ha_port (int): The port of the Vault HA instance.
+    client_cert_p12_base64 (str): The client certificate in PKCS12 format, base64 encoded.
+    client_cert_p12_passphrase (str): The passphrase for the PKCS12 client certificate.
+    root_ca_cert_pem (str): The root CA certificate in PEM format.
+    token (Optional[str]): The authentication token for Vault.
+    vault_root_ca_cert_file (Optional[str]): The file path for the root CA certificate.
+    vault_client_cert_file (Optional[str]): The file path for the client certificate.
+    vault_client_key_file (Optional[str]): The file path for the client key.
+    _hvac_client (Optional[hvac.Client]): A private attribute for the hvac client instance.
+
+Methods:
+    __init__(self, vault_config: Optional[VaultConfig] = None, **data: Any) -> None:
+        Initializes the VaultHaClient instance with the provided configuration and data.
+
+    __prepare__(self) -> None:
+        Prepares the client by writing certificates to files and configuring the hvac client.
+
+    hvac_client(self) -> hvac.Client:
+        Returns the hvac client object, authenticating if necessary.
+
+    evaluate_token(self) -> None:
+        Sets the token for the client by retrieving it from the hvac client.
 """
 
 import base64
