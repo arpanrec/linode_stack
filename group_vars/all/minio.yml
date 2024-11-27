@@ -1,10 +1,4 @@
 ---
-cs_mini0_external_disk_enc_key_base64: "{{ vault_cred_cs_mini0_external_disk_enc_key_base64 }}"
-cs_mini0_external_disk_enc_password: "{{ vault_cred_cs_mini0_external_disk_enc_password }}"
-cs_mini0_external_disk_uuid: "{{ vault_cred_cs_mini0_external_disk_uuid }}"
-cs_mini0_external_disk_crypt_open_name: mini0cryptdevice
-cs_mini0_external_disk_mount_path: "/mnt/{{ cs_mini0_external_disk_crypt_open_name }}"
-
 cs_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/minio"
 # cs_mini0_working_dir: /app/minio
 cs_mini0_kes_group_name: kes
@@ -53,7 +47,7 @@ cs_mini0_mini0_root_user: "{{ vault_cred_cs_mini0_mini0_root_user }}"
 cs_mini0_mini0_root_password: "{{ vault_cred_cs_mini0_mini0_root_password }}"
 cs_mini0_mini0_region: "{{ vault_cred_cs_mini0_mini0_region }}"
 cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
-cs_mini0_mini0_private_ip: "{{ cs_rb4_m2_ip }}"
+
 cs_mini0_mini0_public_ip: "{{ cs_public_ingress_ip }}"
 minio_server_systemd_service_name: minio.service
 minio_env_file: "{{ cs_mini0_mini0_working_dir }}/.env"
