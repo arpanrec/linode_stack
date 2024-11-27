@@ -90,6 +90,7 @@
       - "{{ cs_mini0_mini0_certs_dir }}"
       - "{{ cs_mini0_mini0_certs_dir }}/CAs"
       - "{{ cs_mini0_mini0_data_dir }}"
+      - "{{ cs_mini0_mini0_kes_cert_dir }}"
 
 - name: Minio | Install | Get Minio Server Certificates from Vault
   become: false
@@ -116,14 +117,14 @@
       dest: "{{ item.dest }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      mode: "0600"
+      mode: "0644"
   loop:
       - content: "{{ minio_server_tmp_certificate.data.data.certificate }}\n\
-            {{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}"
+            {{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}\n"
         dest: "{{ cs_mini0_mini0_cert_file }}"
-      - content: "{{ minio_server_tmp_certificate.data.data.private_key }}"
+      - content: "{{ minio_server_tmp_certificate.data.data.private_key }}\n"
         dest: "{{ cs_mini0_mini0_private_key }}"
-      - content: "{{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}"
+      - content: "{{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}\n"
         dest: "{{ minio_server_ca }}"
 
 - name: Minio | Install | Write KES Client Admin Certificates
@@ -189,7 +190,7 @@
       dest: "{{ minio_env_file }}"
       owner: "{{ cs_mini0_mini0_user_name }}"
       group: "{{ cs_mini0_mini0_group_name }}"
-      mode: "0600"
+      mode: "0777"
 
 - name: Minio | Install | Enable UFW
   community.general.ufw:

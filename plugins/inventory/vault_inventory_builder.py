@@ -32,6 +32,8 @@ from cryptography.hazmat.backends import default_backend  # type: ignore
 from cryptography.hazmat.primitives import serialization
 from hvac.exceptions import VaultDown  # type: ignore
 from pydantic_core import to_jsonable_python
+from requests import ConnectTimeout
+
 from vaultops.builder.vault_config import build_vault_config
 from vaultops.builder.vault_raft_node import build_raft_server_nodes_map
 from vaultops.models.vault_config import VaultConfig
@@ -172,10 +174,10 @@ class InventoryModule(BaseInventoryPlugin):
         )
         try:
             vault_ha_client.evaluate_token()
-        except VaultDown as e:
-            # raise AnsibleParserError(f"Vault is down: {e}") from e
+        except ConnectTimeout as e:
             display.warning(f"Vault ha client is down: {e}")
-
+        except VaultDown as e:
+            raise AnsibleParserError(f"Vault ha client is down: {e}")
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
 
