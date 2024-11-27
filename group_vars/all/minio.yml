@@ -43,8 +43,6 @@ cs_mini0_mini0_version: RELEASE.2024-11-07T00-52-20Z
 cs_mini0_mini0_default_kms_key_id: my-minio-key
 cs_mini0_mini0_port: "{{ vault_cred_cs_mini0_mini0_port }}"
 cs_mini0_mini0_console_port: "{{ vault_cred_cs_mini0_mini0_console_port }}"
-cs_mini0_mini0_root_user: "{{ vault_cred_cs_mini0_mini0_root_user }}"
-cs_mini0_mini0_root_password: "{{ vault_cred_cs_mini0_mini0_root_password }}"
 cs_mini0_mini0_region: "{{ vault_cred_cs_mini0_mini0_region }}"
 cs_mini0_mini0_domain: "{{ cs_public_ingress_dns_entry }}"
 
