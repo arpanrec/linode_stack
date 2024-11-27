@@ -42,4 +42,3 @@ ps_postgres_pg_admin_pg_servers_file: "{{ cs_postgres_pg_admin_dir }}/pg_servers
 ps_postgres_pg_admin_entrypoint_file: "{{ cs_postgres_pg_admin_dir }}/entrypoint.sh"
 cs_postgres_pg_admin_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_postgres_pg_admin_email: "{{ cs_mail_smtpname }}"
-
