@@ -1,9 +1,11 @@
 # *-* coding: utf-8 *-*
 """
-This module defines the `VaultHaClient` class, which represents a client for interacting with HashiCorp Vault in a high-availability (HA) setup.
+This module defines the `VaultHaClient` class, which represents
+ a client for interacting with HashiCorp Vault in a high-availability (HA) setup.
 
 Classes:
-    VaultHaClient: A Pydantic model that encapsulates the configuration and methods required to interact with a HashiCorp Vault HA setup.
+    VaultHaClient: A Pydantic model that encapsulates the configuration and methods required
+      to interact with a HashiCorp Vault HA setup.
 
 Attributes:
     model_config (ConfigDict): Configuration for the Pydantic model allowing arbitrary types.
