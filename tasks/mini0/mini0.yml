@@ -10,7 +10,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "secret"
+      engine_mount_point: "managed-secrets"
       path: "minio/kes/servers/{{ minio_server_kes_secret_id_vault }}/config"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
@@ -157,7 +157,7 @@
       path: "minio/clusters/{{ minio_cluster_name }}/servers/{{ inventory_hostname }}/config"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
-      engine_mount_point: "secret"
+      engine_mount_point: "managed-secrets"
       data:
           root_user: "{{ minio_server_root_user }}"
           root_password: "{{ minio_server_root_password }}"

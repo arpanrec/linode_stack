@@ -114,6 +114,7 @@
   become: false
   delegate_facts: true
   delegate_to: localhost
+  timeout: 60
   community.hashi_vault.vault_write:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
       path: pki/issue/client_certificate
@@ -223,14 +224,14 @@
   community.hashi_vault.vault_kv2_write:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
       path: "minio/kes/servers/{{ inventory_hostname }}/config"
-      engine_mount_point: "secret"
+      engine_mount_point: "managed-secrets"
       data:
           admin_cert: "{{ kes_tmp_admin_client_cert_res.data.data.certificate }}\n\
               {{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
           admin_key: "{{ kes_tmp_admin_client_cert_res.data.data.private_key }}"
           admin_ca: "{{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
           ips: "{{ minio_kes_ips }}"
-          port: "{{ cs_mini0_kes_port }}"
+          "port": "{{ cs_mini0_kes_port }}"
           hostnames: "{{ minio_kes_hostnames }}"
           version: "{{ cs_mini0_kes_version }}"
       token: "{{ vault_ha_client.token }}"
@@ -274,7 +275,7 @@
           keystore:
               vault:
                   endpoint: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-                  engine: "secret" # "kv"
+                  engine: "managed-secrets" # "kv"
                   version: "v2" # "v1"
                   prefix: "minio/kes/kms"
                   approle:
