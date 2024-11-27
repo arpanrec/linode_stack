@@ -177,7 +177,8 @@ class InventoryModule(BaseInventoryPlugin):
         except ConnectTimeout as e:
             display.warning(f"Vault ha client is down: {e}")
         except VaultDown as e:
-            raise AnsibleParserError(f"Vault ha client is down: {e}")
+            raise AnsibleParserError(f"Vault ha client is down: {e}") from e
+
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
 
