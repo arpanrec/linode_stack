@@ -1,17 +1,17 @@
 ---
-- name: KES | Assert | minio_kes_hostnames
+- name: KES | Assert | cs_mini0_kes_hostnames
   ansible.builtin.assert:
       that:
-          - minio_kes_hostnames | type_debug == 'list'
-          - minio_kes_hostnames | length > 0
-      fail_msg: "minio_kes_hostnames must be a list with at least one element"
+          - cs_mini0_kes_hostnames | type_debug == 'list'
+          - cs_mini0_kes_hostnames | length > 0
+      fail_msg: "cs_mini0_kes_hostnames must be a list with at least one element"
 
-- name: KES | Assert | minio_kes_ips
+- name: KES | Assert | cs_mini0_kes_ips
   ansible.builtin.assert:
       that:
-          - minio_kes_ips | type_debug == 'list'
-          - minio_kes_ips | length > 0
-      fail_msg: "minio_kes_ips must be a list with at least one element"
+          - cs_mini0_kes_ips | type_debug == 'list'
+          - cs_mini0_kes_ips | length > 0
+      fail_msg: "cs_mini0_kes_ips must be a list with at least one element"
 
 - name: KES | Install | Gather Facts
   ansible.builtin.setup:
@@ -86,8 +86,8 @@
       validate_certs: true
       data:
           common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ minio_kes_hostnames | join(',') }}"
-          ip_sans: "{{ minio_kes_ips | join(',') }}"
+          alt_names: "{{ cs_mini0_kes_hostnames | join(',') }}"
+          ip_sans: "{{ cs_mini0_kes_ips | join(',') }}"
   register: minio_kes_tmp_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -122,8 +122,8 @@
       validate_certs: true
       data:
           common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ minio_kes_hostnames | join(',') }}"
-          ip_sans: "{{ minio_kes_ips | join(',') }}"
+          alt_names: "{{ cs_mini0_kes_hostnames | join(',') }}"
+          ip_sans: "{{ cs_mini0_kes_ips | join(',') }}"
   register: kes_tmp_admin_client_cert_res
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -231,9 +231,9 @@
               {{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
           admin_key: "{{ kes_tmp_admin_client_cert_res.data.data.private_key }}"
           admin_ca: "{{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
-          ips: "{{ minio_kes_ips }}"
+          ips: "{{ cs_mini0_kes_ips }}"
           "port": "{{ cs_mini0_kes_port }}"
-          hostnames: "{{ minio_kes_hostnames }}"
+          hostnames: "{{ cs_mini0_kes_hostnames }}"
           version: "{{ cs_mini0_kes_version }}"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
