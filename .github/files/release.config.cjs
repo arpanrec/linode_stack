@@ -30,7 +30,6 @@ module.exports = {
                     'rm -f CHANGELOG.md',
                     'poetry version ${nextRelease.version}',
                     'poetry export --without-hashes --format=requirements.txt --without dev -o requirements.txt',
-                    'poetry export --without-hashes --format=requirements.txt --with dev -o requirements-dev.txt',
                 ].join(' && '),
             },
         ],
@@ -43,7 +42,7 @@ module.exports = {
         [
             '@semantic-release/git',
             {
-                assets: ['CHANGELOG.md', 'pyproject.toml', 'requirements.txt', 'requirements-dev.txt'],
+                assets: ['CHANGELOG.md', 'pyproject.toml', 'requirements.txt'],
                 message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
             },
         ],

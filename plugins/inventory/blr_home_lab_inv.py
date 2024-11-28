@@ -29,7 +29,9 @@ from ansible.template import Templar  # type: ignore
 from ansible.utils.display import Display  # type: ignore
 from cryptography.hazmat.backends import default_backend  # type: ignore
 from cryptography.hazmat.primitives import serialization
+from hvac.exceptions import VaultDown, InternalServerError  # type: ignore
 from pydantic_core import to_jsonable_python
+from requests import ConnectTimeout
 from vaultops.builder.vault_config import build_vault_config
 from vaultops.builder.vault_raft_node import build_raft_server_nodes_map
 from vaultops.models.vault_config import VaultConfig
@@ -68,9 +70,9 @@ options:
     plugin:
         description: Name of the plugin
         required: true
-        choices: ["vault_inventory_builder"]
+        choices: ["blr_home_lab_inv"]
         type: str
-        default: vault_inventory_builder
+        default: blr_home_lab_inv
     vaultops_tmp_dir_path:
         description: Path to the temporary directory for storing Vault configuration files.
         required: true
@@ -89,7 +91,7 @@ options:
         type: dict | str
 """
 
-_display = Display()
+display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -97,7 +99,7 @@ class InventoryModule(BaseInventoryPlugin):
     Ansible dynamic inventory plugin for Hashicorp Vault
     """
 
-    NAME = "vault_inventory_builder"  # used internally by Ansible, it should match the file name but not required
+    NAME = "blr_home_lab_inv"  # used internally by Ansible, it should match the file name but not required
     loader: Any
     templar: Templar
     ansible_vault_server_group_name = "vault_vm_servers"
@@ -120,7 +122,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         self.inventory.add_host("localhost")
 
-        _display.v(f"Vault Inventory Builder Plugin: Parsing inventory file: {path}")
+        display.v(f"Vault Inventory Builder Plugin: Parsing inventory file: {path}")
 
         self.inventory.add_group(self.ansible_vault_server_group_name)
         self.inventory.add_group(self.ansible_vault_node_servers_group_name)
@@ -168,7 +170,11 @@ class InventoryModule(BaseInventoryPlugin):
             rsa_root_ca_key=rsa_root_ca_key,
             rsa_root_ca_cert=None,
         )
-        vault_ha_client.evaluate_token()
+        try:
+            vault_ha_client.evaluate_token()
+        except (ConnectTimeout, VaultDown, InternalServerError) as e:
+            display.warning(f"Vault ha client is down: {e}")
+
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")
 
@@ -220,7 +226,7 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.add_host(vault_server_name, group=ansible_inventory_extra_group)
             self.inventory.set_variable(vault_server_name, "host_keys", vault_server_details.host_keys)
             self.inventory.set_variable(
-                vault_server_name,
+                "all",
                 f"cs_{vault_server_name.replace('-', '_')}_ip",
                 vault_server_details.ansible_opts["ansible_host"],
             )

@@ -423,7 +423,7 @@ pv_vault_info_map:
             1.9.7: 27167a6c98530987a8ea37c18b16db584d739ac67ecd298922117bd79d0cf3f5
             1.9.8: dc113c7b53fe1ab82cb2d09eb3d0d129b716b111a65623451bb40e2a5a8a0e8c
             1.9.9: d6c2b80ac005119d16bdfeb0541d17d0ccf81622bcbddde92ba242942d11c266
-vault_rv_version: 1.17.3
+vault_rv_version: 1.18.2
 
 pv_vault_user: vault
 pv_vault_group: vault

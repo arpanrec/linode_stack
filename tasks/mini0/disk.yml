@@ -1,0 +1,89 @@
+---
+- name: Mini0 | Disk | Unencrypted | Get Disk details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/disks/{{ cs_mini0_external_disk_id }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __minio_external_disk_details
+
+- name: Mini0 | Disk | Unencrypted | Set config facts
+  ansible.builtin.set_fact:
+      cs_mini0_external_disk_enc_key_base64: "{{ __minio_external_disk_details.secret.luks_key_base64 }}"
+      cs_mini0_external_disk_enc_password: "{{ __minio_external_disk_details.secret.luks_password }}"
+      cs_mini0_external_disk_uuid: "{{ __minio_external_disk_details.secret.drive_uuid }}"
+
+- name: Mini0 | Disk | Unencrypted | Install cryptsetup
+  ansible.builtin.package:
+      name: cryptsetup
+      state: present
+
+- name: Mini0 | Disk | Unencrypted | Copy key file
+  ansible.builtin.copy:
+      content: "{{ cs_mini0_external_disk_enc_key_base64 | b64decode }}"
+      dest: /root/.minio-luks-key
+      mode: "0000"
+      remote_src: false
+
+- name: Mini0 | Disk | Unencrypted | Create mount point
+  ansible.builtin.file:
+      path: "{{ cs_mini0_external_disk_mount_path }}"
+      state: directory
+      mode: "0755"
+
+- name: Mini0 | Disk | Unencrypted | Add luks key
+  when: false # This is done manually
+  community.crypto.luks_device:
+      state: opened
+      name: "{{ cs_mini0_external_disk_crypt_open_name }}"
+      uuid: "{{ cs_mini0_external_disk_uuid }}"
+      # keyfile: /root/.minio-luks-key
+      passphrase: "{{ cs_mini0_external_disk_enc_password }}"
+      new_keyfile: /root/.minio-luks-key
+
+- name: Mini0 | Disk | Unencrypted | Add to crypttab
+  ansible.builtin.lineinfile:
+      path: /etc/crypttab
+      line: "{{ cs_mini0_external_disk_crypt_open_name }} UUID={{ cs_mini0_external_disk_uuid }}
+          /root/.minio-luks-key luks"
+      create: true
+      mode: "0644"
+      owner: root
+      group: root
+      regexp: "^{{ cs_mini0_external_disk_crypt_open_name }}"
+
+- name: Mini0 | Disk | Unencrypted | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_mini0_external_disk_crypt_open_name }}.*"
+      state: absent
+
+- name: Mini0 | Disk | Unencrypted | Mount
+  ansible.posix.mount:
+      src: /dev/mapper/{{ cs_mini0_external_disk_crypt_open_name }}
+      path: "{{ cs_mini0_external_disk_mount_path }}"
+      fstype: ext4
+      state: mounted
+      boot: true
+      opts: defaults,noatime,nofail
+      dump: 0
+      passno: 2
+
+- name: Mini0 | Disk | Unencrypted | Perform systemd daemon-reload
+  ansible.builtin.systemd_service:
+      daemon_reload: true
+
+- name: "Mini0 | Disk | Unencrypted | Check for self uuid file
+      {{ cs_mini0_external_disk_mount_path + '/' + cs_mini0_external_disk_uuid }}"
+  ansible.builtin.stat:
+      path: "{{ cs_mini0_external_disk_mount_path }}/{{ cs_mini0_external_disk_uuid }}"
+  register: uuid_file
+  failed_when: not uuid_file.stat.exists
