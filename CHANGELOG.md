@@ -1,6 +1,6 @@
-# [1.11.0](https://github.com/arpanrec/home-lab/compare/1.10.0...1.11.0) (2024-11-27)
+# [1.12.0](https://github.com/arpanrec/home-lab/compare/1.11.0...1.12.0) (2024-11-28)
 
 
 ### Features
 
-* Update vault_rv_version to 1.18.2 in vaultops.yml ([f463904](https://github.com/arpanrec/home-lab/commit/f463904eb4ef9899dd7b68285f4a342651b578db))
+* postgresql secrets from vault and remove pg_admin ([#43](https://github.com/arpanrec/home-lab/issues/43)) ([feacfa6](https://github.com/arpanrec/home-lab/commit/feacfa62d65f7fd3d130972d9b945d4094cb22a0))
