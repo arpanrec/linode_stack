@@ -144,10 +144,6 @@
                 POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
                 TZ: Asia/Kolkata
 
-      - name: Hard fail
-        ansible.builtin.fail:
-            msg: "Postgres container failed to start"
-
       - name: Database | Postgres | First Run | Get Client Certificates from Vault
         become: false
         delegate_facts: true
@@ -158,69 +154,42 @@
             token: "{{ vault_ha_client.token }}"
             validate_certs: true
             data:
-                common_name: "{{ inventory_hostname }}"
+                common_name: "{{ cs_postgres_maintenance_user }}"
                 alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
-                    {{ cs_postgres_container_name }},localhost"
+                    {{ cs_postgres_container_name }},localhost,{{ cs_postgres_maintenance_user }}"
                 ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
-        register: __postgresql_server_cert
+        register: __postgresql_first_run_client_cert
         environment:
             VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
             VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
             VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-      - name: Database | Postgres | Client | First Run | Create SSL Private key
-        community.crypto.openssl_privatekey:
-            path: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
-            size: 4096
-            mode: "0600"
-            owner: "{{ cs_postgres_run_user }}"
-            group: "{{ cs_postgres_run_group }}"
+      - name: Database | Postgres | First Run | Create Client Certificates temp files
+        ansible.builtin.tempfile:
+            state: file
+        register: __temp_file_first_run_client_cert
+        with_items:
+            - "key"
+            - "cert"
+            - "ca_chain"
 
-      - name: Database | Postgres | Client | First Run | Create SSL CSR
-        community.crypto.openssl_csr:
-            path: "{{ cs_postgres_client_certs_dir }}/client-csr-{{ item.value.user }}.pem"
-            privatekey_path: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
-            common_name: "{{ item.value.user }}"
-            key_usage:
-                - "digitalSignature"
-                - "keyEncipherment"
-                - "keyAgreement"
-            extended_key_usage:
-                - "clientAuth"
-            create_subject_key_identifier: true
-            mode: "0644"
-            owner: "{{ cs_postgres_run_user }}"
-            group: "{{ cs_postgres_run_group }}"
-        with_items: "{{ cs_postgres_apps_dict |
-            combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
-            cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
-
-      - name: Database | Postgres | Client | Sign SSL CSR
-        community.crypto.x509_certificate:
-            path: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ item.value.user }}.pem"
-            csr_path: "{{ cs_postgres_client_certs_dir }}/client-csr-{{ item.value.user }}.pem"
-            provider: ownca
-            ownca_privatekey_content: "{{ root_ca_key_pem }}"
-            ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-            ownca_content: "{{ root_ca_cert_pem }}"
-            mode: "0644"
-            owner: "{{ cs_postgres_run_user }}"
-            group: "{{ cs_postgres_run_group }}"
-            return_content: true
-        with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
-            {'database': cs_postgres_maintenance_db, 'password':
-            cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
-
-      - name: Database | Postgres | Client | Write CA certificate
+      - name: Database | Postgres | First Run | Write Client Certificate
         ansible.builtin.copy:
-            content: "{{ root_ca_cert_pem }}"
-            dest: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-            mode: "0644"
+            content: "{{ item.content }}"
+            dest: "{{ item.dest }}"
             owner: "{{ cs_postgres_run_user }}"
             group: "{{ cs_postgres_run_group }}"
-            remote_src: false
+            mode: "0600"
+        loop:
+            - content: "{{ __postgresql_first_run_client_cert.data.data.certificate }}\n\
+                  {{ __postgresql_first_run_client_cert.data.data.ca_chain | join('\n') }}"
+              dest: "{{ __temp_file_first_run_client_cert.results[1].path }}"
+            - content: "{{ __postgresql_first_run_client_cert.data.data.private_key }}"
+              dest: "{{ __temp_file_first_run_client_cert.results[0].path }}"
+            - content: "{{ __postgresql_first_run_client_cert.data.data.ca_chain | join('\n') }}"
+              dest: "{{ __temp_file_first_run_client_cert.results[2].path }}"
 
-      - name: Database | Postgres | Wait for service to start
+      - name: Database | Postgres | First Run | Wait for service to start
         community.postgresql.postgresql_ping:
             login_host: "{{ cs_postgres_host_private_ip }}"
             login_password: "{{ cs_postgres_maintenance_password }}"
@@ -228,13 +197,23 @@
             login_port: "{{ cs_postgres_port }}"
             login_db: "{{ cs_postgres_maintenance_db }}"
             ssl_mode: verify-full
-            ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-            ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
-            ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
+            ssl_rootcert: "{{ __temp_file_first_run_client_cert.results[2].path }}"
+            ssl_cert: "{{ __temp_file_first_run_client_cert.results[0].path }}"
+            ssl_key: "{{ __temp_file_first_run_client_cert.results[1].path }}"
         register: is_postgres_up
         until: is_postgres_up.is_available
         retries: 30
         delay: 3
+
+      - name: Database | Postgres | First Run | Remove temp files
+        ansible.builtin.file:
+            path: "{{ item.path }}"
+            state: absent
+        with_items: "{{ __temp_file_first_run_client_cert.results }}"
+
+      - name: Hard fail
+        ansible.builtin.fail:
+            msg: "Hard fail"
 
 - name: Database | Postgres | Start Container
   community.docker.docker_container:
