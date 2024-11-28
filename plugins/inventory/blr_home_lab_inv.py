@@ -22,7 +22,6 @@ import os
 from typing import Any, Dict, List, Union
 from urllib.parse import urlsplit
 
-from ansible.errors import AnsibleParserError  # type: ignore
 from ansible.inventory.data import InventoryData  # type: ignore
 from ansible.parsing.dataloader import DataLoader  # type: ignore
 from ansible.plugins.inventory import BaseInventoryPlugin  # type: ignore
@@ -71,9 +70,9 @@ options:
     plugin:
         description: Name of the plugin
         required: true
-        choices: ["vault_inventory_builder"]
+        choices: ["blr_home_lab_inv"]
         type: str
-        default: vault_inventory_builder
+        default: blr_home_lab_inv
     vaultops_tmp_dir_path:
         description: Path to the temporary directory for storing Vault configuration files.
         required: true
@@ -100,7 +99,7 @@ class InventoryModule(BaseInventoryPlugin):
     Ansible dynamic inventory plugin for Hashicorp Vault
     """
 
-    NAME = "vault_inventory_builder"  # used internally by Ansible, it should match the file name but not required
+    NAME = "blr_home_lab_inv"  # used internally by Ansible, it should match the file name but not required
     loader: Any
     templar: Templar
     ansible_vault_server_group_name = "vault_vm_servers"
@@ -176,7 +175,8 @@ class InventoryModule(BaseInventoryPlugin):
         except ConnectTimeout as e:
             display.warning(f"Vault ha client is down: {e}")
         except VaultDown as e:
-            raise AnsibleParserError(f"Vault ha client is down: {e}") from e
+            # raise AnsibleParserError(f"Vault ha client is down: {e}") from e
+            display.warning(f"Vault ha client is down: {e}")
 
         self.inventory.set_variable("all", "vault_ha_client", vault_ha_client.model_dump())
         ssh_private_key_temp_file = os.path.join(vault_config.vaultops_tmp_dir_path, "ansible_ssh_private_key_file")

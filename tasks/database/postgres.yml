@@ -1,4 +1,26 @@
 ---
+- name: Database | Postgres | Get config from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/postgresql"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __postgresql_config
+
+- name: Database | Postgres | Set config facts
+  ansible.builtin.set_fact:
+      cs_postgres_port: "{{ __postgresql_config.secret.port }}"
+      cs_postgres_maintenance_db: "{{ __postgresql_config.secret.maintenance_db }}"
+      cs_postgres_apps_dict: "{{ __postgresql_config.secret.apps_dict }}"
+
 - name: Database | Postgres | Install python3-psycopg2
   ansible.builtin.apt:
       name: python3-psycopg2
@@ -10,7 +32,6 @@
       force_kill: true
   with_items:
       - "{{ cs_postgres_container_name }}"
-      - "{{ ps_postgres_pg_admin_docker_container_name }}"
 
 - name: Database | Postgres | Create network
   community.docker.docker_network:
@@ -28,66 +49,42 @@
       - "{{ cs_postgres_dir }}"
       - "{{ cs_postgres_data_dir }}"
       - "{{ cs_postgres_certs_dir }}"
-      - "{{ cs_postgres_certs_privkey_file | dirname }}"
-      - "{{ cs_postgres_certs_cert_file | dirname }}"
-      - "{{ cs_postgres_certs_chain_file | dirname }}"
-      - "{{ cs_postgres_certs_csr_file | dirname }}"
-      - "{{ cs_postgres_client_certs_dir }}"
 
-- name: Database | Postgres | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_postgres_certs_privkey_file }}"
-      size: 4096
-      mode: "0600"
-      owner: "{{ cs_postgres_run_user }}"
-      group: "{{ cs_postgres_run_group }}"
+- name: Database | Postgres | Get Server Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/server_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ inventory_hostname }}"
+          alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
+              {{ cs_postgres_container_name }},localhost"
+          ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
+  register: __postgresql_server_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Database | Postgres | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_postgres_certs_csr_file }}"
-      privatekey_path: "{{ cs_postgres_certs_privkey_file }}"
-      common_name: "{{ cs_postgres_maintenance_user }}"
-      subject_alt_name:
-          - "IP:{{ cs_postgres_host_public_ip }}"
-          - "DNS:{{ cs_postgres_host_public_domain }}"
-          - "DNS:{{ cs_postgres_host_private_domain }}"
-          - "IP:{{ cs_postgres_host_private_ip }}"
-          - "DNS:localhost"
-          - "IP:127.0.0.1"
-          - "DNS:{{ cs_postgres_maintenance_user }}"
-          - "DNS:{{ cs_postgres_container_name }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_postgres_run_user }}"
-      group: "{{ cs_postgres_run_group }}"
-
-- name: Database | Postgres | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_postgres_certs_cert_file }}"
-      csr_path: "{{ cs_postgres_certs_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      owner: "{{ cs_postgres_run_user }}"
-      group: "{{ cs_postgres_run_group }}"
-      return_content: true
-
-- name: Database | Postgres | Write CA certificate
+- name: Database | Postgres | Write Server Certificate
   ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_postgres_certs_chain_file }}"
-      mode: "0644"
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
-      remote_src: false
+      mode: "0600"
+  loop:
+      - content: "{{ __postgresql_server_cert.data.data.certificate }}\n\
+            {{ __postgresql_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_postgres_certs_cert_file }}"
+      - content: "{{ __postgresql_server_cert.data.data.private_key }}"
+        dest: "{{ cs_postgres_certs_privkey_file }}"
+      - content: "{{ __postgresql_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_postgres_certs_chain_file }}"
 
 - name: Database | Postgres | Create pg_hba.conf
   ansible.builtin.copy:
@@ -97,6 +94,169 @@
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
       remote_src: false
+
+- name: Database | Postgres | Check if PG_VERSION file exists
+  ansible.builtin.stat:
+      path: "{{ cs_postgres_data_dir }}/PG_VERSION"
+  register: __pg_version_file
+
+- name: Database | Postgres | First Run
+  when: not __pg_version_file.stat.exists
+  block:
+      - name: Database | Postgres | First Run | Create User and Password
+        ansible.builtin.set_fact:
+            cs_postgres_maintenance_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+                chars=['ascii_letters', 'digits']) }}"
+            cs_postgres_maintenance_user: "{{ lookup('community.general.random_string', special=false, length=12) }}"
+
+      - name: Database | Postgres | First Run | Write the Password to Vault
+        become: false
+        delegate_facts: true
+        delegate_to: localhost
+        community.hashi_vault.vault_kv2_write:
+            url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+            path: "postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
+            token: "{{ vault_ha_client.token }}"
+            validate_certs: true
+            engine_mount_point: "managed-secrets"
+            data:
+                maintenance_user: "{{ cs_postgres_maintenance_user }}"
+                maintenance_password: "{{ cs_postgres_maintenance_password }}"
+                maintenance_db: "{{ cs_postgres_maintenance_db }}"
+                servers:
+                    - "{{ cs_postgres_host_private_ip }}"
+                    - "{{ cs_postgres_host_public_ip }}"
+                    - "{{ cs_postgres_host_public_domain }}"
+                    - "{{ cs_postgres_host_private_domain }}"
+                server_port: "{{ cs_postgres_port }}"
+                server_version: "{{ cs_postgres_version }}"
+        environment:
+            VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+            VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+            VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+      - name: Database | Postgres | First Run | Start Container
+        community.docker.docker_container:
+            name: "{{ cs_postgres_container_name }}"
+            image: "{{ cs_postgres_docker_image }}:{{ cs_postgres_docker_image_tag }}"
+            user: "{{ cs_postgres_run_user }}:{{ cs_postgres_run_group }}"
+            auto_remove: true
+            networks:
+                - name: "{{ cs_postgres_network_name }}"
+            volumes:
+                - "{{ cs_postgres_data_dir }}:/var/lib/postgresql/data:rw"
+                - "{{ cs_postgres_certs_privkey_file }}:/server-privkey.pem:ro"
+                - "{{ cs_postgres_certs_cert_file }}:/server-cert.pem:ro"
+                - "{{ cs_postgres_certs_chain_file }}:/server-chain.pem:ro"
+                - "{{ cs_postgres_hba_file }}:/pg_hba.conf:ro"
+            state: started
+            command: "--port={{ cs_postgres_port }}
+                --ssl=on
+                --ssl_cert_file=/server-cert.pem
+                --ssl_key_file=/server-privkey.pem
+                --ssl_ca_file=/server-chain.pem
+                -c hba_file=/pg_hba.conf"
+            ports:
+                - "{{ cs_postgres_port }}:{{ cs_postgres_port }}"
+            env:
+                POSTGRES_PASSWORD: "{{ cs_postgres_maintenance_password }}"
+                POSTGRES_USER: "{{ cs_postgres_maintenance_user }}"
+                POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
+                TZ: Asia/Kolkata
+
+      - name: Database | Postgres | First Run | Get Client Certificates from Vault
+        become: false
+        delegate_facts: true
+        delegate_to: localhost
+        community.hashi_vault.vault_write:
+            url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+            path: pki/issue/client_certificate
+            token: "{{ vault_ha_client.token }}"
+            validate_certs: true
+            data:
+                common_name: "{{ cs_postgres_maintenance_user }}"
+                alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
+                    {{ cs_postgres_container_name }},localhost,{{ cs_postgres_maintenance_user }}"
+                ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
+        register: __postgresql_first_run_client_cert
+        environment:
+            VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+            VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+            VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+      - name: Database | Postgres | First Run | Create Client Certificates temp files
+        ansible.builtin.tempfile:
+            state: file
+        register: __temp_file_first_run_client_cert
+        with_items:
+            - "key"
+            - "cert"
+            - "ca_chain"
+
+      - name: Database | Postgres | First Run | Write Client Certificate
+        ansible.builtin.copy:
+            content: "{{ item.content }}"
+            dest: "{{ item.dest }}"
+            owner: "{{ cs_postgres_run_user }}"
+            group: "{{ cs_postgres_run_group }}"
+            mode: "0600"
+        loop:
+            - content: "{{ __postgresql_first_run_client_cert.data.data.certificate }}\n\
+                  {{ __postgresql_first_run_client_cert.data.data.ca_chain | join('\n') }}"
+              dest: "{{ __temp_file_first_run_client_cert.results[1].path }}"
+            - content: "{{ __postgresql_first_run_client_cert.data.data.private_key }}"
+              dest: "{{ __temp_file_first_run_client_cert.results[0].path }}"
+            - content: "{{ __postgresql_first_run_client_cert.data.data.ca_chain | join('\n') }}"
+              dest: "{{ __temp_file_first_run_client_cert.results[2].path }}"
+
+      - name: Database | Postgres | First Run | Wait for service to start
+        community.postgresql.postgresql_ping:
+            login_host: "{{ cs_postgres_host_private_ip }}"
+            login_password: "{{ cs_postgres_maintenance_password }}"
+            login_user: "{{ cs_postgres_maintenance_user }}"
+            login_port: "{{ cs_postgres_port }}"
+            login_db: "{{ cs_postgres_maintenance_db }}"
+            ssl_mode: verify-full
+            ssl_rootcert: "{{ __temp_file_first_run_client_cert.results[2].path }}"
+            ssl_cert: "{{ __temp_file_first_run_client_cert.results[1].path }}"
+            ssl_key: "{{ __temp_file_first_run_client_cert.results[0].path }}"
+        register: is_postgres_up
+        until: is_postgres_up.is_available
+        retries: 30
+        delay: 3
+
+      - name: Database | Postgres | First Run | Remove temporary certificates
+        ansible.builtin.file:
+            path: "{{ item.path }}"
+            state: absent
+        with_items: "{{ __temp_file_first_run_client_cert.results }}"
+
+      - name: Database | Postgres | First Run | Remove container
+        community.docker.docker_container:
+            name: "{{ cs_postgres_container_name }}"
+            state: absent
+            force_kill: true
+
+- name: Database | Postgres | Get credentials from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "managed-secrets"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __postgresql_secrets
+
+- name: Database | Postgres | Create User and Password
+  ansible.builtin.set_fact:
+      cs_postgres_maintenance_password: "{{ __postgresql_secrets.secret.maintenance_password }}"
+      cs_postgres_maintenance_user: "{{ __postgresql_secrets.secret.maintenance_user }}"
 
 - name: Database | Postgres | Start Container
   community.docker.docker_container:
@@ -113,6 +273,7 @@
           - "{{ cs_postgres_certs_chain_file }}:/server-chain.pem:ro"
           - "{{ cs_postgres_hba_file }}:/pg_hba.conf:ro"
       state: started
+      restart: true
       command: "--port={{ cs_postgres_port }}
           --ssl=on
           --ssl_cert_file=/server-cert.pem
@@ -122,62 +283,52 @@
       ports:
           - "{{ cs_postgres_port }}:{{ cs_postgres_port }}"
       env:
-          POSTGRES_PASSWORD: "{{ cs_postgres_maintenance_password }}"
-          POSTGRES_USER: "{{ cs_postgres_maintenance_user }}"
-          POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
           TZ: Asia/Kolkata
 
-- name: Database | Postgres | Client | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
-      size: 4096
-      mode: "0600"
-      owner: "{{ cs_postgres_run_user }}"
-      group: "{{ cs_postgres_run_group }}"
+- name: Database | Postgres | Get Client Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/client_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_postgres_maintenance_user }}"
+          alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
+              {{ cs_postgres_container_name }},localhost,{{ cs_postgres_maintenance_user }}"
+          ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
+  register: __postgresql_client_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Database | Postgres | Client | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_postgres_client_certs_dir }}/client-csr-{{ item.value.user }}.pem"
-      privatekey_path: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
-      common_name: "{{ item.value.user }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "clientAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_postgres_run_user }}"
-      group: "{{ cs_postgres_run_group }}"
-  with_items: "{{ cs_postgres_apps_dict |
-      combine({cs_postgres_maintenance_db: {'database': cs_postgres_maintenance_db, 'password':
-      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
+- name: Database | Postgres | Create Client Certificates temp files
+  ansible.builtin.tempfile:
+      state: file
+  register: __temp_file_client_cert
+  with_items:
+      - "key"
+      - "cert"
+      - "ca_chain"
 
-- name: Database | Postgres | Client | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ item.value.user }}.pem"
-      csr_path: "{{ cs_postgres_client_certs_dir }}/client-csr-{{ item.value.user }}.pem"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      owner: "{{ cs_postgres_run_user }}"
-      group: "{{ cs_postgres_run_group }}"
-      return_content: true
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
-      {'database': cs_postgres_maintenance_db, 'password':
-      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
-
-- name: Database | Postgres | Client | Write CA certificate
+- name: Database | Postgres | Write Client Certificate
   ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      mode: "0644"
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
-      remote_src: false
+      mode: "0600"
+  loop:
+      - content: "{{ __postgresql_client_cert.data.data.certificate }}\n\
+            {{ __postgresql_client_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[1].path }}"
+      - content: "{{ __postgresql_client_cert.data.data.private_key }}"
+        dest: "{{ __temp_file_client_cert.results[0].path }}"
+      - content: "{{ __postgresql_client_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[2].path }}"
 
 - name: Database | Postgres | Wait for service to start
   community.postgresql.postgresql_ping:
@@ -187,18 +338,45 @@
       login_port: "{{ cs_postgres_port }}"
       login_db: "{{ cs_postgres_maintenance_db }}"
       ssl_mode: verify-full
-      ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
-      ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
   register: is_postgres_up
   until: is_postgres_up.is_available
   retries: 30
   delay: 3
 
+- name: Database | Postgres | Generate random user and password
+  ansible.builtin.set_fact:
+      user: "{{ lookup('community.general.random_string', special=false, length=12) }}"
+      password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+  register: __random_user_password
+  with_items: "{{ cs_postgres_apps_dict | dict2items }}"
+
+- name: Database | Postgres | Create Database users and passwords in Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/db/{{ item.item.key }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "managed-secrets"
+      data:
+          user: "{{ item.ansible_facts.user }}"
+          password: "{{ item.ansible_facts.password }}"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  with_items: "{{ __random_user_password.results }}"
+
 - name: Database | Postgres | Create users
   community.postgresql.postgresql_user:
-      name: "{{ item.value.user }}"
-      password: "{{ item.value.password }}"
+      name: "{{ item.ansible_facts.user }}"
+      password: "{{ item.ansible_facts.password }}"
       state: "present"
       login_host: "{{ cs_postgres_host_private_ip }}"
       login_password: "{{ cs_postgres_maintenance_password }}"
@@ -206,208 +384,30 @@
       login_port: "{{ cs_postgres_port }}"
       login_db: "{{ cs_postgres_maintenance_db }}"
       ssl_mode: verify-full
-      ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
-      ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
-  with_items: "{{ cs_postgres_apps_dict | dict2items }}"
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
 
 - name: Database | Postgres | Create databases
   community.postgresql.postgresql_db:
-      name: "{{ item.value.database }}"
+      name: "{{ item.item.key }}"
       state: "present"
       encoding: "UTF8"
       template: "template0"
-      owner: "{{ item.value.user }}"
+      owner: "{{ item.ansible_facts.user }}"
       login_host: "{{ cs_postgres_host_private_ip }}"
       login_password: "{{ cs_postgres_maintenance_password }}"
       login_user: "{{ cs_postgres_maintenance_user }}"
       login_port: "{{ cs_postgres_port }}"
       ssl_mode: verify-full
-      ssl_rootcert: "{{ cs_postgres_client_certs_dir }}/client-chain.pem"
-      ssl_cert: "{{ cs_postgres_client_certs_dir }}/client-cert-{{ cs_postgres_maintenance_user }}.pem"
-      ssl_key: "{{ cs_postgres_client_certs_dir }}/client-privkey.pem"
-  with_items: "{{ cs_postgres_apps_dict | dict2items }}"
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
 
-- name: Database | Postgres | pgAdmin | Create directories
+- name: Database | Postgres | Remove temporary certificates
   ansible.builtin.file:
-      path: "{{ item }}"
-      state: directory
-      mode: "0755"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-  with_items:
-      - "{{ cs_postgres_pg_admin_dir }}"
-      - "{{ cs_postgres_pg_admin_certs_dir }}"
-      - "{{ cs_postgres_pg_admin_certs_privkey_file | dirname }}"
-      - "{{ cs_postgres_pg_admin_certs_cert_file | dirname }}"
-      - "{{ cs_postgres_pg_admin_certs_chain_file | dirname }}"
-      - "{{ cs_postgres_pg_admin_certs_csr_file | dirname }}"
-      - "{{ cs_postgres_pg_admin_client_certs_dir }}"
-      - "{{ ps_postgres_pg_admin_pg_pass_file | dirname }}"
-      - "{{ ps_postgres_pg_admin_pg_servers_file | dirname }}"
-      - "{{ ps_postgres_pg_admin_entrypoint_file | dirname }}"
-
-- name: Database | Postgres | pgAdmin | Copy postgresql certificates
-  ansible.builtin.copy:
-      src: "{{ cs_postgres_client_certs_dir }}/"
-      dest: "{{ cs_postgres_pg_admin_client_certs_dir }}"
-      mode: "0755"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-      remote_src: true
-
-- name: Database | Postgres | pgAdmin | Write pgpassfile
-  ansible.builtin.lineinfile:
-      line: "{{ cs_postgres_container_name }}\
-          :{{ cs_postgres_port }}\
-          :{{ item.value.database }}\
-          :{{ item.value.user }}\
-          :{{ item.value.password | regex_escape() }}"
-      regexp: "^{{ cs_postgres_container_name }}:{{ cs_postgres_port }}:\
-          {{ item.value.database }}:{{ item.value.user }}:"
-      path: "{{ ps_postgres_pg_admin_pg_pass_file }}"
-      create: true
-      mode: "0600"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
-      {'database': cs_postgres_maintenance_db, 'password':
-      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
-
-- name: Database | Postgres | pgAdmin | Set Server json fact
-  with_items: "{{ cs_postgres_apps_dict | combine({cs_postgres_maintenance_db:
-      {'database': cs_postgres_maintenance_db, 'password':
-      cs_postgres_maintenance_password, 'user': cs_postgres_maintenance_user}}) | dict2items }}"
-  loop_control:
-      index_var: index
-  vars:
-      server_index: "{{ index + 1 }}"
-  ansible.builtin.set_fact:
-      cs_pg_admin_servers: "{{ cs_pg_admin_servers | default({}) |
-          combine({server_index: {'Name': item.key,
-          'Group': 'Servers',
-          'Host': cs_postgres_container_name,
-          'Port': (cs_postgres_port | int),
-          'SSLMode': 'verify-full',
-          'SSLCert': '/client-cert-' + item.value.user + '.pem',
-          'SSLKey': '/client-privkey.pem',
-          'SSLRootCert': '/client-chain.pem',
-          'MaintenanceDB': item.value.database,
-          'PassFile': '/pgpassfile',
-          'Username': item.value.user}}) }}"
-
-- name: Database | Postgres | pgAdmin | Write pgadmin servers.json
-  ansible.builtin.copy:
-      content: "{{ {'Servers': cs_pg_admin_servers} | to_nice_json }}"
-      dest: "{{ ps_postgres_pg_admin_pg_servers_file }}"
-      mode: "0644"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-
-- name: Database | Postgres | pgAdmin | Server Certificate | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_postgres_pg_admin_certs_privkey_file }}"
-      size: 4096
-      mode: "0600"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-
-- name: Database | Postgres | pgAdmin | Server Certificate | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_postgres_pg_admin_certs_csr_file }}"
-      privatekey_path: "{{ cs_postgres_pg_admin_certs_privkey_file }}"
-      common_name: "{{ cs_postgres_pg_admin_domain }}"
-      subject_alt_name:
-          - "DNS:{{ cs_postgres_pg_admin_domain }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-
-- name: Database | Postgres | pgAdmin | Server Certificate | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_postgres_pg_admin_certs_cert_file }}"
-      csr_path: "{{ cs_postgres_pg_admin_certs_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      return_content: true
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-  register: cs_db_postgresql_pgadmin_ssl_cert
-
-- name: Database | Postgres | pgAdmin | Server Certificate | Write Full chain
-  ansible.builtin.copy:
-      content: |+
-          {{ cs_db_postgresql_pgadmin_ssl_cert.certificate | trim }}
-          {{ root_ca_cert_pem }}
-      dest: "{{ cs_postgres_pg_admin_certs_fullchain_file }}"
-      mode: "0644"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-
-- name: Database | Postgres | pgAdmin | File copy entrypoint.sh
-  ansible.builtin.template:
-      src: templates/db/postgresql/pgadmin-entrypoint.sh.j2
-      dest: "{{ ps_postgres_pg_admin_entrypoint_file }}"
-      mode: "0755"
-      owner: "{{ cs_postgres_pg_admin_run_user }}"
-      group: "{{ cs_postgres_pg_admin_run_group }}"
-
-- name: Database | Postgres | pgAdmin | Start Container
-  community.docker.docker_container:
-      name: "{{ ps_postgres_pg_admin_docker_container_name }}"
-      image: "{{ ps_postgres_pg_admin_docker_image }}:{{ ps_postgres_pg_admin_docker_image_tag }}"
-      user: "{{ cs_postgres_pg_admin_run_user }}:{{ cs_postgres_pg_admin_run_group }}"
-      restart_policy: unless-stopped
-      networks:
-          - name: "{{ cs_postgres_network_name }}"
-      state: started
-      ports:
-          - "{{ cs_postgres_pg_admin_port }}:{{ cs_postgres_pg_admin_port }}"
-      entrypoint:
-          - /file-entrypoint.sh
-      env:
-          PGADMIN_DEFAULT_EMAIL: "{{ cs_postgres_pg_admin_email }}"
-          PGADMIN_DEFAULT_PASSWORD: "{{ cs_postgres_pg_admin_password }}"
-          PGADMIN_LISTEN_PORT: "{{ cs_postgres_pg_admin_port | string }}"
-          PGADMIN_ENABLE_TLS: "True"
-          TZ: Asia/Kolkata
-      volumes:
-          - "{{ cs_postgres_pg_admin_certs_fullchain_file }}:/certs/server.cert:ro"
-          - "{{ cs_postgres_pg_admin_certs_privkey_file }}:/certs/server.key:ro"
-          - "{{ ps_postgres_pg_admin_entrypoint_file }}:/file-entrypoint.sh"
-          - "{{ ps_postgres_pg_admin_pg_servers_file }}:/pgadmin4/servers.json"
-          - "{{ ps_postgres_pg_admin_pg_pass_file }}:/pgpassfile"
-          - "{{ cs_postgres_pg_admin_client_certs_dir }}:/client-certs"
-
-- name: Database | Postgres | Enable UFW port
-  community.general.ufw:
-      rule: allow
-      port: "{{ item }}"
-      state: enabled
-  with_items:
-      - "{{ cs_postgres_port }}"
-      - "{{ cs_postgres_pg_admin_port }}"
-
-- name: Database | Postgres | pgAdmin | Wait for service to start
-  ansible.builtin.uri:
-      url: https://{{ cs_postgres_pg_admin_domain }}:{{ cs_postgres_pg_admin_port }}/misc/ping
-      return_content: true
-      status_code:
-          - 200
-      ca_path: "{{ cs_postgres_pg_admin_certs_fullchain_file }}"
-      validate_certs: true
-  register: is_pgadmin_up
-  retries: 30
-  delay: 3
-  until: is_pgadmin_up.status == 200 and is_pgadmin_up.content == "PING"
+      path: "{{ item.path }}"
+      state: absent
+  with_items: "{{ __temp_file_client_cert.results }}"
