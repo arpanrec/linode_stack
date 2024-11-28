@@ -40,6 +40,7 @@
       mode: "0755"
 
 - name: Mini0 | Disk | Unencrypted | Add luks key
+  when: false # This is done manually
   community.crypto.luks_device:
       state: opened
       name: "{{ cs_mini0_external_disk_crypt_open_name }}"
