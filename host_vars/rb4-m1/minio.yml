@@ -1,7 +1,5 @@
 ---
-cs_mini0_external_disk_enc_key_base64: "{{ vault_cred_cs_mini0_external_disk_enc_key_base64 }}"
-cs_mini0_external_disk_enc_password: "{{ vault_cred_cs_mini0_external_disk_enc_password }}"
-cs_mini0_external_disk_uuid: "{{ vault_cred_cs_mini0_external_disk_uuid }}"
+cs_mini0_external_disk_id: "p1-5tb-rb4-m1"
 cs_mini0_external_disk_crypt_open_name: mini0cryptdevice
 cs_mini0_external_disk_mount_path: "/mnt/{{ cs_mini0_external_disk_crypt_open_name }}"
 
