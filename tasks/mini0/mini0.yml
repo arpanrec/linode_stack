@@ -242,11 +242,11 @@
 
 - name: Minio | Install | Wait for Minio to start
   ansible.builtin.uri:
-      url: "http://localhost:{{ cs_mini0_mini0_port }}/minio/health/live"
+      url: "https://localhost:{{ cs_mini0_mini0_port }}/minio/health/live"
       status_code: 200
-      timeout: 5
+      timeout: 3
       method: GET
   register: minio_server_health_check
   until: minio_server_health_check.status == 200
   retries: 10
-  delay: 5
+  delay: 1
