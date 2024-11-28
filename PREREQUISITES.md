@@ -16,11 +16,11 @@ This any change in this file will cause the entire infrastructure to be recreate
 
 Create a YAML file `inventory.yml`.
 
-Make sure the `plugin`  is set to `vault_inventory_builder`.
+Make sure the `plugin`  is set to `blr_home_lab_inv`.
 
 ```yaml
 ---
-plugin: vault_inventory_builder
+plugin: blr_home_lab_inv
 vaultops_tmp_dir_path: # TODO: The temporary directory path., Type: str
 storage_config: # TODO: To store vault snapshot and terraform state, Type: str (Path to the file) | Dict: Actual Storage configuration
 vault_config: # TODO: Location of the vault configuration file, Type: str (Path to the file) | Dict: Actual Vault configuration

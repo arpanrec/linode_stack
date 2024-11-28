@@ -1,6 +1,6 @@
-# [1.8.0](https://github.com/arpanrec/home-lab/compare/1.7.1...1.8.0) (2024-11-26)
+## [1.12.4](https://github.com/arpanrec/home-lab/compare/1.12.3...1.12.4) (2024-11-28)
 
 
-### Features
+### Bug Fixes
 
-* Postgres password from vault ([#38](https://github.com/arpanrec/home-lab/issues/38)) ([addecb3](https://github.com/arpanrec/home-lab/commit/addecb321b492696d5665a0c25829b8b42aa3f35))
+* rename variables and update configuration for mini0 ([ea71a81](https://github.com/arpanrec/home-lab/commit/ea71a81112df0fa2d3b852ea7f191390f8cf13d7))

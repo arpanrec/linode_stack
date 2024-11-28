@@ -10,12 +10,13 @@ cs_mail_domain: "{{ vault_cred_cs_mail_domain }}"
 cs_mail_smtpsecure: "{{ vault_cred_cs_mail_smtpsecure }}"
 cs_mail_smtpauth: 1
 cs_mail_smtphost: "{{ vault_cred_cs_mail_smtphost }}"
-cs_mail_smtpname: "{{ vault_cred_cs_mail_smtpname }}"
+cs_mail_smtpname: "{{ cs_mail_from_address }}@{{ cs_mail_domain }}"
 cs_mail_smtppassword: "{{ vault_cred_cs_mail_smtppassword }}"
 
 cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
 cs_no_log: "{{ not cs_env_debug }}"
 
-cs_vm_ssh_service_user_id: "svc_admin"
+# cs_vm_ssh_service_user_id: "arpan" # Only for patching
+cs_vm_ssh_service_user_id: "cloudinit" # Only for patching
 
 ansible_user: "{{ cs_vm_ssh_service_user_id }}"

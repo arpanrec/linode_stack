@@ -127,7 +127,7 @@ def vault_token_revoke(vault_client: Union[VaultHaClient, VaultRaftNodeHvac]) ->
     """
     Revoke all tokens and destroy all AppRole secret ID accessors in HashiCorp Vault.
     Args:
-        vault_ha_client (VaultHaClient): The details of the HashiCorp Vault Raft node.
+        vault_client (VaultHaClient): The details of the HashiCorp Vault Raft node.
     Returns:
         None
     """
@@ -136,7 +136,7 @@ def vault_token_revoke(vault_client: Union[VaultHaClient, VaultRaftNodeHvac]) ->
     if isinstance(vault_client, VaultRaftNodeHvac):
         hvac_client = vault_client.hvac_client
     elif isinstance(vault_client, VaultHaClient):
-        hvac_client = vault_client.hvac_client()
+        hvac_client = vault_client.hvac_client
     else:
         raise ValueError(f"Unsupported vault_client type: {type(vault_client)}")
 
