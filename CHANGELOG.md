@@ -1,6 +1,6 @@
-## [1.12.2](https://github.com/arpanrec/home-lab/compare/1.12.1...1.12.2) (2024-11-28)
+## [1.12.3](https://github.com/arpanrec/home-lab/compare/1.12.2...1.12.3) (2024-11-28)
 
 
 ### Bug Fixes
 
-* vault pass for databases ([#45](https://github.com/arpanrec/home-lab/issues/45)) ([dba57bc](https://github.com/arpanrec/home-lab/commit/dba57bc6b6c25b102602c9098cbf289f888485b0))
+* add test for kes ([#46](https://github.com/arpanrec/home-lab/issues/46)) ([a8a8fdc](https://github.com/arpanrec/home-lab/commit/a8a8fdceddbff9e71086ce5b0b147fa4d12ea485))
