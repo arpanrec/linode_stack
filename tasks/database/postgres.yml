@@ -123,11 +123,10 @@
                 maintenance_user: "{{ cs_postgres_maintenance_user }}"
                 maintenance_password: "{{ cs_postgres_maintenance_password }}"
                 maintenance_db: "{{ cs_postgres_maintenance_db }}"
-                servers:
-                    - "{{ cs_postgres_host_private_ip }}"
-                    - "{{ cs_postgres_host_public_ip }}"
-                    - "{{ cs_postgres_host_public_domain }}"
-                    - "{{ cs_postgres_host_private_domain }}"
+                private_ip: "{{ cs_postgres_host_private_ip }}"
+                public_ip: "{{ cs_postgres_host_public_ip }}"
+                public_domain: "{{ cs_postgres_host_public_domain }}"
+                private_domain: "{{ cs_postgres_host_private_domain }}"
                 server_port: "{{ cs_postgres_port }}"
                 server_version: "{{ cs_postgres_version }}"
         environment:
@@ -372,6 +371,32 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
   with_items: "{{ __random_user_password.results }}"
+
+- name: Database | Postgres | Write the Password to Vault again for the maintenance user
+      in case some some connection properties changes
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "managed-secrets"
+      data:
+          maintenance_user: "{{ cs_postgres_maintenance_user }}"
+          maintenance_password: "{{ cs_postgres_maintenance_password }}"
+          maintenance_db: "{{ cs_postgres_maintenance_db }}"
+          private_ip: "{{ cs_postgres_host_private_ip }}"
+          public_ip: "{{ cs_postgres_host_public_ip }}"
+          public_domain: "{{ cs_postgres_host_public_domain }}"
+          private_domain: "{{ cs_postgres_host_private_domain }}"
+          server_port: "{{ cs_postgres_port }}"
+          server_version: "{{ cs_postgres_version }}"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
 - name: Database | Postgres | Create users
   community.postgresql.postgresql_user:

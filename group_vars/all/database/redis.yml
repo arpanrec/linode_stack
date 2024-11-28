@@ -5,19 +5,7 @@ cs_redis_certs_dir: "{{ cs_redis_dir }}/certs"
 cs_redis_certs_privkey_file: "{{ cs_redis_certs_dir }}/privkey.pem"
 cs_redis_certs_cert_file: "{{ cs_redis_certs_dir }}/cert.pem"
 cs_redis_certs_chain_file: "{{ cs_redis_certs_dir }}/chain.pem"
-cs_redis_certs_csr_file: "{{ cs_redis_certs_dir }}/csr.pem"
-
-cs_redis_client_certs_dir: "{{ cs_redis_dir }}/client_certs"
-cs_redis_client_certs_key_file: "{{ cs_redis_client_certs_dir }}/client.key"
-cs_redis_client_certs_csr_file: "{{ cs_redis_client_certs_dir }}/client.csr"
-cs_redis_client_certs_cert_file: "{{ cs_redis_client_certs_dir }}/client.crt"
-cs_redis_client_certs_ca_file: "{{ cs_redis_client_certs_dir }}/ca.crt"
-
+cs_redis_cluster_name: blr-home-lab
 redis_container_name: redis
 redis_docker_image: "docker.io/library/redis"
 redis_docker_image_tag: "7.4.1"
-
-cs_redis_admin_password: "{{ vault_cred_cs_redis_admin_password }}"
-cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
-cs_redis_tls_port: "{{ vault_cred_cs_redis_tls_port }}"
-cs_redis_tls_privkey_pass: "{{ vault_cred_cs_redis_tls_privkey_pass }}"

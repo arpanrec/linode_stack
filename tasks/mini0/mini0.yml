@@ -21,9 +21,11 @@
       cs_mini0_mini0_console_port: "{{ __minio_details.secret.console_port }}"
       cs_mini0_mini0_region: "{{ __minio_details.secret.region }}"
 
-- name: Minio | Assert | Set minio_server_kes_secret_id_vault
+- name: Minio | Assert | Set cs_mini0_mini0_kes_cluster_name
   ansible.builtin.set_fact:
-      minio_server_kes_secret_id_vault: "{{ minio_server_kes_secret_id_vault | d(inventory_hostname)
+      cs_mini0_mini0_kes_cluster_name: "{{ cs_mini0_mini0_kes_cluster_name | d(cs_mini0_mini0_cluster_name) }}
+          | mandatory }}"
+      cs_mini0_mini0_kes_cluster_node_name: "{{ cs_mini0_mini0_kes_cluster_node_name | d(inventory_hostname)
           | mandatory }}"
 
 - name: Minio | Assert | Get KES Admin Key Id from Vault
@@ -33,7 +35,8 @@
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
       engine_mount_point: "managed-secrets"
-      path: "minio/kes/servers/{{ minio_server_kes_secret_id_vault }}/config"
+      path: "minio-kes/clusters/{{ cs_mini0_kes_cluster_name }}/servers/{{ cs_mini0_mini0_kes_cluster_node_name }}\
+          /config"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
   register: minio_server_kes_secret_dict
@@ -176,7 +179,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_write:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "minio/clusters/{{ minio_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      path: "minio/clusters/{{ cs_mini0_mini0_cluster_name }}/servers/{{ inventory_hostname }}/config"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "managed-secrets"

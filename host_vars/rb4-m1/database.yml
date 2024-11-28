@@ -4,3 +4,7 @@ cs_postgres_host_public_ip: "127.0.0.1"
 cs_postgres_host_public_domain: "localhost"
 cs_postgres_host_private_domain: "localhost"
 cs_postgres_dir: "{{ cs_mini0_external_disk_mount_path }}/postgres"
+
+cs_elasticsearch_host: "{{ cs_rb4_m1_ip }}"
+
+cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
