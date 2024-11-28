@@ -46,7 +46,7 @@ boto3 = "1.35.69"
 boto3-stubs = { extras = ["s3"], version = "1.35.69" } # extras = ["all"]
 cachier = "3.1.2"
 # https://github.com/pyca/cryptography/issues/11927#issuecomment-2469615317
-cryptography = "42.0.8" # {git = "https://github.com/pyca/cryptography.git#b8e5bfd4d7b35ba8d18b8052266e2cdae4963970"}
+cryptography = "43.0.1" # {git = "https://github.com/pyca/cryptography.git#b8e5bfd4d7b35ba8d18b8052266e2cdae4963970"}
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
