@@ -181,11 +181,11 @@
   loop:
       - content: "{{ kes_tmp_vault_client_cert.data.data.certificate }}\n\
             {{ kes_tmp_vault_client_cert.data.data.ca_chain | join('\n') }}"
-        dest: "{{ minio_kes_vault_client_cert }}"
+        dest: "{{ cs_mini0_kes_vault_client_cert }}"
       - content: "{{ kes_tmp_vault_client_cert.data.data.private_key }}"
-        dest: "{{ minio_kes_vault_client_key }}"
+        dest: "{{ cs_mini0_kes_vault_client_key }}"
       - content: "{{ kes_tmp_vault_client_cert.data.data.ca_chain | join('\n') }}"
-        dest: "{{ minio_kes_vault_ca_cert }}"
+        dest: "{{ cs_mini0_kes_vault_ca_cert }}"
 
 - name: KES | Install | Get role-id
   become: false
@@ -223,7 +223,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_write:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "minio/kes/servers/{{ inventory_hostname }}/config"
+      path: "minio-kes/clusters/{{ cs_mini0_kes_cluster_name }}/servers/{{ inventory_hostname }}/config"
       engine_mount_point: "managed-secrets"
       data:
           admin_cert: "{{ kes_tmp_admin_client_cert_res.data.data.certificate }}\n\
@@ -277,14 +277,14 @@
                   endpoint: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
                   engine: "managed-secrets" # "kv"
                   version: "v2" # "v1"
-                  prefix: "minio/kes/kms"
+                  prefix: "minio-kes/clusters/{{ cs_mini0_kes_cluster_name }}/kms"
                   approle:
                       id: "{{ minio_kes_tmp_vault_role_id.data.data.role_id }}"
                       secret: "{{ minio_kes_tmp_vault_secret_id.data.data.secret_id }}"
                   tls:
-                      key: "{{ minio_kes_vault_client_key }}"
-                      cert: "{{ minio_kes_vault_client_cert }}"
-                      ca: "{{ minio_kes_vault_ca_cert }}"
+                      key: "{{ cs_mini0_kes_vault_client_key }}"
+                      cert: "{{ cs_mini0_kes_vault_client_cert }}"
+                      ca: "{{ cs_mini0_kes_vault_ca_cert }}"
                   status:
                       ping: 10s
 
@@ -298,8 +298,8 @@
 
 - name: KES | Install | Create Systemd Service
   ansible.builtin.template:
-      src: "templates/minio/{{ minio_kes_systemd_service_name }}.j2"
-      dest: "/etc/systemd/system/{{ minio_kes_systemd_service_name }}"
+      src: "templates/mini0-kes/{{ cs_mini0_kes_systemd_service_name }}.j2"
+      dest: "/etc/systemd/system/{{ cs_mini0_kes_systemd_service_name }}"
       owner: root
       group: root
       mode: "0644"
@@ -313,7 +313,7 @@
 
 - name: KES | Install | Start Systemd Service
   ansible.builtin.systemd_service:
-      name: "{{ minio_kes_systemd_service_name }}"
+      name: "{{ cs_mini0_kes_systemd_service_name }}"
       state: started
       daemon_reload: true
       daemon_reexec: true

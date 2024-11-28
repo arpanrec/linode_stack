@@ -97,6 +97,19 @@
         ansible.builtin.import_tasks:
             file: tasks/vaultops/github.yml
 
+- name: Mini0 KES
+  hosts: rb4-m1
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Mini0 | KES
+        tags: never,mini0,mini0_kes
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/mini0-kes.yml
+
 - name: Mini0
   hosts: rb4-m1
   become: false
@@ -109,13 +122,6 @@
         become_user: root
         ansible.builtin.import_tasks:
             file: tasks/mini0/disk.yml
-
-      - name: Mini0 | KES
-        tags: never,mini0,mini0_kes
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/mini0/kes.yml
 
       - name: Mini0 | Mini0
         tags: never,mini0,mini0_mini0
