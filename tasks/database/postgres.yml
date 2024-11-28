@@ -120,7 +120,7 @@
             name: "{{ cs_postgres_container_name }}"
             image: "{{ cs_postgres_docker_image }}:{{ cs_postgres_docker_image_tag }}"
             user: "{{ cs_postgres_run_user }}:{{ cs_postgres_run_group }}"
-            restart_policy: unless-stopped
+            auto_remove: true
             networks:
                 - name: "{{ cs_postgres_network_name }}"
             volumes:
@@ -198,22 +198,45 @@
             login_db: "{{ cs_postgres_maintenance_db }}"
             ssl_mode: verify-full
             ssl_rootcert: "{{ __temp_file_first_run_client_cert.results[2].path }}"
-            ssl_cert: "{{ __temp_file_first_run_client_cert.results[0].path }}"
-            ssl_key: "{{ __temp_file_first_run_client_cert.results[1].path }}"
+            ssl_cert: "{{ __temp_file_first_run_client_cert.results[1].path }}"
+            ssl_key: "{{ __temp_file_first_run_client_cert.results[0].path }}"
         register: is_postgres_up
         until: is_postgres_up.is_available
         retries: 30
         delay: 3
 
-      - name: Database | Postgres | First Run | Remove temp files
+      - name: Database | Postgres | First Run | Remove temporary certificates
         ansible.builtin.file:
             path: "{{ item.path }}"
             state: absent
         with_items: "{{ __temp_file_first_run_client_cert.results }}"
 
-      - name: Hard fail
-        ansible.builtin.fail:
-            msg: "Hard fail"
+      - name: Database | Postgres | First Run | Remove container
+        community.docker.docker_container:
+            name: "{{ cs_postgres_container_name }}"
+            state: absent
+            force_kill: true
+
+- name: Database | Postgres | Get credentials from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "managed-secrets"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __postgresql_secrets
+
+- name: Database | Postgres | First Run | Create User and Password
+  ansible.builtin.set_fact:
+      cs_postgres_maintenance_password: "{{ __postgresql_secrets.secret.maintenance_password }}"
+      cs_postgres_maintenance_user: "{{ __postgresql_secrets.secret.maintenance_user }}"
 
 - name: Database | Postgres | Start Container
   community.docker.docker_container:
@@ -230,6 +253,7 @@
           - "{{ cs_postgres_certs_chain_file }}:/server-chain.pem:ro"
           - "{{ cs_postgres_hba_file }}:/pg_hba.conf:ro"
       state: started
+      restart: true
       command: "--port={{ cs_postgres_port }}
           --ssl=on
           --ssl_cert_file=/server-cert.pem
@@ -239,10 +263,11 @@
       ports:
           - "{{ cs_postgres_port }}:{{ cs_postgres_port }}"
       env:
-          POSTGRES_PASSWORD: "{{ cs_postgres_maintenance_password }}"
-          POSTGRES_USER: "{{ cs_postgres_maintenance_user }}"
-          POSTGRES_DB: "{{ cs_postgres_maintenance_db }}"
           TZ: Asia/Kolkata
+
+- name: Hard fail
+  ansible.builtin.fail:
+      msg: "Hard fail"
 
 - name: Database | Postgres | Client | Create SSL Private key
   community.crypto.openssl_privatekey:
