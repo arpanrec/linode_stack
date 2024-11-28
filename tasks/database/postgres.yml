@@ -1,4 +1,26 @@
 ---
+- name: Database | Postgres | Get config from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/postgresql"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __postgresql_config
+
+- name: Database | Postgres | Set config facts
+  ansible.builtin.set_fact:
+      cs_postgres_port: "{{ __postgresql_config.secret.port }}"
+      cs_postgres_maintenance_db: "{{ __postgresql_config.secret.maintenance_db }}"
+      cs_postgres_apps_dict: "{{ __postgresql_config.secret.apps_dict }}"
+
 - name: Database | Postgres | Install python3-psycopg2
   ansible.builtin.apt:
       name: python3-psycopg2
