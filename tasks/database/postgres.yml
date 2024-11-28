@@ -265,6 +265,73 @@
       env:
           TZ: Asia/Kolkata
 
+- name: Database | Postgres | Get Client Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/client_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_postgres_maintenance_user }}"
+          alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
+              {{ cs_postgres_container_name }},localhost,{{ cs_postgres_maintenance_user }}"
+          ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
+  register: __postgresql_client_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Database | Postgres | Create Client Certificates temp files
+  ansible.builtin.tempfile:
+      state: file
+  register: __temp_file_client_cert
+  with_items:
+      - "key"
+      - "cert"
+      - "ca_chain"
+
+- name: Database | Postgres | Write Client Certificate
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
+      owner: "{{ cs_postgres_run_user }}"
+      group: "{{ cs_postgres_run_group }}"
+      mode: "0600"
+  loop:
+      - content: "{{ __postgresql_client_cert.data.data.certificate }}\n\
+            {{ __postgresql_client_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[1].path }}"
+      - content: "{{ __postgresql_client_cert.data.data.private_key }}"
+        dest: "{{ __temp_file_client_cert.results[0].path }}"
+      - content: "{{ __postgresql_client_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[2].path }}"
+
+- name: Database | Postgres | Wait for service to start
+  community.postgresql.postgresql_ping:
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  register: is_postgres_up
+  until: is_postgres_up.is_available
+  retries: 30
+  delay: 3
+
+- name: Database | Postgres | Remove temporary certificates
+  ansible.builtin.file:
+      path: "{{ item.path }}"
+      state: absent
+  with_items: "{{ __temp_file_client_cert.results }}"
+
 - name: Hard fail
   ansible.builtin.fail:
       msg: "Hard fail"
