@@ -75,8 +75,6 @@
           "node.name": "es01"
           "cluster.name": docker-cluster
           "bootstrap.memory_lock": "true"
-          "elasticsearch.node.name": "{{ inventory_hostname }}"
-          "elasticsearch.cluster.name": "{{ cs_elasticsearch_cluster_name }}"
           "http.port": "{{ cs_elasticsearch_servlet_port | string }}"
           "xpack.license.self_generated.type": basic
           "xpack.security.enabled": "false"
