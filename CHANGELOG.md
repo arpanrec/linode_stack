@@ -1,6 +1,6 @@
-# [1.12.0](https://github.com/arpanrec/home-lab/compare/1.11.0...1.12.0) (2024-11-28)
+## [1.12.4](https://github.com/arpanrec/home-lab/compare/1.12.3...1.12.4) (2024-11-28)
 
 
-### Features
+### Bug Fixes
 
-* postgresql secrets from vault and remove pg_admin ([#43](https://github.com/arpanrec/home-lab/issues/43)) ([feacfa6](https://github.com/arpanrec/home-lab/commit/feacfa62d65f7fd3d130972d9b945d4094cb22a0))
+* rename variables and update configuration for mini0 ([ea71a81](https://github.com/arpanrec/home-lab/commit/ea71a81112df0fa2d3b852ea7f191390f8cf13d7))

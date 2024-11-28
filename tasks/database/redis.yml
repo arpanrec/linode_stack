@@ -1,22 +1,55 @@
 ---
+# cs_redis_tls_privkey_pass: "{{ vault_cred_cs_redis_tls_privkey_pass }}"
+- name: Database | Redis | Get config from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/redis"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __redis_config
+
+- name: Database | Redis | Set config facts
+  ansible.builtin.set_fact:
+      cs_redis_tls_port: "{{ __redis_config.secret.tls_port }}"
+      cs_redis_admin_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+
+- name: Database | Redis | Create Database users and passwords in Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "redis/clusters/{{ cs_redis_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "managed-secrets"
+      data:
+          tls_port: "{{ cs_redis_tls_port }}"
+          admin_password: "{{ cs_redis_admin_password }}"
+          private_ip: "{{ cs_redis_private_ip }}"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
 - name: Database | Redis | Create data directory
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
       mode: "0755"
   with_items:
-      - "{{ cs_redis_data_dir }}"
       - "{{ cs_redis_dir }}"
+      - "{{ cs_redis_data_dir }}"
       - "{{ cs_redis_certs_dir }}"
-      - "{{ cs_redis_certs_privkey_file | dirname }}"
-      - "{{ cs_redis_certs_cert_file | dirname }}"
-      - "{{ cs_redis_certs_chain_file | dirname }}"
-      - "{{ cs_redis_certs_csr_file | dirname }}"
-      - "{{ cs_redis_client_certs_dir }}"
-      - "{{ cs_redis_client_certs_key_file | dirname }}"
-      - "{{ cs_redis_client_certs_csr_file | dirname }}"
-      - "{{ cs_redis_client_certs_cert_file | dirname }}"
-      - "{{ cs_redis_client_certs_ca_file | dirname }}"
 
 - name: Database | Redis | Stop old container
   community.docker.docker_container:
@@ -24,52 +57,38 @@
       state: absent
       force_kill: true
 
-- name: Database | Redis | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_redis_certs_privkey_file }}"
-      size: 4096
-      mode: "0644"
-      cipher: auto
-      passphrase: "{{ cs_redis_tls_privkey_pass }}"
+- name: Database | Redis | Get Server Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/server_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_redis_private_ip }}"
+          alt_names: "localhost"
+          ip_sans: "{{ cs_redis_private_ip }},127.0.0.1"
+  register: __redis_server_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Database | Redis | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_redis_certs_csr_file }}"
-      privatekey_path: "{{ cs_redis_certs_privkey_file }}"
-      privatekey_passphrase: "{{ cs_redis_tls_privkey_pass }}"
-      common_name: "{{ cs_redis_private_ip }}"
-      version: 1
-      subject_alt_name:
-          - "IP:{{ cs_redis_private_ip }}"
-          - "IP:127.0.0.1"
-          - "DNS:localhost"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-          - "clientAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-
-- name: Database | Redis | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_redis_certs_cert_file }}"
-      csr_path: "{{ cs_redis_certs_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      return_content: true
-
-- name: Database | Redis | Write CA certificate
+- name: Database | Redis | Write Server Certificate
   ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_redis_certs_chain_file }}"
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
       mode: "0644"
-      remote_src: false
+  loop:
+      - content: "{{ __redis_server_cert.data.data.certificate }}\n\
+            {{ __redis_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_redis_certs_cert_file }}"
+      - content: "{{ __redis_server_cert.data.data.private_key }}"
+        dest: "{{ cs_redis_certs_privkey_file }}"
+      - content: "{{ __redis_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_redis_certs_chain_file }}"
 
 - name: Database | Redis | Start container
   community.docker.docker_container:
@@ -84,11 +103,13 @@
           - "{{ cs_redis_certs_chain_file }}:/ca.crt"
       ports:
           - "{{ cs_redis_tls_port }}:{{ cs_redis_tls_port }}"
-      command: redis-server --save 20 1 --loglevel warning
+      command:
+          redis-server --save 20 1 --loglevel warning
           --requirepass "{{ cs_redis_admin_password }}" --port 0
           --tls-port "{{ cs_redis_tls_port }}" --tls-cert-file /server.crt --tls-auth-clients yes
           --tls-key-file /server.key --tls-ca-cert-file /ca.crt
-          --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
+
+          # --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
 
 - name: Database | Redis | Enable UFW port
   community.general.ufw:
@@ -102,42 +123,63 @@
       state: present
       install_recommends: true
 
-- name: Database | Redis | Test | Create client key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_redis_client_certs_key_file }}"
-      size: 4096
-      mode: "0600"
+- name: Database | Redis | Get Client Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/client_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_redis_private_ip }}"
+          alt_names: "localhost"
+          ip_sans: "{{ cs_redis_private_ip }},127.0.0.1"
+  register: __redis_client_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Database | Redis | Test | Create client CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_redis_client_certs_csr_file }}"
-      privatekey_path: "{{ cs_redis_client_certs_key_file }}"
+- name: Database | Redis | Create Client Certificates temp files
+  ansible.builtin.tempfile:
+      state: file
+  register: __temp_file_client_cert
+  with_items:
+      - "key"
+      - "cert"
+      - "ca_chain"
 
-- name: Database | Redis | Test | Sign client CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_redis_client_certs_cert_file }}"
-      csr_path: "{{ cs_redis_client_certs_csr_file }}"
-      provider: ownca
-      ownca_content: "{{ root_ca_cert_pem }}"
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-
-- name: Database | Redis | Test | Write client CA certificate
+- name: Database | Redis | Write Client Certificate
   ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_redis_client_certs_ca_file }}"
-      mode: "0644"
-      remote_src: false
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
+      mode: "0600"
+  loop:
+      - content: "{{ __redis_client_cert.data.data.certificate }}\n\
+            {{ __redis_client_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[1].path }}"
+      - content: "{{ __redis_client_cert.data.data.private_key }}"
+        dest: "{{ __temp_file_client_cert.results[0].path }}"
+      - content: "{{ __redis_client_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[2].path }}"
 
 - name: Database | Redis | Wait for service to start
   ansible.builtin.command:
       cmd: "redis-cli -a {{ cs_redis_admin_password }} -p {{ cs_redis_tls_port }} --no-auth-warning
-          --tls --cert {{ cs_redis_client_certs_cert_file }}
-          --key {{ cs_redis_client_certs_key_file }}
-          --cacert {{ cs_redis_client_certs_ca_file }} ping"
+          --tls --cert {{ __temp_file_client_cert.results[1].path }}
+          --key {{ __temp_file_client_cert.results[0].path }}
+          --cacert {{ __temp_file_client_cert.results[2].path }} ping"
   changed_when: false
   timeout: 3
   register: redis_ping
   retries: 30
   delay: 5
   until: redis_ping.stdout is defined and redis_ping.stdout == "PONG"
+
+- name: Database | Redis | Remove temporary certificates
+  ansible.builtin.file:
+      path: "{{ item.path }}"
+      state: absent
+  with_items: "{{ __temp_file_client_cert.results }}"
