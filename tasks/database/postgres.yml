@@ -10,7 +10,6 @@
       force_kill: true
   with_items:
       - "{{ cs_postgres_container_name }}"
-      - "{{ ps_postgres_pg_admin_docker_container_name }}"
 
 - name: Database | Postgres | Create network
   community.docker.docker_network:
@@ -28,7 +27,6 @@
       - "{{ cs_postgres_dir }}"
       - "{{ cs_postgres_data_dir }}"
       - "{{ cs_postgres_certs_dir }}"
-      - "{{ cs_postgres_client_certs_dir }}"
 
 - name: Database | Postgres | Get Server Certificates from Vault
   become: false
