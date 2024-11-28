@@ -71,9 +71,9 @@
       mode: "0755"
       owner: root
       group: root
-      checksum: "sha256:{{ minio_kes_bin_info_map[ansible_architecture]['sha256sum'][cs_mini0_kes_version] }}"
+      checksum: "sha256:{{ cs_mini0_kes_bin_info_map[ansible_architecture]['sha256sum'][cs_mini0_kes_version] }}"
       url: "https://github.com/minio/kes/releases/download/{{ cs_mini0_kes_version }}/kes-linux\
-          -{{ minio_kes_bin_info_map[ansible_architecture]['minio_kes_arch'] }}"
+          -{{ cs_mini0_kes_bin_info_map[ansible_architecture]['cs_mini0_kes_arch'] }}"
 
 - name: KES | Install | Get Server Certificates from Vault
   become: false
@@ -319,6 +319,7 @@
       daemon_reload: true
       daemon_reexec: true
       enabled: true
+      force: true
 
 - name: KES | Install | Test | Create a temp file for client certificate
   ansible.builtin.tempfile:

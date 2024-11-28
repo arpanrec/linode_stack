@@ -1,11 +1,8 @@
 ---
-cs_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/minio"
-# cs_mini0_working_dir: /app/minio
-
 cs_mini0_mini0_group_name: mini0
 cs_mini0_mini0_user_name: "{{ cs_mini0_mini0_group_name }}"
 
-cs_mini0_mini0_working_dir: "{{ cs_mini0_working_dir }}/mini0"
+cs_mini0_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/minio/mini0"
 cs_mini0_mini0_data_dir: "{{ cs_mini0_mini0_working_dir }}/data"
 
 cs_mini0_mini0_certs_dir: "{{ cs_mini0_mini0_working_dir }}/certs"
@@ -32,13 +29,13 @@ cs_mini0_mini0_env_file: "{{ cs_mini0_mini0_working_dir }}/.env"
 
 cs_mini0_mini0_bin_info_map:
     x86_64:
-        arch: amd64
+        cs_mini0_mini0_arch: amd64
         sha256sum:
             "RELEASE.2024-05-10T01-41-38Z": bd3a3e65c48d35613fe1c556e77a18bccb8aee911b6293ca5f6112f73376c105
             "RELEASE.2024-06-13T22-53-53Z": 1568c0d8ab09eebaf444f78ec9cd85ce62b1a2aacbd92ec29c1ec779864811bc
             "RELEASE.2024-11-07T00-52-20Z": c27873d791b56d33518de11f12c5bfae4be88ebac00e12c6dd0027b08123fd80
     aarch64:
-        arch: arm64
+        cs_mini0_mini0_arch: arm64
         sha256sum:
             "RELEASE.2024-05-10T01-41-38Z": b830c0862eadd2adb0db07118858fb917ac8002a9fde7a8eb0cc5234699ba40d
             "RELEASE.2024-06-13T22-53-53Z": e30af0de3db096a35d594e7e7fa501efd686cb3a3335f8576f36c7359ecde5a3

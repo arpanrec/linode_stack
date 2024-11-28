@@ -39,11 +39,16 @@
           /config"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
-  register: minio_server_kes_secret_dict
+  register: __minio_server_kes_secret_dict
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Minio | Assert | Set cs_mini0_mini0_kes_endpoint
+  ansible.builtin.set_fact:
+      cs_mini0_mini0_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.secret.ips[0] }}:\
+          {{ __minio_server_kes_secret_dict.secret.port }}"
 
 - name: Minio | Assert | cs_mini0_mini0_hostnames
   ansible.builtin.assert:
@@ -52,26 +57,12 @@
           - cs_mini0_mini0_hostnames | length > 0
       fail_msg: "cs_mini0_mini0_hostnames must be a list with at least one element"
 
-- name: Minio | Assert | cs_mini0_mini0_server_ips
+- name: Minio | Assert | cs_mini0_mini0_ips
   ansible.builtin.assert:
       that:
-          - cs_mini0_mini0_server_ips | type_debug == 'list'
-          - cs_mini0_mini0_server_ips | length > 0
-      fail_msg: "cs_mini0_mini0_server_ips must be a list with at least one element"
-
-- name: Minio | Assert | cs_mini0_mini0_kes_endpoint hostname
-  ansible.builtin.assert:
-      that:
-          - |+
-              cs_mini0_mini0_kes_endpoint | urlsplit('hostname')
-              in
-              (minio_server_kes_secret_dict.secret.hostnames + minio_server_kes_secret_dict.secret.ips)
-      fail_msg: "cs_mini0_mini0_kes_endpoint must be a valid URL with hostname or IP address"
-
-- name: Minio | Assert | cs_mini0_mini0_kes_endpoint port
-  ansible.builtin.assert:
-      that:
-          - cs_mini0_mini0_kes_endpoint | urlsplit('port') == minio_server_kes_secret_dict.secret.port
+          - cs_mini0_mini0_ips | type_debug == 'list'
+          - cs_mini0_mini0_ips | length > 0
+      fail_msg: "cs_mini0_mini0_ips must be a list with at least one element"
 
 - name: Minio | Install | Gather Facts
   ansible.builtin.setup:
@@ -101,7 +92,7 @@
       group: root
       checksum: "sha256:{{ cs_mini0_mini0_bin_info_map[ansible_architecture]['sha256sum'][cs_mini0_mini0_version] }}"
       url: "https://dl.min.io/server/minio/release/linux-\
-          {{ cs_mini0_mini0_bin_info_map[ansible_architecture]['arch'] }}/archive/minio.\
+          {{ cs_mini0_mini0_bin_info_map[ansible_architecture]['cs_mini0_mini0_arch'] }}/archive/minio.\
           {{ cs_mini0_mini0_version }}"
 
 - name: Minio | Install | Create Directories
@@ -122,6 +113,7 @@
   delegate_facts: true
   delegate_to: localhost
   community.hashi_vault.vault_write:
+      timeout: 60
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
       path: pki/issue/server_certificate
       token: "{{ vault_ha_client.token }}"
@@ -129,7 +121,7 @@
       data:
           common_name: "{{ inventory_hostname }}"
           alt_names: "{{ cs_mini0_mini0_hostnames | join(',') }}"
-          ip_sans: "{{ cs_mini0_mini0_server_ips | join(',') }}"
+          ip_sans: "{{ cs_mini0_mini0_ips | join(',') }}"
   register: minio_server_tmp_certificate
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -160,11 +152,11 @@
       group: "{{ cs_mini0_mini0_group_name }}"
       mode: "0777"
   loop:
-      - content: "{{ minio_server_kes_secret_dict.secret.admin_cert }}\n"
+      - content: "{{ __minio_server_kes_secret_dict.secret.admin_cert }}\n"
         dest: "{{ cs_mini0_mini0_kes_admin_cert }}"
-      - content: "{{ minio_server_kes_secret_dict.secret.admin_key }}\n"
+      - content: "{{ __minio_server_kes_secret_dict.secret.admin_key }}\n"
         dest: "{{ cs_mini0_mini0_kes_admin_key }}"
-      - content: "{{ minio_server_kes_secret_dict.secret.admin_ca }}\n"
+      - content: "{{ __minio_server_kes_secret_dict.secret.admin_ca }}\n"
         dest: "{{ cs_mini0_mini0_kes_ca_cert }}"
 
 - name: Minio | Install | Create User and Password
@@ -186,13 +178,11 @@
       data:
           root_user: "{{ minio_server_root_user }}"
           root_password: "{{ minio_server_root_password }}"
-          ips: "{{ cs_mini0_mini0_server_ips }}"
+          ips: "{{ cs_mini0_mini0_ips }}"
           hostnames: "{{ cs_mini0_mini0_hostnames }}"
           server_port: "{{ cs_mini0_mini0_port }}"
           console_port: "{{ cs_mini0_mini0_console_port }}"
           server_version: "{{ cs_mini0_mini0_version }}"
-          ca_cert: "{{ minio_server_kes_secret_dict.secret.admin_ca }}"
-          server_cert: "{{ minio_server_kes_secret_dict.secret.admin_cert }}"
           kes:
               cluster_name: "{{ cs_mini0_mini0_kes_cluster_name }}"
               cluster_node_name: "{{ cs_mini0_mini0_kes_cluster_node_name }}"
@@ -245,6 +235,7 @@
       daemon_reload: true
       daemon_reexec: true
       enabled: true
+      force: true
 
 - name: Minio | Install | Wait for Minio to start
   ansible.builtin.uri:
