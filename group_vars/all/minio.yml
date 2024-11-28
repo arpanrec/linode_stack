@@ -19,7 +19,7 @@ cs_mini0_mini0_kes_admin_key: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-admin-key.p
 cs_mini0_mini0_kes_ca_cert: "{{ cs_mini0_mini0_kes_cert_dir }}/kes-ca-cert.pem"
 
 cs_mini0_mini0_container_name: mini0
-minio_cluster_name: mini0
+cs_mini0_mini0_cluster_name: blr-home-lab
 cs_mini0_mini0_image: docker.io/minio/minio
 cs_mini0_mini0_version: RELEASE.2024-11-07T00-52-20Z
 cs_mini0_mini0_default_kms_key_id: my-minio-key

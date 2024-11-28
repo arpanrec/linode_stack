@@ -124,10 +124,10 @@
                 maintenance_password: "{{ cs_postgres_maintenance_password }}"
                 maintenance_db: "{{ cs_postgres_maintenance_db }}"
                 servers:
-                    - "{{ cs_postgres_host_private_ip }}"
-                    - "{{ cs_postgres_host_public_ip }}"
-                    - "{{ cs_postgres_host_public_domain }}"
-                    - "{{ cs_postgres_host_private_domain }}"
+                    private_ip: "{{ cs_postgres_host_private_ip }}"
+                    public_ip: "{{ cs_postgres_host_public_ip }}"
+                    public_domain: "{{ cs_postgres_host_public_domain }}"
+                    private_domain: "{{ cs_postgres_host_private_domain }}"
                 server_port: "{{ cs_postgres_port }}"
                 server_version: "{{ cs_postgres_version }}"
         environment:
