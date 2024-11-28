@@ -1,4 +1,26 @@
 ---
+- name: Mini0 | Disk | Unencrypted | Get Disk details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/disks/{{ cs_mini0_external_disk_id }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __minio_external_disk_details
+
+- name: Mini0 | Disk | Unencrypted | Set config facts
+  ansible.builtin.set_fact:
+      cs_mini0_external_disk_enc_key_base64: "{{ __minio_external_disk_details.secret.luks_key_base64 }}"
+      cs_mini0_external_disk_enc_password: "{{ __minio_external_disk_details.secret.luks_password }}"
+      cs_mini0_external_disk_uuid: "{{ __minio_external_disk_details.secret.drive_uuid }}"
+
 - name: Mini0 | Disk | Unencrypted | Install cryptsetup
   ansible.builtin.package:
       name: cryptsetup

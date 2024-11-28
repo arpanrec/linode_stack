@@ -1,4 +1,26 @@
 ---
+- name: Mini0 | Get Config details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/minio"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __minio_details
+
+- name: Mini0 | Set config facts
+  ansible.builtin.set_fact:
+      cs_mini0_mini0_port: "{{ __minio_details.secret.port }}"
+      cs_mini0_mini0_console_port: "{{ __minio_details.secret.console_port }}"
+      cs_mini0_mini0_region: "{{ __minio_details.secret.region }}"
+
 - name: Minio | Assert | Set minio_server_kes_secret_id_vault
   ansible.builtin.set_fact:
       minio_server_kes_secret_id_vault: "{{ minio_server_kes_secret_id_vault | d(inventory_hostname)
@@ -217,3 +239,14 @@
       daemon_reload: true
       daemon_reexec: true
       enabled: true
+
+- name: Minio | Install | Wait for Minio to start
+  ansible.builtin.uri:
+      url: "http://localhost:{{ cs_mini0_mini0_port }}/minio/health/live"
+      status_code: 200
+      timeout: 5
+      method: GET
+  register: minio_server_health_check
+  until: minio_server_health_check.status == 200
+  retries: 10
+  delay: 5
