@@ -135,10 +135,6 @@
       state: file
   register: kes_tmp_admin_client_cert_tmp_file
 
-- name: KES | Install | Debug Temp File
-  ansible.builtin.debug:
-      var: kes_tmp_admin_client_cert_tmp_file
-
 - name: KES | Install | Write Admin Client Certificate
   ansible.builtin.copy:
       content: "{{ kes_tmp_admin_client_cert_res.data.data.certificate }}\n\
@@ -153,6 +149,11 @@
       cmd: "/usr/local/bin/kes identity of {{ kes_tmp_admin_client_cert_tmp_file.path }}"
   register: minio_kes_tmp_admin_key_id
   changed_when: false
+
+- name: KES | Install | Remove Temp File
+  ansible.builtin.file:
+      path: "{{ kes_tmp_admin_client_cert_tmp_file.path }}"
+      state: absent
 
 - name: KES | Install | Get Hashicorp Vault Client Certificate
   become: false
@@ -314,7 +315,51 @@
 - name: KES | Install | Start Systemd Service
   ansible.builtin.systemd_service:
       name: "{{ cs_mini0_kes_systemd_service_name }}"
-      state: started
+      state: restarted
       daemon_reload: true
       daemon_reexec: true
       enabled: true
+
+- name: KES | Install | Test | Create a temp file for client certificate
+  ansible.builtin.tempfile:
+      state: file
+  register: __temp_file_client_cert
+  with_items:
+      - "key"
+      - "cert"
+      - "ca_chain"
+
+- name: KES | Install | Test | Write Certificates
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
+      mode: "0600"
+  loop:
+      - content: "{{ kes_tmp_admin_client_cert_res.data.data.certificate }}\n\
+            {{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[1].path }}"
+      - content: "{{ kes_tmp_admin_client_cert_res.data.data.private_key }}"
+        dest: "{{ __temp_file_client_cert.results[0].path }}"
+      - content: "{{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
+        dest: "{{ __temp_file_client_cert.results[2].path }}"
+
+- name: KES | Install | Test | Wait for service to start
+  ansible.builtin.uri:
+      url: "https://127.0.0.1:{{ cs_mini0_kes_port }}/v1/status"
+      ca_path: "{{ __temp_file_client_cert.results[2].path }}"
+      client_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      client_key: "{{ __temp_file_client_cert.results[0].path }}"
+      validate_certs: true
+      status_code: 200
+      timeout: 2
+      return_content: false
+  register: __kes_ready
+  until: __kes_ready.status == 200
+  retries: 10
+  delay: 2
+
+- name: Database | Install | Test | Remove temporary certificates
+  ansible.builtin.file:
+      path: "{{ item.path }}"
+      state: absent
+  with_items: "{{ __temp_file_client_cert.results }}"

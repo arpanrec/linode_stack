@@ -23,7 +23,7 @@
 
 - name: Minio | Assert | Set cs_mini0_mini0_kes_cluster_name
   ansible.builtin.set_fact:
-      cs_mini0_mini0_kes_cluster_name: "{{ cs_mini0_mini0_kes_cluster_name | d(cs_mini0_mini0_cluster_name) }}
+      cs_mini0_mini0_kes_cluster_name: "{{ cs_mini0_mini0_kes_cluster_name | d(cs_mini0_mini0_cluster_name)
           | mandatory }}"
       cs_mini0_mini0_kes_cluster_node_name: "{{ cs_mini0_mini0_kes_cluster_node_name | d(inventory_hostname)
           | mandatory }}"
@@ -193,6 +193,9 @@
           server_version: "{{ cs_mini0_mini0_version }}"
           ca_cert: "{{ minio_server_kes_secret_dict.secret.admin_ca }}"
           server_cert: "{{ minio_server_kes_secret_dict.secret.admin_cert }}"
+          kes:
+              cluster_name: "{{ cs_mini0_mini0_kes_cluster_name }}"
+              cluster_node_name: "{{ cs_mini0_mini0_kes_cluster_node_name }}"
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
