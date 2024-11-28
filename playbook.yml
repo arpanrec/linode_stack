@@ -197,7 +197,7 @@
             file: tasks/collabora.yml
 
 - name: Nextcloud
-  hosts: rb4-m3
+  hosts: rb4-m2
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
