@@ -1,7 +1,7 @@
 ---
 - name: Nextcloud | Install | Check if Nextcloud config.php exists
   ansible.builtin.stat:
-      path: "{{ cs_nc_web_dir }}/config/config.php"
+      path: "{{ cs_nc_web_dir }}/occ"
   register: is_nc_www_config_php_present
 
 - name: Nextcloud | Install | Download New
@@ -89,59 +89,70 @@
       - src: files/nc/background.jpg
         dest: /tmp/nc-background.jpg
 
-- name: Nextcloud | Install | Databse Client Certificate | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_nc_db_privkey_pem_file }}"
-      size: 4096
+- name: Nextcloud | Install | Get DB Details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "managed-secrets"
+      path: "postgresql/clusters/{{ cs_nc_db_cluster_name }}/servers/{{ cs_nc_db_cluster_node }}/db/{{
+          cs_nc_db_database }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_db_details
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Install | Set db fact
+  ansible.builtin.set_fact:
+      cs_nc_db_user: "{{ __nextcloud_db_details.secret.user }}"
+      cs_nc_db_password: "{{ __nextcloud_db_details.secret.password }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.secret.private_ip }}"
+      cs_nc_db_port: "{{ __nextcloud_db_details.secret.server_port }}"
+
+- name: Nextcloud | Install | Get Db client certificate
+  become: false
+  when: cs_nc_protocol == "https"
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/client_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_nc_db_user }}"
+          alt_names: "{{ cs_nc_domain }}"
+  register: __nextcloud_db_client_certificate
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Install | Write Server Certificate
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
       mode: "0600"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
+  loop:
+      - content: "{{ __nextcloud_db_client_certificate.data.data.certificate }}\n\
+            {{ __nextcloud_db_client_certificate.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_nc_db_cert_pem_file }}"
+      - content: "{{ __nextcloud_db_client_certificate.data.data.private_key }}"
+        dest: "{{ cs_nc_db_privkey_pem_file }}"
+      - content: "{{ __nextcloud_db_client_certificate.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_nc_db_chain_pem_file }}"
+      - content: "{{ __nextcloud_db_client_certificate.data.data.ca_chain | last }}"
+        dest: "{{ cs_nc_root_ca_chain_pem_file }}"
 
-- name: Nextcloud | Install | Databse Client Certificate | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_nc_db_cert_csr_file }}"
-      privatekey_path: "{{ cs_nc_db_privkey_pem_file }}"
-      common_name: "{{ cs_nc_db_user }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "clientAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-
-- name: Nextcloud | Install | Databse Client Certificate | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_nc_db_cert_pem_file }}"
-      csr_path: "{{ cs_nc_db_cert_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-
-- name: Nextcloud | Install | Databse Client Certificate | Write CA certificate
-  ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_nc_db_chain_pem_file }}"
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-      remote_src: false
-
-- name: Nextcloud | Install | Write ownca CA certificate
-  ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_nc_root_ca_chain_pem_file }}"
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-      remote_src: false
+- name: Hard Fail
+  ansible.builtin.fail:
+      msg: "Hard Fail"
 
 - name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
