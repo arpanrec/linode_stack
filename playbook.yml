@@ -98,7 +98,7 @@
             file: tasks/vaultops/github.yml
 
 - name: Mini0 KES
-  hosts: rb4-m1
+  hosts: mini0_kes
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
@@ -111,7 +111,7 @@
             file: tasks/mini0-kes.yml
 
 - name: Mini0
-  hosts: rb4-m1
+  hosts: mini0_mini0
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
