@@ -234,14 +234,16 @@
 - name: Minio | Install | Enable UFW
   community.general.ufw:
       rule: allow
-      port: "{{ item }}"
+      port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Mini0 Console/S3 port, Managed by Ansible home-lab playbook {{
+      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook {{
           now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   loop:
-      - "{{ cs_mini0_mini0_port }}"
-      - "{{ cs_mini0_mini0_console_port }}"
+      - port: "{{ cs_mini0_mini0_port }}"
+        comment: "S3"
+      - port: "{{ cs_mini0_mini0_console_port }}"
+        comment: "Console"
 
 - name: Minio | Install | Create Systemd Service
   ansible.builtin.template:

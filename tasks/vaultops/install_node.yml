@@ -123,14 +123,16 @@
 - name: Vaultops | Vault Virtual Node Server | Install | Node | Enable UFW Firewall
   community.general.ufw:
       rule: allow
-      port: "{{ item }}"
+      port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Vault Node/Cluster port, Managed by Ansible home-lab playbook {{
+      comment: "Allow Vault {{ item.comment }} port, Managed by Ansible home-lab playbook {{
           now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   with_items:
-      - "{{ pv_vault_node_port }}"
-      - "{{ pv_vault_cluster_port }}"
+      - port: "{{ pv_vault_node_port }}"
+        comment: "Node"
+      - port: "{{ pv_vault_cluster_port }}"
+        comment: "Cluster"
 
 - name: Vaultops | Vault Virtual Node Server | Install | Node | Enable Vault Service
   ansible.builtin.systemd:
