@@ -125,8 +125,9 @@
       rule: allow
       port: "{{ item }}"
       proto: tcp
-      comment: Vault Node Port
       state: enabled
+      comment: "Allow Vault Node/Cluster port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   with_items:
       - "{{ pv_vault_node_port }}"
       - "{{ pv_vault_cluster_port }}"

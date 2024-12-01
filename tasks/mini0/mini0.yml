@@ -236,7 +236,9 @@
       rule: allow
       port: "{{ item }}"
       proto: tcp
-      comment: "Minio Server"
+      state: enabled
+      comment: "Allow Mini0 Console/S3 port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   loop:
       - "{{ cs_mini0_mini0_port }}"
       - "{{ cs_mini0_mini0_console_port }}"

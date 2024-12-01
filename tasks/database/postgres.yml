@@ -33,7 +33,8 @@
       port: "{{ cs_postgres_port }}"
       proto: tcp
       state: enabled
-      comment: "Postgres: Managed by Ansible"
+      comment: "Allow Postgres port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
 
 - name: Database | Postgres | Install python3-psycopg2
   ansible.builtin.apt:

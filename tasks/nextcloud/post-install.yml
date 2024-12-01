@@ -34,6 +34,9 @@
       rule: allow
       port: "{{ item }}"
       state: enabled
+      proto: tcp
+      comment: "Allow Nextcloud port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   with_items:
       - "{{ cs_nc_port }}"
 
