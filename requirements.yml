@@ -13,7 +13,7 @@ collections:
     - name: kewlfft.aur
       version: 0.11.1
     - name: arpanrec.nebula
-      version: 1.11.2
+      version: 1.11.4
     - name: community.hashi_vault
       version: 6.2.0
 roles:
