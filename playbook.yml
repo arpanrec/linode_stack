@@ -130,6 +130,38 @@
         ansible.builtin.import_tasks:
             file: tasks/mini0/mini0.yml
 
+- name: Database
+  hosts: postgres
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Database | Postgres
+        become: true
+        become_user: root
+        tags: never,postgres
+        ansible.builtin.import_tasks:
+            file: tasks/database/postgres.yml
+
+- name: Database
+  hosts: rb4-m1
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Database | Redis
+        become: true
+        become_user: root
+        tags: never,database,redis
+        ansible.builtin.import_tasks:
+            file: tasks/database/redis.yml
+
+      - name: Database | Elasticsearch
+        become: true
+        become_user: root
+        tags: never,database,elasticsearch
+        ansible.builtin.import_tasks:
+            file: tasks/database/elasticsearch.yml
 - name: NFS Server
   hosts: rb4-m3
   become: false
@@ -155,33 +187,6 @@
         tags: never,nfs-client
         ansible.builtin.import_tasks:
             file: tasks/nfs-client.yml
-
-- name: Database
-  hosts: rb4-m1
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tasks:
-      - name: Database | Postgres
-        become: true
-        become_user: root
-        tags: never,database,postgres
-        ansible.builtin.import_tasks:
-            file: tasks/database/postgres.yml
-
-      - name: Database | Redis
-        become: true
-        become_user: root
-        tags: never,database,redis
-        ansible.builtin.import_tasks:
-            file: tasks/database/redis.yml
-
-      - name: Database | Elasticsearch
-        become: true
-        become_user: root
-        tags: never,database,elasticsearch
-        ansible.builtin.import_tasks:
-            file: tasks/database/elasticsearch.yml
 
 - name: Collabora
   hosts: rb4-m2
