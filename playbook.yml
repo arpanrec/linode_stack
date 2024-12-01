@@ -195,21 +195,8 @@
         ansible.builtin.import_tasks:
             file: tasks/nfs-client.yml
 
-- name: Collabora
-  hosts: rb4-m2
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tasks:
-      - name: Collabora
-        tags: never,collabora
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/collabora.yml
-
 - name: Nextcloud
-  hosts: rb4-m3
+  hosts: nextcloud
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
@@ -298,6 +285,19 @@
         tags: never,nextcloud,nextcloud_dump
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/dump.yml
+
+- name: Collabora
+  hosts: rb4-m2
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
+  tasks:
+      - name: Collabora
+        tags: never,collabora
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/collabora.yml
 
 - name: Delete all
   hosts: patchservers

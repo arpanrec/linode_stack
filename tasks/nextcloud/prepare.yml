@@ -1,4 +1,51 @@
 ---
+- name: Nextcloud | Prepare | Get Public Ingress IP and Hostname from vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "secret"
+      path: "blr-home-lab"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_server_public_ingress_secret_dict
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Prepare | Set fact Public Ingress IP and Hostname
+  ansible.builtin.set_fact:
+      cs_public_ingress_ip: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_ip }}"
+      cs_public_ingress_dns_entry: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_dns_entry }}"
+
+- name: Nextcloud | Prepare | Get Config details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __nextcloud_app_details
+
+- name: Nextcloud | Prepare | Set config facts
+  ansible.builtin.set_fact:
+      cs_nc_port: "{{ __nextcloud_app_details.secret.port }}"
+      # cs_nc_admin_user:
+      # cs_nc_admin_password:
+      # cs_nc_imaginary_key:
+      # cs_nc_imaginary_port:
+      # cs_nc_imaginary_domain:
+      # cs_nc_users_dict:
+
 - name: Nextcloud | Prepare | Install Packages
   ansible.builtin.apt:
       state: present
@@ -188,59 +235,44 @@
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
   with_items:
-      - "{{ cs_nc_cert_dir }}"
       - "{{ cs_nc_cert_privkey_file | dirname }}"
       - "{{ cs_nc_cert_cert_file | dirname }}"
       - "{{ cs_nc_cert_chain_file | dirname }}"
-      - "{{ cs_nc_cert_cert_csr_file | dirname }}"
 
-- name: Nextcloud | Prepare | Server Certificate | Create SSL Private key
-  community.crypto.openssl_privatekey:
-      path: "{{ cs_nc_cert_privkey_file }}"
-      size: 4096
-      mode: "0600"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
+- name: Nextcloud | Prepare | Get Server Certificates from Vault
+  become: false
+  when: cs_nc_protocol == "https"
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/server_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_nc_domain }}"
+          alt_names: "{{ cs_nc_domain }}"
+  register: __nextcloud_server_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Nextcloud | Prepare | Server Certificate | Create SSL CSR
-  community.crypto.openssl_csr:
-      path: "{{ cs_nc_cert_cert_csr_file }}"
-      privatekey_path: "{{ cs_nc_cert_privkey_file }}"
-      common_name: "{{ cs_nc_domain }}"
-      subject_alt_name:
-          - "DNS:{{ cs_nc_domain }}"
-      key_usage:
-          - "digitalSignature"
-          - "keyEncipherment"
-          - "keyAgreement"
-      extended_key_usage:
-          - "serverAuth"
-      create_subject_key_identifier: true
-      mode: "0644"
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-
-- name: Nextcloud | Prepare | Server Certificate | Sign SSL CSR
-  community.crypto.x509_certificate:
-      path: "{{ cs_nc_cert_cert_file }}"
-      csr_path: "{{ cs_nc_cert_cert_csr_file }}"
-      provider: ownca
-      ownca_privatekey_content: "{{ root_ca_key_pem }}"
-      ownca_privatekey_passphrase: "{{ root_ca_key_passphrase }}"
-      ownca_content: "{{ root_ca_cert_pem }}"
-      mode: "0644"
-      return_content: true
-      owner: "{{ cs_nc_run_user }}"
-      group: "{{ cs_nc_run_group }}"
-
-- name: Nextcloud | Prepare | Server Certificate | Write CA certificate
+- name: Nextcloud | Prepare | Write Server Certificate
   ansible.builtin.copy:
-      content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_nc_cert_chain_file }}"
-      mode: "0644"
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
-      remote_src: false
+      mode: "0600"
+  loop:
+      - content: "{{ __nextcloud_server_cert.data.data.certificate }}\n\
+            {{ __nextcloud_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_nc_cert_cert_file }}"
+      - content: "{{ __nextcloud_server_cert.data.data.private_key }}"
+        dest: "{{ cs_nc_cert_privkey_file }}"
+      - content: "{{ __nextcloud_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_nc_cert_chain_file }}"
 
 - name: Nextcloud | Prepare | Create Apache2 config
   ansible.builtin.template:
