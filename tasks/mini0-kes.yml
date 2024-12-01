@@ -311,7 +311,7 @@
       port: "{{ cs_mini0_kes_port }}"
       proto: tcp
       state: enabled
-      comment: "Allow KES port, Managed by Ansible home-lab playbook {{ now(utc=true,fmt='%Y-%m-%d %H:%M:%S') }}"
+      comment: "Allow KES port, Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
 
 - name: KES | Install | Start Systemd Service
   ansible.builtin.systemd_service:
