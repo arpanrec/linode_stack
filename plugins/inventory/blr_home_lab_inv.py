@@ -29,7 +29,7 @@ from ansible.template import Templar  # type: ignore
 from ansible.utils.display import Display  # type: ignore
 from cryptography.hazmat.backends import default_backend  # type: ignore
 from cryptography.hazmat.primitives import serialization
-from hvac.exceptions import VaultDown, InternalServerError  # type: ignore
+from hvac.exceptions import InternalServerError, VaultDown  # type: ignore
 from pydantic_core import to_jsonable_python
 from requests import ConnectTimeout
 from vaultops.builder.vault_config import build_vault_config
