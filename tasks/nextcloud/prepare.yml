@@ -231,7 +231,7 @@
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
-      mode: "0755"
+      mode: "0750"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
   with_items:
@@ -278,7 +278,7 @@
   ansible.builtin.template:
       src: templates/nc/{{ cs_nc_apache_template_name }}.conf.j2
       dest: "/etc/apache2/sites-available/{{ cs_nc_apache_template_name }}.conf"
-      mode: "0644"
+      mode: "0640"
       owner: root
       group: root
 
@@ -286,7 +286,7 @@
   ansible.builtin.file:
       path: "{{ cs_nc_web_dir }}"
       state: directory
-      mode: "0755"
+      mode: "0750"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
 

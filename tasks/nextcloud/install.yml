@@ -75,7 +75,7 @@
             msg: "Failed to download/install Nextcloud {{ cs_nc_version }}
                 Please check the logs for more information"
 
-- name: Nextcloud | Install | Download New | Remove AD
+- name: Nextcloud | Install | Remove AD
   ansible.builtin.command:
       cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
   changed_when: true
@@ -114,6 +114,21 @@
         dest: /tmp/nc-logoheader.png
       - src: files/nc/background.jpg
         dest: /tmp/nc-background.jpg
+
+- name: Nextcloud | Install | Reset permissions and ownership
+  ansible.builtin.shell:
+      cmd: |+
+          set -euo pipefail;
+
+          find {{ cs_nc_data_dir }}/ -type d -exec chmod 0750 {} \;
+          find {{ cs_nc_data_dir }}/ -type f -exec chmod 0640 {} \;
+          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
+
+          find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
+          find {{ cs_nc_web_dir }}/ -type f -exec chmod 0640 {} \;
+          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
+      executable: /bin/bash
+  changed_when: true
 
 - name: Nextcloud | Install | Get DB Details
   become: false
@@ -164,7 +179,7 @@
       dest: "{{ item.dest }}"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
-      mode: "0640"
+      mode: "0600"
   loop:
       - content: "{{ __nextcloud_db_client_certificate.data.data.certificate }}\n\
             {{ __nextcloud_db_client_certificate.data.data.ca_chain | join('\n') }}"
@@ -176,20 +191,27 @@
       - content: "{{ __nextcloud_db_client_certificate.data.data.ca_chain | last }}"
         dest: "{{ cs_nc_root_ca_chain_pem_file }}"
 
-- name: Nextcloud | Install | Reset permissions and ownership
-  ansible.builtin.shell:
-      cmd: |+
-          set -euo pipefail;
+- name: Nextcloud | Install | Install python3-psycopg2
+  ansible.builtin.apt:
+      name: python3-psycopg2
 
-          find {{ cs_nc_data_dir }}/ -type d -exec chmod 0750 {} \;
-          find {{ cs_nc_data_dir }}/ -type f -exec chmod 640 {} \;
-          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
-
-          find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
-          find {{ cs_nc_web_dir }}/ -type f -exec chmod 640 {} \;
-          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
-      executable: /bin/bash
-  changed_when: true
+- name: Nextcloud | Install | Test if Postgres is up
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  community.postgresql.postgresql_ping:
+      login_host: "{{ cs_nc_db_host }}"
+      login_password: "{{ cs_nc_db_password }}"
+      login_user: "{{ cs_nc_db_user }}"
+      login_port: "{{ cs_nc_db_port }}"
+      login_db: "{{ cs_nc_db_database }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ cs_nc_db_chain_pem_file }}"
+      ssl_cert: "{{ cs_nc_db_cert_pem_file }}"
+      ssl_key: "{{ cs_nc_db_privkey_pem_file }}"
+  register: is_postgres_up
+  until: is_postgres_up.is_available
+  retries: 30
+  delay: 3
 
 - name: Nextcloud | Install | Check if Nextcloud is installed
   ansible.builtin.stat:
@@ -238,9 +260,27 @@
   register: nc_install_output
   changed_when: true
 
-# 'dbhost' => '192.168.0.162;port=8566;sslmode=verify-full;sslrootcert=/app/nextcloud/certs/db_certs/db_chain.pem;sslcert=/app/nextcloud/certs/db_certs/db_cert.pem;sslkey=/app/nextcloud/certs/db_certs/db_privkey.pem'
+- name: Nextcloud | Install | DB user String
+  ansible.builtin.lineinfile:
+      path: "{{ cs_nc_web_dir }}/config/config.php"
+      line: "  'dbuser' => '{{ cs_nc_db_user }}',"
+      mode: "0640"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      insertafter: "^  'dbtableprefix' =>.*"
+      regexp: "^  'dbuser' => '.*"
 
-- name: Nextcloud | Install | DB String
+- name: Nextcloud | Install | DB password String
+  ansible.builtin.lineinfile:
+      path: "{{ cs_nc_web_dir }}/config/config.php"
+      line: "  'dbpassword' => '{{ cs_nc_db_password }}',"
+      mode: "0640"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      insertafter: "^  'dbuser' =>.*"
+      regexp: "^  'dbpassword' => '.*"
+
+- name: Nextcloud | Install | DB host String
   ansible.builtin.lineinfile:
       path: "{{ cs_nc_web_dir }}/config/config.php"
       line: "  'dbhost' => '{{ cs_nc_db_host }};port={{ cs_nc_db_port }};sslmode=verify-full;sslrootcert={{
@@ -248,12 +288,8 @@
       mode: "0640"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
-      insertafter: ".*'dbtype'.*"
-      regexp: "^  'dbhost' => '.*'"
-
-- name: Hard Fail
-  ansible.builtin.fail:
-      msg: "Hard Fail"
+      insertafter: "^  'dbname' =>.*"
+      regexp: "^  'dbhost' => '.*"
 
 - name: Nextcloud | Install | Get Status
   become: true
@@ -264,6 +300,9 @@
   changed_when: false
   register: nc_status
 
+- name: Hard Fail
+  ansible.builtin.fail:
+      msg: "Hard Fail"
 - name: Nextcloud | Install | Test if Nextcloud is installed correctly
   ansible.builtin.assert:
       that:
