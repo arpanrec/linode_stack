@@ -366,6 +366,13 @@
       data:
           user: "{{ item.ansible_facts.user }}"
           password: "{{ item.ansible_facts.password }}"
+          maintenance_db: "{{ cs_postgres_maintenance_db }}"
+          private_ip: "{{ cs_postgres_host_private_ip }}"
+          public_ip: "{{ cs_postgres_host_public_ip }}"
+          public_domain: "{{ cs_postgres_host_public_domain }}"
+          private_domain: "{{ cs_postgres_host_private_domain }}"
+          server_port: "{{ cs_postgres_port }}"
+          server_version: "{{ cs_postgres_version }}"
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
