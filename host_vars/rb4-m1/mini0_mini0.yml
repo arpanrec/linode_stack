@@ -3,8 +3,5 @@ cs_mini0_external_disk_id: "p1-5tb-rb4-m1"
 cs_mini0_external_disk_crypt_open_name: mini0cryptdevice
 cs_mini0_external_disk_mount_path: "/mnt/{{ cs_mini0_external_disk_crypt_open_name }}"
 
-cs_mini0_kes_hostnames: ["localhost"]
-cs_mini0_kes_ips: ["127.0.0.1", "{{ cs_rb4_m1_ip }}"]
-
 cs_mini0_mini0_hostnames: ["localhost", "{{ cs_public_ingress_dns_entry }}"]
 cs_mini0_mini0_ips: ["127.0.0.1", "{{ cs_rb4_m1_ip }}", "{{ cs_public_ingress_ip }}"]
