@@ -116,6 +116,7 @@
       rule: allow
       port: "{{ cs_redis_tls_port }}"
       state: enabled
+      comment: "Allow Redis TLS port, Managed by Ansible"
 
 - name: Database | Redis | Test | Install Redis Tools
   ansible.builtin.apt:

@@ -21,6 +21,20 @@
       cs_postgres_maintenance_db: "{{ __postgresql_config.secret.maintenance_db }}"
       cs_postgres_apps_dict: "{{ __postgresql_config.secret.apps_dict }}"
 
+- name: Database | Postgres | Enable Docker
+  ansible.builtin.systemd:
+      name: docker
+      enabled: true
+      state: started
+
+- name: Database | Postgres | Enable UFW Port
+  community.general.ufw:
+      rule: allow
+      port: "{{ cs_postgres_port }}"
+      proto: tcp
+      state: enabled
+      comment: "Postgres: Managed by Ansible"
+
 - name: Database | Postgres | Install python3-psycopg2
   ansible.builtin.apt:
       name: python3-psycopg2

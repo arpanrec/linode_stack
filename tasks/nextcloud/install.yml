@@ -1,4 +1,25 @@
 ---
+- name: Nextcloud | Install | Get Public Ingress IP and Hostname from vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "secret"
+      path: "blr-home-lab"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_server_public_ingress_secret_dict
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Install | Set fact Public Ingress IP and Hostname
+  ansible.builtin.set_fact:
+      cs_public_ingress_ip: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_ip }}"
+      cs_public_ingress_dns_entry: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_dns_entry }}"
+
 - name: Nextcloud | Install | Check if Nextcloud config.php exists
   ansible.builtin.stat:
       path: "{{ cs_nc_web_dir }}/occ"
@@ -27,6 +48,8 @@
             remote_src: true
             creates: "/tmp/nextcloud-{{ cs_nc_version }}/index.php"
             mode: "0644"
+            owner: "{{ cs_nc_run_user }}"
+            group: "{{ cs_nc_run_group }}"
 
       - name: Nextcloud | Install | Download New | Copy Nextcloud to {{ cs_nc_web_dir }}
         ansible.builtin.copy:
@@ -46,6 +69,7 @@
             - "/tmp/nextcloud-{{ cs_nc_version }}.zip"
             - "/tmp/nextcloud-{{ cs_nc_version }}"
             - "{{ cs_nc_web_dir }}"
+
       - name: Nextcloud | Install | Download New | Fail
         ansible.builtin.fail:
             msg: "Failed to download/install Nextcloud {{ cs_nc_version }}
@@ -60,7 +84,7 @@
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
-      mode: "0755"
+      mode: "0750"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
   with_items:
@@ -78,7 +102,9 @@
   ansible.builtin.copy:
       src: "{{ item.src }}"
       dest: "{{ item.dest }}"
-      mode: "0644"
+      mode: "0640"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
   with_items:
       - src: files/nc/favicon.svg
         dest: /tmp/nc-favicon.ico
@@ -132,13 +158,13 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Nextcloud | Install | Write Server Certificate
+- name: Nextcloud | Install | Write DB client certificate to disk
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
-      mode: "0600"
+      mode: "0640"
   loop:
       - content: "{{ __nextcloud_db_client_certificate.data.data.certificate }}\n\
             {{ __nextcloud_db_client_certificate.data.data.ca_chain | join('\n') }}"
@@ -149,10 +175,6 @@
         dest: "{{ cs_nc_db_chain_pem_file }}"
       - content: "{{ __nextcloud_db_client_certificate.data.data.ca_chain | last }}"
         dest: "{{ cs_nc_root_ca_chain_pem_file }}"
-
-- name: Hard Fail
-  ansible.builtin.fail:
-      msg: "Hard Fail"
 
 - name: Nextcloud | Install | Reset permissions and ownership
   ansible.builtin.shell:
@@ -174,6 +196,32 @@
       path: "{{ cs_nc_web_dir }}/config/CAN_INSTALL"
   register: is_nc_occ_installed
 
+- name: Nextcloud | Install | Get Config details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __nextcloud_app_details
+
+- name: Nextcloud | Install | Set config facts
+  ansible.builtin.set_fact:
+      cs_nc_port: "{{ __nextcloud_app_details.secret.port }}"
+      cs_nc_admin_user: "{{ __nextcloud_app_details.secret.admin_user }}"
+      cs_nc_admin_password: "{{ __nextcloud_app_details.secret.admin_password }}"
+      # cs_nc_imaginary_key:
+      # cs_nc_imaginary_port:
+      # cs_nc_imaginary_domain:
+      # cs_nc_users_dict:
+
 - name: Nextcloud | Install | Install Nextcloud for the first time
   when: is_nc_occ_installed.stat.exists
   become: true
@@ -189,6 +237,23 @@
       chdir: "{{ cs_nc_web_dir }}"
   register: nc_install_output
   changed_when: true
+
+# 'dbhost' => '192.168.0.162;port=8566;sslmode=verify-full;sslrootcert=/app/nextcloud/certs/db_certs/db_chain.pem;sslcert=/app/nextcloud/certs/db_certs/db_cert.pem;sslkey=/app/nextcloud/certs/db_certs/db_privkey.pem'
+
+- name: Nextcloud | Install | DB String
+  ansible.builtin.lineinfile:
+      path: "{{ cs_nc_web_dir }}/config/config.php"
+      line: "  'dbhost' => '{{ cs_nc_db_host }};port={{ cs_nc_db_port }};sslmode=verify-full;sslrootcert={{
+          cs_nc_db_chain_pem_file }};sslcert={{ cs_nc_db_cert_pem_file }};sslkey={{ cs_nc_db_privkey_pem_file }}',"
+      mode: "0640"
+      owner: "{{ cs_nc_run_user }}"
+      group: "{{ cs_nc_run_group }}"
+      insertafter: ".*'dbtype'.*"
+      regexp: "^  'dbhost' => '.*'"
+
+- name: Hard Fail
+  ansible.builtin.fail:
+      msg: "Hard Fail"
 
 - name: Nextcloud | Install | Get Status
   become: true
