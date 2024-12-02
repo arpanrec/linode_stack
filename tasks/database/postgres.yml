@@ -568,7 +568,7 @@
       ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
   with_items: "{{ __random_user_password.results }}"
 
-- name: Database | Postgres | Grant privileges schema
+- name: Database | Postgres | Change owner of databases
   community.postgresql.postgresql_owner:
       obj_type: "database"
       obj_name: "{{ item.item.key }}"

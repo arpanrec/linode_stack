@@ -300,9 +300,6 @@
   changed_when: false
   register: nc_status
 
-- name: Hard Fail
-  ansible.builtin.fail:
-      msg: "Hard Fail"
 - name: Nextcloud | Install | Test if Nextcloud is installed correctly
   ansible.builtin.assert:
       that:
@@ -350,26 +347,6 @@
       cmd: "php occ config:system:set updater.release.channel --value stable"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: false
-
-- name: Nextcloud | Install | Get Status
-  become: true
-  become_user: "{{ cs_nc_run_user }}"
-  ansible.builtin.command:
-      cmd: "php occ status --output=json"
-      chdir: "{{ cs_nc_web_dir }}"
-  changed_when: false
-  register: nc_status_installed
-
-- name: Nextcloud | Install | Test if Nextcloud is installed correctly
-  ansible.builtin.assert:
-      that:
-          - nc_current_status.installed
-          - nc_current_status.versionstring == cs_nc_version
-          - not nc_current_status.needsDbUpgrade
-      fail_msg: "Nextcloud is not installed correctly"
-      success_msg: "Nextcloud is installed"
-  vars:
-      nc_current_status: "{{ nc_status_installed.stdout | from_json }}"
 
 - name: Nextcloud | Install | Import Ownca CA certificate
   become: true
