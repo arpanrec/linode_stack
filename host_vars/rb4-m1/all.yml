@@ -1,2 +1,6 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
+
+cs_elasticsearch_host: "{{ cs_rb4_m1_ip }}"
+
+cs_redis_private_ip: "{{ cs_rb4_m1_ip }}"
