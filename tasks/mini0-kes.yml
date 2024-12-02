@@ -33,7 +33,7 @@
       shell: /bin/false
   register: minio_kes_tmp_user_creation
 
-- name: Mini0 | KES | Create Directory
+- name: KES | Install | Create Directory
   ansible.builtin.file:
       name: "{{ item }}"
       owner: "{{ cs_mini0_kes_user_name }}"
@@ -311,6 +311,7 @@
       port: "{{ cs_mini0_kes_port }}"
       proto: tcp
       state: enabled
+      comment: "Allow KES port, Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
 
 - name: KES | Install | Start Systemd Service
   ansible.builtin.systemd_service:

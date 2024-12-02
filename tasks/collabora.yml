@@ -115,4 +115,6 @@
       rule: allow
       port: "{{ cs_collabora_https_port }}"
       proto: tcp
-      comment: "Collabora"
+      state: enabled
+      comment: "Allow Collabora port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"

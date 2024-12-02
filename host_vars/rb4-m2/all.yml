@@ -1,2 +1,5 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
+
+cs_nc_db_cluster_name: blr-home-lab
+cs_nc_db_cluster_node: rb4-m1

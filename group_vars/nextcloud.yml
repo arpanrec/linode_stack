@@ -45,22 +45,8 @@ cs_nc_domain: "{{ cs_public_ingress_dns_entry }}"
 cs_nc_db_type: pgsql
 cs_nc_db_version: "{{ cs_postgres_docker_image_tag }}"
 cs_nc_db_docker_image: "{{ cs_postgres_docker_image }}"
-cs_nc_db_user: "{{ cs_postgres_apps_dict.nextcloud.user }}"
-cs_nc_db_password: "{{ cs_postgres_apps_dict.nextcloud.password }}"
-cs_nc_db_database: "{{ cs_postgres_apps_dict.nextcloud.database }}"
-cs_nc_db_host: "{{ cs_postgres_host_private_ip }}"
-cs_nc_db_port: "{{ cs_postgres_port }}"
 
-cs_nc_mail_smtpmode: "{{ cs_mail_smtpmode }}"
-cs_nc_mail_sendmailmode: "{{ cs_mail_sendmailmode }}"
-cs_nc_mail_smtpport: "{{ cs_mail_smtpport }}"
-cs_nc_mail_from_address: "{{ cs_mail_from_address }}"
-cs_nc_mail_domain: "{{ cs_mail_domain }}"
-cs_nc_mail_smtpsecure: "{{ cs_mail_smtpsecure }}"
-cs_nc_mail_smtpauth: "{{ cs_mail_smtpauth }}"
-cs_nc_mail_smtphost: "{{ cs_mail_smtphost }}"
-cs_nc_mail_smtpname: "{{ cs_mail_smtpname }}"
-cs_nc_mail_smtppassword: "{{ cs_mail_smtppassword }}"
+cs_nc_db_database: nextcloud
 
 cs_nc_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
 cs_nc_redis_privkey_file: "{{ cs_nc_redis_cert_dir }}/redis.key"
