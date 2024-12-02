@@ -1,5 +1,106 @@
 ---
-- name: Nextcloud | Mount Disk | Unencrypted | Create backup and ops directory
+- name: Nextcloud | Disk | Mount | Get Disk details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/disks/{{ cs_nextcloud_external_disk_id }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __nextcloud_external_disk_details
+
+- name: Nextcloud | Disk | Mount | Set config facts
+  ansible.builtin.set_fact:
+      cs_nextcloud_external_disk_enc_key_base64: "{{ __nextcloud_external_disk_details.secret.luks_key_base64 }}"
+      cs_nextcloud_external_disk_enc_password: "{{ __nextcloud_external_disk_details.secret.luks_password }}"
+      cs_nextcloud_external_disk_uuid: "{{ __nextcloud_external_disk_details.secret.drive_uuid }}"
+      cs_nextcloud_external_crypt_device_uuid: "{{ __nextcloud_external_disk_details.secret.crypt_device_uuid }}"
+
+- name: Nextcloud | Disk | Mount | Install cryptsetup
+  ansible.builtin.package:
+      name: cryptsetup
+      state: present
+
+- name: Nextcloud | Disk | Mount | Copy key file
+  ansible.builtin.copy:
+      content: "{{ cs_nextcloud_external_disk_enc_key_base64 | b64decode }}"
+      dest: "/root/.luks-key-{{ cs_nextcloud_external_disk_id }}"
+      mode: "0000"
+      remote_src: false
+
+- name: Nextcloud | Disk | Mount | Create mount point
+  ansible.builtin.file:
+      path: "{{ cs_nextcloud_external_disk_mount_path }}"
+      state: directory
+      mode: "0755"
+
+- name: Nextcloud | Disk | Mount | Add to crypttab
+  ansible.builtin.lineinfile:
+      path: /etc/crypttab
+      line: "{{ cs_nextcloud_external_disk_crypt_open_name }} UUID={{ cs_nextcloud_external_disk_uuid }}
+          /root/.luks-key-{{ cs_nextcloud_external_disk_id }} luks"
+      create: true
+      mode: "0644"
+      owner: root
+      group: root
+      regexp: "^{{ cs_nextcloud_external_disk_crypt_open_name }}"
+      backup: true
+
+- name: Nextcloud | Disk | Mount | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_nextcloud_external_disk_crypt_open_name }}.*"
+      state: absent
+      backup: true
+
+- name: Nextcloud | Disk | Mount | Mount
+  ansible.posix.mount:
+      src: /dev/mapper/{{ cs_nextcloud_external_disk_crypt_open_name }}
+      path: "{{ cs_nextcloud_external_disk_mount_path }}"
+      fstype: ext4
+      state: present
+      boot: true
+      opts: defaults,noatime,nofail
+      dump: 0
+      passno: 2
+      backup: true
+
+- name: Nextcloud | Disk | Mount | Restart systemd-cryptsetup@{{ cs_nextcloud_external_disk_crypt_open_name }}
+  ansible.builtin.systemd_service:
+      name: systemd-cryptsetup@{{ cs_nextcloud_external_disk_crypt_open_name }}
+      enabled: true
+      state: restarted
+      daemon_reload: true
+
+- name: Nextcloud | Disk | Mount | Gather facts
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Nextcloud | Disk | Mount | Check for self uuid file
+  ansible.builtin.copy:
+      content: "{{ ansible_facts | to_json }}"
+      dest: "./foo-ansible.json"
+  delegate_to: localhost
+  become: false
+
+- name: "Nextcloud | Disk | Mount | Check for self uuid file
+      {{ cs_nextcloud_external_disk_mount_path + '/' + cs_nextcloud_external_disk_uuid }}"
+  ansible.builtin.stat:
+      path: "{{ cs_nextcloud_external_disk_mount_path }}/{{ cs_nextcloud_external_disk_uuid }}"
+  register: uuid_file
+  failed_when: not uuid_file.stat.exists
+
+- name: Hard fail
+  ansible.builtin.fail:
+      msg: "This is a hard fail"
+
+- name: Nextcloud | Disk | Application | Create backup and ops directory
   ansible.builtin.file:
       path: "{{ cs_nc_external_drive_mount_web_path }}"
       state: directory
@@ -7,7 +108,7 @@
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Get all the groups
+- name: Nextcloud | Disk | Application | Get all the groups
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -16,7 +117,7 @@
   changed_when: false
   register: nextcloud_mount_groups
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create group
+- name: Nextcloud | Disk | Application | Create group
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -25,7 +126,7 @@
   changed_when: true
   when: cs_nc_files_external_mount_group_name not in nextcloud_mount_groups.stdout | from_json
 
-- name: Nextcloud | Mount Disk | Unencrypted | Get all storage
+- name: Nextcloud | Disk | Application | Get all storage
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -34,17 +135,17 @@
   changed_when: false
   register: nextcloud_mount_storages
 
-- name: Nextcloud | Mount Disk | Unencrypted | Set fact for existing storage
+- name: Nextcloud | Disk | Application | Set fact for existing storage
   ansible.builtin.set_fact:
       existing_storage_mount: "{{ nextcloud_mount_storages.stdout | from_json
           | community.general.json_query('[?mount_point==`/' + cs_nc_files_external_mount_folder_name + '`]') }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Fail if multiple storage found
+- name: Nextcloud | Disk | Application | Fail if multiple storage found
   ansible.builtin.fail:
       msg: "Multiple storage found with same name"
   when: existing_storage_mount | length > 1
 
-- name: Nextcloud | Mount Disk | Unencrypted | Test Basic config
+- name: Nextcloud | Disk | Application | Test Basic config
   when: existing_storage_mount | length == 1
   ansible.builtin.assert:
       that:
@@ -55,7 +156,7 @@
       success_msg: "Storage type is \\OC\\Files\\Storage\\Local
           and configuration.datadir is {{ cs_nc_external_drive_mount_web_path }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create storage
+- name: Nextcloud | Disk | Application | Create storage
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -65,7 +166,7 @@
   changed_when: true
   when: existing_storage_mount | length == 0
 
-- name: Nextcloud | Mount Disk | Unencrypted | Repopulate nextcloud_mount_storages
+- name: Nextcloud | Disk | Application | Repopulate nextcloud_mount_storages
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -74,13 +175,13 @@
   changed_when: false
   register: nextcloud_mount_storages
 
-- name: Nextcloud | Mount Disk | Unencrypted | Set Mount ID
+- name: Nextcloud | Disk | Application | Set Mount ID
   ansible.builtin.set_fact:
       existing_storage_mount_id: "{{ nextcloud_mount_storages.stdout
           | from_json | community.general.json_query('[?mount_point==`/'
           + cs_nc_files_external_mount_folder_name + '`].mount_id') | first }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Set Config
+- name: Nextcloud | Disk | Application | Set Config
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -98,20 +199,20 @@
       - files_external:option {{ existing_storage_mount_id }} readonly false
       - files_external:option {{ existing_storage_mount_id }} encrypt false
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create systemd unit file for nextcloud scan files
+- name: Nextcloud | Disk | Application | Create systemd unit file for nextcloud scan files
   ansible.builtin.template:
       dest: /etc/systemd/system/{{ cs_nc_files_scanner_systemd_timer_name }}.service
       src: templates/nc/{{ cs_nc_files_scanner_systemd_timer_name }}.service.j2
       mode: "0644"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create systemd timmer file for nextcloud scan files
+- name: Nextcloud | Disk | Application | Create systemd timmer file for nextcloud scan files
   ansible.builtin.copy:
       dest: /etc/systemd/system/{{ cs_nc_files_scanner_systemd_timer_name }}.timer
       src: files/nc/{{ cs_nc_files_scanner_systemd_timer_name }}.timer
       mode: "0644"
       remote_src: false
 
-- name: Nextcloud | Mount Disk | Unencrypted | Enable and start {{ cs_nc_files_scanner_systemd_timer_name }}
+- name: Nextcloud | Disk | Application | Enable and start {{ cs_nc_files_scanner_systemd_timer_name }}
   ansible.builtin.systemd_service:
       name: "{{ cs_nc_files_scanner_systemd_timer_name }}.timer"
       enabled: true
