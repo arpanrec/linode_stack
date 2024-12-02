@@ -39,12 +39,6 @@
 - name: Nextcloud | Prepare | Set config facts
   ansible.builtin.set_fact:
       cs_nc_port: "{{ __nextcloud_app_details.secret.port }}"
-      # cs_nc_admin_user:
-      # cs_nc_admin_password:
-      # cs_nc_imaginary_key:
-      # cs_nc_imaginary_port:
-      # cs_nc_imaginary_domain:
-      # cs_nc_users_dict:
 
 - name: Nextcloud | Prepare | Install Packages
   ansible.builtin.apt:

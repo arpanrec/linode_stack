@@ -238,10 +238,6 @@
       cs_nc_port: "{{ __nextcloud_app_details.secret.port }}"
       cs_nc_admin_user: "{{ __nextcloud_app_details.secret.admin_user }}"
       cs_nc_admin_password: "{{ __nextcloud_app_details.secret.admin_password }}"
-      # cs_nc_imaginary_key:
-      # cs_nc_imaginary_port:
-      # cs_nc_imaginary_domain:
-      # cs_nc_users_dict:
 
 - name: Nextcloud | Install | Install Nextcloud for the first time
   when: is_nc_occ_installed.stat.exists
