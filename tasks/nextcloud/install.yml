@@ -156,7 +156,6 @@
 
 - name: Nextcloud | Install | Get Db client certificate
   become: false
-  when: cs_nc_protocol == "https"
   delegate_facts: true
   delegate_to: localhost
   community.hashi_vault.vault_write:

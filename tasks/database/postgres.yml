@@ -362,7 +362,6 @@
 
 - name: Database | Postgres | Generate random user and password
   ansible.builtin.set_fact:
-      user: "{{ lookup('community.general.random_string', special=false, length=12) }}"
       password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
   register: __random_user_password
@@ -379,7 +378,7 @@
       validate_certs: true
       engine_mount_point: "managed-secrets"
       data:
-          user: "{{ item.ansible_facts.user }}"
+          user: "{{ item.item.value.user }}"
           password: "{{ item.ansible_facts.password }}"
           maintenance_db: "{{ cs_postgres_maintenance_db }}"
           private_ip: "{{ cs_postgres_host_private_ip }}"
@@ -456,7 +455,7 @@
 
 - name: Database | Postgres | Create users
   community.postgresql.postgresql_user:
-      name: "{{ item.ansible_facts.user }}"
+      name: "{{ item.item.value.user }}"
       password: "{{ item.ansible_facts.password }}"
       state: "present"
       login_host: "{{ cs_postgres_host_private_ip }}"
@@ -475,11 +474,11 @@
 - name: Database | Postgres | Create databases
   community.postgresql.postgresql_db:
       name: "{{ item.item.key }}"
-      owner: "{{ item.ansible_facts.user }}"
+      owner: "{{ item.item.value.user }}"
       state: "present"
       encoding: "UTF8"
       template: "template0"
-      comment: "Database for {{ item.item.key }}, Owned by {{ item.ansible_facts.user }},
+      comment: "Database for {{ item.item.key }}, Owned by {{ item.item.value.user }},
           Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
       maintenance_db: "{{ cs_postgres_maintenance_db }}"
       login_host: "{{ cs_postgres_host_private_ip }}"
@@ -497,7 +496,7 @@
       type: "table"
       database: "{{ item.item.key }}"
       obj: "ALL_IN_SCHEMA"
-      role: "{{ item.ansible_facts.user }}"
+      role: "{{ item.item.value.user }}"
       privs: "ALL"
       admin_option: "true"
       login_host: "{{ cs_postgres_host_private_ip }}"
@@ -516,7 +515,7 @@
       type: "sequence"
       database: "{{ item.item.key }}"
       obj: "ALL_IN_SCHEMA"
-      role: "{{ item.ansible_facts.user }}"
+      role: "{{ item.item.value.user }}"
       privs: "ALL"
       admin_option: "true"
       login_host: "{{ cs_postgres_host_private_ip }}"
@@ -535,7 +534,7 @@
       type: "function"
       database: "{{ item.item.key }}"
       obj: "ALL_IN_SCHEMA"
-      role: "{{ item.ansible_facts.user }}"
+      role: "{{ item.item.value.user }}"
       privs: "ALL"
       admin_option: "true"
       login_host: "{{ cs_postgres_host_private_ip }}"
@@ -554,7 +553,7 @@
       type: "procedure"
       database: "{{ item.item.key }}"
       obj: "ALL_IN_SCHEMA"
-      role: "{{ item.ansible_facts.user }}"
+      role: "{{ item.item.value.user }}"
       privs: "ALL"
       admin_option: "true"
       login_host: "{{ cs_postgres_host_private_ip }}"
@@ -572,7 +571,7 @@
   community.postgresql.postgresql_owner:
       obj_type: "database"
       obj_name: "{{ item.item.key }}"
-      new_owner: "{{ item.ansible_facts.user }}"
+      new_owner: "{{ item.item.value.user }}"
       login_host: "{{ cs_postgres_host_private_ip }}"
       login_db: "{{ cs_postgres_maintenance_db }}"
       login_password: "{{ cs_postgres_maintenance_password }}"
