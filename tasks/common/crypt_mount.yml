@@ -8,6 +8,11 @@
       - "{{ cs_crypt_mount_vault_id }}"
       - "{{ cs_crypt_mount_disk_mount_path }}"
       - "{{ cs_crypt_mount_crypt_open_name }}"
+      - "{{ inventory_hostname }}"
+
+- name: Crypt Device | Mount | Information
+  ansible.builtin.debug:
+      msg: "Mounting disk {{ cs_crypt_mount_vault_id }} on {{ cs_crypt_mount_disk_mount_path }}"
 
 - name: Crypt Device | Mount | Get Disk details
   become: false

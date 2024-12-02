@@ -7,9 +7,9 @@
       cs_crypt_mount_disk_mount_path: "{{ cs_nextcloud_external_disk_mount_path }}"
       cs_crypt_mount_crypt_open_name: "{{ cs_nextcloud_external_disk_crypt_open_name }}"
 
-- name: Hard fail
-  ansible.builtin.fail:
-      msg: "This is a hard fail"
+- name: Nextcloud | Disk | Application | Set fact for external drive mount web path
+  ansible.builtin.set_fact:
+      cs_nc_external_drive_mount_web_path: "{{ cs_nextcloud_external_disk_mount_path }}/nextcloud"
 
 - name: Nextcloud | Disk | Application | Create backup and ops directory
   ansible.builtin.file:
@@ -36,6 +36,10 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   when: cs_nc_files_external_mount_group_name not in nextcloud_mount_groups.stdout | from_json
+
+- name: Hard fail
+  ansible.builtin.fail:
+      msg: "This is a hard fail"
 
 - name: Nextcloud | Disk | Application | Get all storage
   become: true
