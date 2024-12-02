@@ -3,7 +3,6 @@
   ansible.builtin.assert:
       that:
           - item is defined
-          - item | type_debug == "str"
           - item | length > 0
   with_items:
       - "{{ cs_crypt_mount_vault_id }}"
@@ -49,6 +48,7 @@
       mode: "0000"
       owner: root
       group: root
+
 - name: Crypt Device | Mount | Mount
   ansible.posix.mount:
       src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
@@ -81,7 +81,7 @@
   ansible.builtin.lineinfile:
       path: /etc/crypttab
       line: "{{ cs_crypt_mount_crypt_open_name }} UUID={{ cs_crypt_mount_disk_uuid }}
-          /root/.luks-key-{{ cs_crypt_mount_vault_id }} luks"
+          {{ cs_crypt_mount_tmp_crypt_key_file }} luks"
       create: true
       mode: "0644"
       owner: root
