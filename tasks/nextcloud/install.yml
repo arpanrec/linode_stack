@@ -409,6 +409,33 @@
       - "config:system:set default_language --value en"
       - "config:system:set default_locale --value en_IN"
 
+- name: Nextcloud | Install | Get bot email from vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "secret"
+      path: "bot_email"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_server_bot_email
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Install | Set fact Public Ingress IP and Hostname
+  ansible.builtin.set_fact:
+      cs_nc_mail_smtpmode: "{{ __nextcloud_server_bot_email.secret.smtpmode }}"
+      cs_nc_mail_sendmailmode: "{{ __nextcloud_server_bot_email.secret.sendmailmode }}"
+      cs_nc_mail_smtpport: "{{ __nextcloud_server_bot_email.secret.smtpport }}"
+      cs_nc_mail_from_address: "{{ __nextcloud_server_bot_email.secret.from_address }}"
+      cs_nc_mail_domain: "{{ __nextcloud_server_bot_email.secret.domain }}"
+      cs_nc_mail_smtpsecure: "{{ __nextcloud_server_bot_email.secret.smtpsecure }}"
+      cs_nc_mail_smtphost: "{{ __nextcloud_server_bot_email.secret.smtphost }}"
+      cs_nc_mail_smtppassword: "{{ __nextcloud_server_bot_email.secret.smtppassword }}"
+
 - name: Nextcloud | Install | Set email config
   become: true
   become_user: "{{ cs_nc_run_user }}"
@@ -423,9 +450,9 @@
       - "config:system:set mail_from_address --value {{ cs_nc_mail_from_address }}"
       - "config:system:set mail_domain --value {{ cs_nc_mail_domain }}"
       - "config:system:set mail_smtpsecure --value {{ cs_nc_mail_smtpsecure }}"
-      - "config:system:set mail_smtpauth --value {{ cs_nc_mail_smtpauth }}"
+      - "config:system:set mail_smtpauth --value 1"
       - "config:system:set mail_smtphost --value {{ cs_nc_mail_smtphost }}"
-      - "config:system:set mail_smtpname --value {{ cs_nc_mail_smtpname }}"
+      - "config:system:set mail_smtpname --value {{ cs_nc_mail_from_address }}@{{ cs_nc_mail_domain }}"
       - "config:system:set mail_smtppassword --value {{ cs_nc_mail_smtppassword }}"
 
 - name: Nextcloud | Install | Set nextcloud maintenance window at 3 am

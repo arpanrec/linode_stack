@@ -48,17 +48,6 @@ cs_nc_db_docker_image: "{{ cs_postgres_docker_image }}"
 
 cs_nc_db_database: nextcloud
 
-cs_nc_mail_smtpmode: "{{ cs_mail_smtpmode }}"
-cs_nc_mail_sendmailmode: "{{ cs_mail_sendmailmode }}"
-cs_nc_mail_smtpport: "{{ cs_mail_smtpport }}"
-cs_nc_mail_from_address: "{{ cs_mail_from_address }}"
-cs_nc_mail_domain: "{{ cs_mail_domain }}"
-cs_nc_mail_smtpsecure: "{{ cs_mail_smtpsecure }}"
-cs_nc_mail_smtpauth: "{{ cs_mail_smtpauth }}"
-cs_nc_mail_smtphost: "{{ cs_mail_smtphost }}"
-cs_nc_mail_smtpname: "{{ cs_mail_smtpname }}"
-cs_nc_mail_smtppassword: "{{ cs_mail_smtppassword }}"
-
 cs_nc_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
 cs_nc_redis_privkey_file: "{{ cs_nc_redis_cert_dir }}/redis.key"
 cs_nc_redis_cert_file: "{{ cs_nc_redis_cert_dir }}/redis.crt"
