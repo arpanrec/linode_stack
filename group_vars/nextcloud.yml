@@ -52,7 +52,6 @@ cs_nc_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
 cs_nc_redis_privkey_file: "{{ cs_nc_redis_cert_dir }}/redis.key"
 cs_nc_redis_cert_file: "{{ cs_nc_redis_cert_dir }}/redis.crt"
 cs_nc_redis_ca_file: "{{ cs_nc_redis_cert_dir }}/redis.ca"
-cs_nc_redis_csr_file: "{{ cs_nc_redis_cert_dir }}/redis.csr"
 cs_nc_redis_host: "{{ cs_redis_private_ip }}"
 cs_nc_redis_port: "{{ cs_redis_tls_port }}"
 cs_nc_redis_password: "{{ cs_redis_admin_password }}"
@@ -63,7 +62,6 @@ cs_nc_imaginary_docker_image_tag: latest
 cs_nc_imaginary_certs_dir: "{{ cs_nc_cert_dir }}/imaginary"
 cs_nc_imaginary_privkey_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.key"
 cs_nc_imaginary_cert_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.crt"
-cs_nc_imaginary_csr_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.csr"
 cs_nc_imaginary_fullchain_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.fullchain.pem"
 cs_nc_imaginary_protocol: http
 

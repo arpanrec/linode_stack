@@ -15,7 +15,6 @@
       - "{{ cs_nc_imaginary_certs_dir }}"
       - "{{ cs_nc_imaginary_privkey_file | dirname }}"
       - "{{ cs_nc_imaginary_cert_file | dirname }}"
-      - "{{ cs_nc_imaginary_csr_file | dirname }}"
       - "{{ cs_nc_imaginary_fullchain_file | dirname }}"
 
 - name: Nextcloud | Imaginary | Create SSL Private key
