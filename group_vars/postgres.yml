@@ -8,6 +8,7 @@ cs_postgres_version: "16.5"
 cs_postgres_docker_image: docker.io/library/postgres
 
 # No touchy touchy zone
+cs_postgres_dir: "/app/postgres"
 cs_postgres_data_dir: "{{ cs_postgres_dir }}/data"
 cs_postgres_certs_dir: "{{ cs_postgres_dir }}/certs"
 cs_postgres_certs_privkey_file: "{{ cs_postgres_certs_dir }}/privkey.pem"
