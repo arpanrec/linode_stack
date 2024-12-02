@@ -420,6 +420,40 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
+- name: Database | Postgres | Update maintenance user password
+  community.postgresql.postgresql_user:
+      name: "{{ cs_postgres_maintenance_user }}"
+      password: "{{ cs_postgres_maintenance_password }}"
+      comment: "Postgres maintenance user,
+          Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      state: "present"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+
+- name: Database | Postgres | Update maintenance database
+  community.postgresql.postgresql_db:
+      name: "{{ cs_postgres_maintenance_db }}"
+      owner: "{{ cs_postgres_maintenance_user }}"
+      state: "present"
+      comment: "Postgres maintenance database,
+          Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      maintenance_db: "{{ cs_postgres_maintenance_db }}"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+
 - name: Database | Postgres | Create users
   community.postgresql.postgresql_user:
       name: "{{ item.ansible_facts.user }}"
@@ -431,6 +465,8 @@
       login_port: "{{ cs_postgres_port }}"
       login_db: "{{ cs_postgres_maintenance_db }}"
       ssl_mode: verify-full
+      comment: "User for {{ item.item.key }},
+          Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
       ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
       ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
       ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
@@ -439,10 +475,13 @@
 - name: Database | Postgres | Create databases
   community.postgresql.postgresql_db:
       name: "{{ item.item.key }}"
+      owner: "{{ item.ansible_facts.user }}"
       state: "present"
       encoding: "UTF8"
       template: "template0"
-      owner: "{{ item.ansible_facts.user }}"
+      comment: "Database for {{ item.item.key }}, Owned by {{ item.ansible_facts.user }},
+          Managed by Ansible home-lab playbook {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      maintenance_db: "{{ cs_postgres_maintenance_db }}"
       login_host: "{{ cs_postgres_host_private_ip }}"
       login_password: "{{ cs_postgres_maintenance_password }}"
       login_user: "{{ cs_postgres_maintenance_user }}"
@@ -453,36 +492,97 @@
       ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
   with_items: "{{ __random_user_password.results }}"
 
-# - name: Database | Postgres | Grant privileges
-#   community.postgresql.postgresql_privs:
-#       privs: "ALL"
-#       type: "database"
-#       database: "{{ item.item.key }}"
-#       role: "{{ item.ansible_facts.user }}"
-#       login_host: "{{ cs_postgres_host_private_ip }}"
-#       login_db: "{{ cs_postgres_maintenance_db }}"
-#       login_password: "{{ cs_postgres_maintenance_password }}"
-#       login_user: "{{ cs_postgres_maintenance_user }}"
-#       login_port: "{{ cs_postgres_port }}"
-#       ssl_mode: verify-full
-#       ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
-#       ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
-#       ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
-#   with_items: "{{ __random_user_password.results }}"
+- name: Database | Postgres | Grant privileges table
+  community.postgresql.postgresql_privs:
+      type: "table"
+      database: "{{ item.item.key }}"
+      obj: "ALL_IN_SCHEMA"
+      role: "{{ item.ansible_facts.user }}"
+      privs: "ALL"
+      admin_option: "true"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      #   login_db: "{{ cs_postgres_maintenance_db }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
 
-# - name: Database | Postgres | Grant privileges
-#   community.postgresql.postgresql_query:
-#       query: "GRANT ALL PRIVILEGES ON DATABASE {{ item.item.key }} TO {{ item.ansible_facts.user }}"
-#       login_host: "{{ cs_postgres_host_private_ip }}"
-#       login_db: "{{ cs_postgres_maintenance_db }}"
-#       login_password: "{{ cs_postgres_maintenance_password }}"
-#       login_user: "{{ cs_postgres_maintenance_user }}"
-#       login_port: "{{ cs_postgres_port }}"
-#       ssl_mode: verify-full
-#       ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
-#       ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
-#       ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
-#   with_items: "{{ __random_user_password.results }}"
+- name: Database | Postgres | Grant privileges sequence
+  community.postgresql.postgresql_privs:
+      type: "sequence"
+      database: "{{ item.item.key }}"
+      obj: "ALL_IN_SCHEMA"
+      role: "{{ item.ansible_facts.user }}"
+      privs: "ALL"
+      admin_option: "true"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      #   login_db: "{{ cs_postgres_maintenance_db }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
+
+- name: Database | Postgres | Grant privileges function
+  community.postgresql.postgresql_privs:
+      type: "function"
+      database: "{{ item.item.key }}"
+      obj: "ALL_IN_SCHEMA"
+      role: "{{ item.ansible_facts.user }}"
+      privs: "ALL"
+      admin_option: "true"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      #   login_db: "{{ cs_postgres_maintenance_db }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
+
+- name: Database | Postgres | Grant privileges procedure
+  community.postgresql.postgresql_privs:
+      type: "procedure"
+      database: "{{ item.item.key }}"
+      obj: "ALL_IN_SCHEMA"
+      role: "{{ item.ansible_facts.user }}"
+      privs: "ALL"
+      admin_option: "true"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      #   login_db: "{{ cs_postgres_maintenance_db }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
+
+- name: Database | Postgres | Grant privileges schema
+  community.postgresql.postgresql_owner:
+      obj_type: "database"
+      obj_name: "{{ item.item.key }}"
+      new_owner: "{{ item.ansible_facts.user }}"
+      login_host: "{{ cs_postgres_host_private_ip }}"
+      login_db: "{{ cs_postgres_maintenance_db }}"
+      login_password: "{{ cs_postgres_maintenance_password }}"
+      login_user: "{{ cs_postgres_maintenance_user }}"
+      login_port: "{{ cs_postgres_port }}"
+      ssl_mode: verify-full
+      ssl_rootcert: "{{ __temp_file_client_cert.results[2].path }}"
+      ssl_cert: "{{ __temp_file_client_cert.results[1].path }}"
+      ssl_key: "{{ __temp_file_client_cert.results[0].path }}"
+  with_items: "{{ __random_user_password.results }}"
 
 - name: Database | Postgres | Remove temporary certificates
   ansible.builtin.file:
