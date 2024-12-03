@@ -54,17 +54,19 @@
       owner: root
       group: root
 
-- name: Crypt Device | Mount | Mount
+- name: Crypt Device | Mount | Remove mount point
   ansible.posix.mount:
-      src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
       path: "{{ cs_crypt_mount_disk_mount_path }}"
-      fstype: ext4
-      state: present
-      boot: true
-      opts: defaults,noatime,nofail
-      dump: 0
-      passno: 2
+      state: absent
       backup: true
+
+- name: Crypt Device | Mount | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
+      state: absent
+      backup: true
+
 - name: Crypt Device | Mount | Copy key file
   become: true
   become_user: root
@@ -82,6 +84,7 @@
       state: directory
       mode: "0755"
 
+# Do not use community.general.crypttab
 - name: Crypt Device | Mount | Add to crypttab
   ansible.builtin.lineinfile:
       path: /etc/crypttab
@@ -94,31 +97,30 @@
       regexp: "^{{ cs_crypt_mount_crypt_open_name }}"
       backup: true
 
-- name: Crypt Device | Mount | Remove from fstab
-  ansible.builtin.lineinfile:
-      path: /etc/fstab
-      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
-      state: absent
-      backup: true
-
-- name: Crypt Device | Mount | Mount
-  ansible.posix.mount:
-      src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
-      path: "{{ cs_crypt_mount_disk_mount_path }}"
-      fstype: ext4
-      state: present
-      boot: true
-      opts: defaults,noatime,nofail
-      dump: 0
-      passno: 2
-      backup: true
-
 - name: Crypt Device | Mount | Restart systemd-cryptsetup@{{ cs_crypt_mount_crypt_open_name }}
   ansible.builtin.systemd_service:
       name: systemd-cryptsetup@{{ cs_crypt_mount_crypt_open_name }}
       enabled: true
       state: restarted
       daemon_reload: true
+
+- name: Crypt Device | Mount | Reload daemon
+  ansible.builtin.systemd_service:
+      daemon_reload: true
+
+- name: Crypt Device | Mount | Fstab Mount
+  ansible.posix.mount:
+      src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
+      path: "{{ cs_crypt_mount_disk_mount_path }}"
+      fstype: ext4
+      state: mounted
+      boot: true
+      opts: defaults,noatime,rw,noexec,nofail,user
+      fstab: /etc/fstab
+      opts_no_log: false
+      dump: 0
+      passno: 2
+      backup: true
 
 - name: Crypt Device | Mount | Gather facts
   ansible.builtin.setup:
@@ -153,6 +155,29 @@
   when: >
       cs_crypt_mount_tmp_crypt_device_details is not defined or
       cs_crypt_mount_tmp_crypt_device_details | length < 1
+
+- name: Crypt Device | Mount | Get df
+  ansible.builtin.command:
+      argv:
+          - "df"
+          - "-h"
+  register: __df_output
+  changed_when: false
+
+- name: Crypt Device | Mount | Debug df
+  ansible.builtin.debug:
+      msg: "{{ __df_output.stdout_lines }}"
+
+- name: Crypt Device | Mount | Look for mount
+  ansible.builtin.set_fact:
+      cs_crypt_mount_disk_df_lookup: "{{ item }}"
+  with_items: "{{ __df_output.stdout_lines }}"
+  when: cs_crypt_mount_disk_mount_path in item
+
+- name: Crypt Device | Mount | Disk df mount not present
+  ansible.builtin.fail:
+      msg: "Mount doesn't exist"
+  when: cs_crypt_mount_disk_df_lookup is not defined
 
 - name: Crypt Device | Mount | Reset facts
   ansible.builtin.set_fact:
