@@ -1,6 +1,6 @@
-## [1.13.1](https://github.com/arpanrec/home-lab/compare/1.13.0...1.13.1) (2024-12-03)
+## [1.13.2](https://github.com/arpanrec/home-lab/compare/1.13.1...1.13.2) (2024-12-03)
 
 
 ### Bug Fixes
 
-* update crypt_mount.yml to remove and manage mount points ([5c76692](https://github.com/arpanrec/home-lab/commit/5c766924302bbfe98662fc9aef572e5fb644a918))
+* streamline disk mount configurations and remove unused variables ([664f473](https://github.com/arpanrec/home-lab/commit/664f4735a30106f48c4cdc2dc9860b5f96ffe5aa))
