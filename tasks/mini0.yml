@@ -4,8 +4,6 @@
       file: tasks/common/crypt_mount.yml
   vars:
       cs_crypt_mount_vault_id: "{{ cs_mini0_external_disk_id }}"
-      cs_crypt_mount_crypt_open_name: "{{ cs_mini0_external_disk_crypt_open_name }}"
-      cs_crypt_mount_disk_mount_path: "{{ cs_mini0_external_disk_mount_path }}"
 
 - name: Mini0 | Get Config details
   become: false
