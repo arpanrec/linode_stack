@@ -116,6 +116,9 @@
       rule: allow
       port: "{{ cs_redis_tls_port }}"
       state: enabled
+      proto: tcp
+      comment: "Allow Redis port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
 
 - name: Database | Redis | Test | Install Redis Tools
   ansible.builtin.apt:

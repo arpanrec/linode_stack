@@ -1,4 +1,12 @@
 ---
+- name: Nextcloud | Disk | Application | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_mini0_external_disk_id }}"
+      cs_crypt_mount_crypt_open_name: "{{ cs_mini0_external_disk_crypt_open_name }}"
+      cs_crypt_mount_disk_mount_path: "{{ cs_mini0_external_disk_mount_path }}"
+
 - name: Mini0 | Get Config details
   become: false
   delegate_facts: true
@@ -234,12 +242,16 @@
 - name: Minio | Install | Enable UFW
   community.general.ufw:
       rule: allow
-      port: "{{ item }}"
+      port: "{{ item.port }}"
       proto: tcp
-      comment: "Minio Server"
+      state: enabled
+      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   loop:
-      - "{{ cs_mini0_mini0_port }}"
-      - "{{ cs_mini0_mini0_console_port }}"
+      - port: "{{ cs_mini0_mini0_port }}"
+        comment: "S3"
+      - port: "{{ cs_mini0_mini0_console_port }}"
+        comment: "Console"
 
 - name: Minio | Install | Create Systemd Service
   ansible.builtin.template:

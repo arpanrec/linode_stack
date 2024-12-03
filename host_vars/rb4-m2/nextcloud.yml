@@ -1,0 +1,13 @@
+---
+cs_nc_db_cluster_name: blr-home-lab
+cs_nc_db_cluster_node: rb4-m1
+
+cs_nc_redis_cluster_name: blr-home-lab
+cs_nc_redis_cluster_node: rb4-m1
+
+cs_nc_elasticsearch_cluster_name: blr-home-lab
+cs_nc_elasticsearch_cluster_node: rb4-m1
+
+cs_nextcloud_external_disk_id: "p2-2tb-rb4-m2"
+cs_nextcloud_external_disk_crypt_open_name: nextcloudcryptdevice
+cs_nextcloud_external_disk_mount_path: "/mnt/{{ cs_nextcloud_external_disk_crypt_open_name }}"

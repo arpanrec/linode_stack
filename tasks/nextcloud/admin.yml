@@ -18,6 +18,26 @@
       chdir: "{{ cs_nc_web_dir }}"
   register: cs_nc_user_list
   changed_when: false
+- name: Nextcloud | Admin | Get Config details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __nextcloud_app_details
+
+- name: Nextcloud | Admin | Set config facts
+  ansible.builtin.set_fact:
+      cs_nc_admin_user: "{{ __nextcloud_app_details.secret.admin_user }}"
+      cs_nc_admin_password: "{{ __nextcloud_app_details.secret.admin_password }}"
 
 - name: Nextcloud | Admin | Create Admin User if not exists
   become: true
@@ -49,6 +69,27 @@
   with_items: "{{ cs_nc_group_list.stdout | from_json | community.general.json_query('admin') }}"
   changed_when: true
 
+- name: Nextcloud | Admin | Get bot email from vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "secret"
+      path: "bot_email"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_server_bot_email
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Admin | Set fact Public Ingress IP and Hostname
+  ansible.builtin.set_fact:
+      cs_nc_mail_from_address: "{{ __nextcloud_server_bot_email.secret.from_address }}"
+      cs_nc_mail_domain: "{{ __nextcloud_server_bot_email.secret.domain }}"
+
 - name: Nextcloud | Admin | Set admin user properties
   become: true
   become_user: "{{ cs_nc_run_user }}"
@@ -58,7 +99,7 @@
   register: cs_nc_group_list
   changed_when: true
   with_items:
-      - "user:setting {{ cs_nc_admin_user }} settings email {{ cs_nc_mail_smtpname }}"
+      - "user:setting {{ cs_nc_admin_user }} settings email {{ cs_nc_mail_from_address }}@{{ cs_nc_mail_domain }}"
       - "user:setting {{ cs_nc_admin_user }} core lang en"
       - "twofactorauth:disable {{ cs_nc_admin_user }} totp"
       - "user:enable {{ cs_nc_admin_user }}"
