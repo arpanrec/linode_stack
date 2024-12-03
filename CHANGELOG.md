@@ -1,6 +1,6 @@
-# [1.13.0](https://github.com/arpanrec/home-lab/compare/1.12.5...1.13.0) (2024-12-03)
+## [1.13.1](https://github.com/arpanrec/home-lab/compare/1.13.0...1.13.1) (2024-12-03)
 
 
-### Features
+### Bug Fixes
 
-* nextcloud details from vault ([#50](https://github.com/arpanrec/home-lab/issues/50)) ([ef0f1a3](https://github.com/arpanrec/home-lab/commit/ef0f1a3cb3853b3758e6bc28b57062e5ded7533b))
+* update crypt_mount.yml to remove and manage mount points ([5c76692](https://github.com/arpanrec/home-lab/commit/5c766924302bbfe98662fc9aef572e5fb644a918))
