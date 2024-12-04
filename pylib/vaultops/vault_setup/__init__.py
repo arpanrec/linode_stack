@@ -35,7 +35,6 @@ Constants:
 
 """
 
-
 import logging
 import os
 from typing import Dict
@@ -66,7 +65,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-statements
-def vault_setup(inventory_file_name: str) -> VaultHaClient:
+def vault_setup(inventory_file_name: str, revoke_all_tokens: bool = False) -> VaultHaClient:
     """
     Setup vault
     args:
@@ -150,10 +149,10 @@ def vault_setup(inventory_file_name: str) -> VaultHaClient:
     terraform_apply(vault_config=vault_config, vault_ha_client=vault_ha_client)
 
     LOGGER.info("Revoking all tokens and secret ID accessors")
-    if vault_config.unseal_keys():
+    if vault_config.unseal_keys() and revoke_all_tokens:
         vault_token_revoke(vault_client=ready_node_details)
     else:
-        vault_token_revoke(vault_client=vault_ha_client)
+        LOGGER.info("No unseal keys found or revoke_all_tokens is False, skipping token revocation")
 
     LOGGER.info("Updating external service secrets")
     update_vault_secrets(vault_ha_client=vault_ha_client, vault_config=vault_config)
