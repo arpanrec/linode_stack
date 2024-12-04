@@ -27,8 +27,8 @@
 - name: Crypt Device | Mount | Set config facts
   ansible.builtin.set_fact:
       cs_crypt_mount_enc_key_base64: "{{ __vault_external_disk_details.secret.luks_key_base64 }}"
-      cs_crypt_mount_disk_uuid: "{{ __vault_external_disk_details.secret.drive_uuid }}"
       cs_crypt_mount_crypt_device_uuid: "{{ __vault_external_disk_details.secret.crypt_device_uuid }}"
+      cs_crypt_mount_device_uuid: "{{ __vault_external_disk_details.secret.device_uuid }}"
       cs_crypt_mount_tmp_crypt_key_file: "/etc/cryptsetup-keys/{{ cs_crypt_mount_vault_id }}"
       cs_crypt_mount_crypt_open_name: "{{ cs_crypt_mount_vault_id }}"
       cs_crypt_mount_disk_mount_path: "/mnt/{{ cs_crypt_mount_vault_id }}"
@@ -88,7 +88,7 @@
 - name: Crypt Device | Mount | Add to crypttab
   ansible.builtin.lineinfile:
       path: /etc/crypttab
-      line: "{{ cs_crypt_mount_crypt_open_name }} UUID={{ cs_crypt_mount_disk_uuid }}
+      line: "{{ cs_crypt_mount_crypt_open_name }} UUID={{ cs_crypt_mount_crypt_device_uuid }}
           {{ cs_crypt_mount_tmp_crypt_key_file }} luks"
       create: true
       mode: "0644"
@@ -108,6 +108,25 @@
       state: restarted
       daemon_reload: true
 
+- name: Crypt Device | Mount | Gather facts for crypt device uuid
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Crypt Device | Mount | Search for crypt device uuid
+  ansible.builtin.set_fact:
+      cs_crypt_mount_tmp_device_details: "{{ item.value }}"
+  with_items: "{{ ansible_devices | dict2items }}"
+  when: >
+      item.value.links.uuids | length > 0 and
+      cs_crypt_mount_crypt_device_uuid == item.value.links.uuids[0]
+
+- name: Crypt Device | Mount | Fail if crypt device uuid doesn't match
+  ansible.builtin.fail:
+      msg: "Device UUID doesn't match"
+  when: >
+      cs_crypt_mount_tmp_device_details is not defined or cs_crypt_mount_tmp_device_details.holders | length == 0 or
+      cs_crypt_mount_tmp_device_details.holders[0] != cs_crypt_mount_crypt_open_name
+
 - name: Crypt Device | Mount | Fstab Mount
   ansible.posix.mount:
       src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
@@ -122,34 +141,19 @@
       passno: 2
       backup: true
 
-- name: Crypt Device | Mount | Gather facts
+- name: Crypt Device | Mount | Gather facts for device uuid
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Crypt Device | Mount | Check for self disk uuid file
-  ansible.builtin.set_fact:
-      cs_crypt_mount_tmp_device_details: "{{ item.value }}"
-  with_items: "{{ ansible_devices | dict2items }}"
-  when: >
-      item.value.links.uuids | length > 0 and
-      cs_crypt_mount_disk_uuid == item.value.links.uuids[0]
-
-- name: Crypt Device | Mount | Fail if device details doesn't match
-  ansible.builtin.fail:
-      msg: "Device UUID doesn't match"
-  when: >
-      cs_crypt_mount_tmp_device_details is not defined or cs_crypt_mount_tmp_device_details.holders | length == 0 or
-      cs_crypt_mount_tmp_device_details.holders[0] != cs_crypt_mount_crypt_open_name
-
-- name: Crypt Device | Mount | Check for self crypt device uuid file
+- name: Crypt Device | Mount | Search for device uuid
   ansible.builtin.set_fact:
       cs_crypt_mount_tmp_crypt_device_details: "{{ item.value }}"
   with_items: "{{ ansible_devices | dict2items }}"
   when: >
       item.value.links.uuids | length > 0 and
-      cs_crypt_mount_crypt_device_uuid == item.value.links.uuids[0]
+      cs_crypt_mount_device_uuid == item.value.links.uuids[0]
 
-- name: Crypt Device | Mount | Fail if crypt device details doesn't match
+- name: Crypt Device | Mount | Fail if device uuid doesn't match
   ansible.builtin.fail:
       msg: "Crypt Device UUID doesn't match"
   when: >
@@ -183,8 +187,8 @@
   ansible.builtin.set_fact:
       cs_crypt_mount_vault_id: null
       cs_crypt_mount_enc_key_base64: null
-      cs_crypt_mount_disk_uuid: null
       cs_crypt_mount_crypt_device_uuid: null
+      cs_crypt_mount_device_uuid: null
       cs_crypt_mount_tmp_crypt_key_file: null
       cs_crypt_mount_disk_mount_path: null
       cs_crypt_mount_crypt_open_name: null
