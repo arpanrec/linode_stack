@@ -1,6 +1,6 @@
-## [1.14.2](https://github.com/arpanrec/home-lab/compare/1.14.1...1.14.2) (2024-12-04)
+## [1.14.3](https://github.com/arpanrec/home-lab/compare/1.14.2...1.14.3) (2024-12-04)
 
 
 ### Bug Fixes
 
-* add revoke_all_tokens parameter to vault_setup function for enhanced token management ([0ae9c6c](https://github.com/arpanrec/home-lab/commit/0ae9c6cae14acb1b2924b58374d01fc9b1fff836))
+* remove deprecated delete_all task from playbook.yml ([6d9f596](https://github.com/arpanrec/home-lab/commit/6d9f5962116becd9594939143f7c0ff0a839912c))
