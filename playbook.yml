@@ -198,19 +198,6 @@
         ansible.builtin.import_tasks:
             file: tasks/nfs-client.yml
 
-- name: Collabora
-  hosts: rb4-m2
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tasks:
-      - name: Collabora
-        tags: never,collabora
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/collabora.yml
-
 - name: Nextcloud
   hosts: nextcloud
   become: false
