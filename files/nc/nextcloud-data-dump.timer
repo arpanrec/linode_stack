@@ -3,6 +3,7 @@ Description=Nextcloud Data Dump Timer
 
 [Timer]
 Persistent=true
+OnCalendar=*-*-* 03:00:00
 OnBootSec=300s
 OnUnitActiveSec=43200s
 Unit=nextcloud-data-dump.service
