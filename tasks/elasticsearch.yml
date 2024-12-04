@@ -88,11 +88,16 @@
 - name: Database | Elasticsearch | Enable UFW port
   community.general.ufw:
       rule: allow
-      port: "{{ item }}"
+      proto: tcp
+      port: "{{ item.port }}"
       state: enabled
+      comment: "Allow Elasticsearch {{ item.comment }} port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   with_items:
-      - "{{ cs_elasticsearch_servlet_port }}"
-      - "{{ cs_elasticsearch_transport_port }}"
+      - port: "{{ cs_elasticsearch_servlet_port }}"
+        comment: "servlet"
+      - port: "{{ cs_elasticsearch_transport_port }}"
+        comment: "transport"
 
 - name: Database | Elasticsearch | Wait for service to start
   ansible.builtin.uri:

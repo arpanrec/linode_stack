@@ -2,8 +2,7 @@
 cs_mini0_mini0_group_name: mini0
 cs_mini0_mini0_user_name: "{{ cs_mini0_mini0_group_name }}"
 
-cs_mini0_mini0_working_dir: "{{ cs_mini0_external_disk_mount_path }}/minio/mini0"
-cs_mini0_mini0_data_dir: "{{ cs_mini0_mini0_working_dir }}/data"
+cs_mini0_mini0_working_dir: "/app/mini0"
 
 cs_mini0_mini0_certs_dir: "{{ cs_mini0_mini0_working_dir }}/certs"
 

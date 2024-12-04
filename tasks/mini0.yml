@@ -1,4 +1,10 @@
 ---
+- name: Nextcloud | Disk | Application | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_mini0_external_disk_id }}"
+
 - name: Mini0 | Get Config details
   become: false
   delegate_facts: true
@@ -21,6 +27,27 @@
       cs_mini0_mini0_console_port: "{{ __minio_details.secret.console_port }}"
       cs_mini0_mini0_region: "{{ __minio_details.secret.region }}"
 
+- name: Minio | Get Public Ingress IP and Hostname from vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "secret"
+      path: "blr-home-lab"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __minio_server_public_ingress_secret_dict
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Minio | Set fact Public Ingress IP and Hostname
+  ansible.builtin.set_fact:
+      cs_public_ingress_ip: "{{ __minio_server_public_ingress_secret_dict.secret.public_ingress_ip }}"
+      cs_public_ingress_dns_entry: "{{ __minio_server_public_ingress_secret_dict.secret.public_ingress_dns_entry }}"
+
 - name: Minio | Assert | Set cs_mini0_mini0_kes_cluster_name
   ansible.builtin.set_fact:
       cs_mini0_mini0_kes_cluster_name: "{{ cs_mini0_mini0_kes_cluster_name | d(cs_mini0_mini0_cluster_name)
@@ -28,7 +55,7 @@
       cs_mini0_mini0_kes_cluster_node_name: "{{ cs_mini0_mini0_kes_cluster_node_name | d(inventory_hostname)
           | mandatory }}"
 
-- name: Minio | Assert | Get KES Admin Key Id from Vault
+- name: Minio | Get KES Admin Key Id from Vault
   become: false
   delegate_facts: true
   delegate_to: localhost
@@ -45,7 +72,7 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Minio | Assert | Set cs_mini0_mini0_kes_endpoint
+- name: Minio | Set cs_mini0_mini0_kes_endpoint
   ansible.builtin.set_fact:
       cs_mini0_mini0_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.secret.ips[0] }}:\
           {{ __minio_server_kes_secret_dict.secret.port }}"
@@ -213,12 +240,16 @@
 - name: Minio | Install | Enable UFW
   community.general.ufw:
       rule: allow
-      port: "{{ item }}"
+      port: "{{ item.port }}"
       proto: tcp
-      comment: "Minio Server"
+      state: enabled
+      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   loop:
-      - "{{ cs_mini0_mini0_port }}"
-      - "{{ cs_mini0_mini0_console_port }}"
+      - port: "{{ cs_mini0_mini0_port }}"
+        comment: "S3"
+      - port: "{{ cs_mini0_mini0_console_port }}"
+        comment: "Console"
 
 - name: Minio | Install | Create Systemd Service
   ansible.builtin.template:

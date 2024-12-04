@@ -1,5 +1,17 @@
 ---
-- name: Nextcloud | Mount Disk | Unencrypted | Create backup and ops directory
+- name: Nextcloud | Disk | Application | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_nextcloud_external_disk_id }}"
+
+- name: Nextcloud | Disk | Application | Set fact for external drive mount web path
+  ansible.builtin.set_fact:
+      cs_nc_external_drive_mount_web_path: "/mnt/{{ cs_nextcloud_external_disk_id }}/local_mnt_nextcloud_nextcloud"
+      cs_nc_files_external_mount_group_name: "local_mnt_nextcloud_nextcloud"
+      cs_nc_files_external_mount_folder_name: "local_mnt_nextcloud_nextcloud"
+
+- name: Nextcloud | Disk | Application | Create backup and ops directory
   ansible.builtin.file:
       path: "{{ cs_nc_external_drive_mount_web_path }}"
       state: directory
@@ -7,7 +19,7 @@
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Get all the groups
+- name: Nextcloud | Disk | Application | Get all the groups
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -16,7 +28,7 @@
   changed_when: false
   register: nextcloud_mount_groups
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create group
+- name: Nextcloud | Disk | Application | Create group
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -25,7 +37,7 @@
   changed_when: true
   when: cs_nc_files_external_mount_group_name not in nextcloud_mount_groups.stdout | from_json
 
-- name: Nextcloud | Mount Disk | Unencrypted | Get all storage
+- name: Nextcloud | Disk | Application | Get all storage
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -34,17 +46,17 @@
   changed_when: false
   register: nextcloud_mount_storages
 
-- name: Nextcloud | Mount Disk | Unencrypted | Set fact for existing storage
+- name: Nextcloud | Disk | Application | Set fact for existing storage
   ansible.builtin.set_fact:
       existing_storage_mount: "{{ nextcloud_mount_storages.stdout | from_json
           | community.general.json_query('[?mount_point==`/' + cs_nc_files_external_mount_folder_name + '`]') }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Fail if multiple storage found
+- name: Nextcloud | Disk | Application | Fail if multiple storage found
   ansible.builtin.fail:
       msg: "Multiple storage found with same name"
   when: existing_storage_mount | length > 1
 
-- name: Nextcloud | Mount Disk | Unencrypted | Test Basic config
+- name: Nextcloud | Disk | Application | Test Basic config
   when: existing_storage_mount | length == 1
   ansible.builtin.assert:
       that:
@@ -55,7 +67,7 @@
       success_msg: "Storage type is \\OC\\Files\\Storage\\Local
           and configuration.datadir is {{ cs_nc_external_drive_mount_web_path }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create storage
+- name: Nextcloud | Disk | Application | Create storage
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -65,7 +77,7 @@
   changed_when: true
   when: existing_storage_mount | length == 0
 
-- name: Nextcloud | Mount Disk | Unencrypted | Repopulate nextcloud_mount_storages
+- name: Nextcloud | Disk | Application | Repopulate nextcloud_mount_storages
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -74,13 +86,13 @@
   changed_when: false
   register: nextcloud_mount_storages
 
-- name: Nextcloud | Mount Disk | Unencrypted | Set Mount ID
+- name: Nextcloud | Disk | Application | Set Mount ID
   ansible.builtin.set_fact:
       existing_storage_mount_id: "{{ nextcloud_mount_storages.stdout
           | from_json | community.general.json_query('[?mount_point==`/'
           + cs_nc_files_external_mount_folder_name + '`].mount_id') | first }}"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Set Config
+- name: Nextcloud | Disk | Application | Set Config
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
@@ -98,20 +110,20 @@
       - files_external:option {{ existing_storage_mount_id }} readonly false
       - files_external:option {{ existing_storage_mount_id }} encrypt false
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create systemd unit file for nextcloud scan files
+- name: Nextcloud | Disk | Application | Create systemd unit file for nextcloud scan files
   ansible.builtin.template:
       dest: /etc/systemd/system/{{ cs_nc_files_scanner_systemd_timer_name }}.service
       src: templates/nc/{{ cs_nc_files_scanner_systemd_timer_name }}.service.j2
       mode: "0644"
 
-- name: Nextcloud | Mount Disk | Unencrypted | Create systemd timmer file for nextcloud scan files
+- name: Nextcloud | Disk | Application | Create systemd timmer file for nextcloud scan files
   ansible.builtin.copy:
       dest: /etc/systemd/system/{{ cs_nc_files_scanner_systemd_timer_name }}.timer
       src: files/nc/{{ cs_nc_files_scanner_systemd_timer_name }}.timer
       mode: "0644"
       remote_src: false
 
-- name: Nextcloud | Mount Disk | Unencrypted | Enable and start {{ cs_nc_files_scanner_systemd_timer_name }}
+- name: Nextcloud | Disk | Application | Enable and start {{ cs_nc_files_scanner_systemd_timer_name }}
   ansible.builtin.systemd_service:
       name: "{{ cs_nc_files_scanner_systemd_timer_name }}.timer"
       enabled: true
