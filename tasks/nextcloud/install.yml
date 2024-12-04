@@ -244,7 +244,7 @@
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
-      cmd: "php occ maintenance:install --database '{{ cs_nc_db_type }}' --database-name '{{ cs_nc_db_database }}'
+      cmd: "php occ maintenance:install --database 'pgsql' --database-name '{{ cs_nc_db_database }}'
           --database-user '{{ cs_nc_db_user }}' --database-pass '{{ cs_nc_db_password }}'
           --database-host '{{ cs_nc_db_host }};port={{ cs_nc_db_port }};\
           sslmode=verify-full;sslrootcert={{ cs_nc_db_chain_pem_file }};sslcert={{ cs_nc_db_cert_pem_file }};\

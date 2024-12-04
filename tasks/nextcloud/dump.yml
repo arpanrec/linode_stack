@@ -17,11 +17,43 @@
           - zstd
       state: present
 
-- name: Nextcloud | Data Dump | Create Script
+- name: Nextcloud | Data Dump | Get DB Details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "managed-secrets"
+      path: "postgresql/clusters/{{ cs_nc_db_cluster_name }}/servers/{{ cs_nc_db_cluster_node }}/db/{{
+          cs_nc_db_database }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_db_details
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Data Dump | Set db fact
+  ansible.builtin.set_fact:
+      cs_nc_db_user: "{{ __nextcloud_db_details.secret.user }}"
+      cs_nc_db_password: "{{ __nextcloud_db_details.secret.password }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.secret.private_ip }}"
+      cs_nc_db_port: "{{ __nextcloud_db_details.secret.server_port }}"
+      cs_nc_db_version: "{{ __nextcloud_db_details.secret.server_version }}"
+
+- name: Nextcloud | Data Dump | Create Environment File
   ansible.builtin.template:
       mode: "0755"
+      dest: "{{ cs_nc_root_dir }}/.create_dump.env"
+      src: "templates/nc/dump-env.j2"
+
+- name: Nextcloud | Data Dump | Create Script
+  ansible.builtin.copy:
+      mode: "0755"
       dest: "{{ cs_nc_root_dir }}/create_dump.sh"
-      src: "templates/nc/create_dump.sh.j2"
+      src: files/nc/create_dump.sh
+      remote_src: false
 
 - name: Nextcloud | Data Dump | Create systemd service
   ansible.builtin.template:

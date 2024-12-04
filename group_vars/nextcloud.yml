@@ -37,9 +37,7 @@ cs_nc_email_regex: (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~
 
 cs_nc_domain: "{{ cs_public_ingress_dns_entry }}"
 
-cs_nc_db_type: pgsql
-cs_nc_db_version: "{{ cs_postgres_docker_image_tag }}"
-cs_nc_db_docker_image: "{{ cs_postgres_docker_image }}"
+cs_nc_db_docker_image: docker.io/library/postgres
 
 cs_nc_db_database: nextcloud
 
