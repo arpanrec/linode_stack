@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 User=root
 Group=root
+EnvironmentFile={{ cs_nc_root_dir }}/.create_dump.env
 ExecStart={{ cs_nc_root_dir }}/create_dump.sh
 
 [Install]

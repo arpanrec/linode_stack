@@ -33,6 +33,29 @@
       src: templates/nc/{{ cs_nc_fts_elasticsearch_systemd }}.service.j2
       mode: "0644"
 
+- name: Nextcloud | Full Text Search | Get server certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "managed-secrets"
+      path: "elasticsearch/clusters/{{ cs_nc_elasticsearch_cluster_name }}/servers/{{
+          cs_nc_elasticsearch_cluster_node }}/config"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __nextcloud_fts_details
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Nextcloud | Full Text Search | Set db fact
+  ansible.builtin.set_fact:
+      cs_nc_fts_elasticsearch_servlet_port: "{{ __nextcloud_fts_details.secret.servlet_port }}"
+      cs_nc_fts_elasticsearch_password: "{{ __nextcloud_fts_details.secret.root_password }}"
+      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.secret.host }}"
+
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
       content: "{{ cs_nc_app_config_fulltextsearch | to_nice_json }}"

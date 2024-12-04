@@ -26,7 +26,7 @@
   become: true
   become_user: root
   gather_facts: true
-  no_log: "{{ cs_no_log }}"
+  no_log: "{{ cs_no_log | default('true') }}"
   tags: never,patch
   tasks:
       - name: Patch System
@@ -98,43 +98,85 @@
             file: tasks/vaultops/github.yml
 
 - name: Mini0 KES
-  hosts: rb4-m1
+  hosts: mini0_kes
   become: false
   gather_facts: false
-  no_log: "{{ cs_no_log }}"
+  tags: never,mini0,mini0_kes
+  no_log: "{{ cs_no_log | default('true') }}"
   tasks:
       - name: Mini0 | KES
-        tags: never,mini0,mini0_kes
         become: true
         become_user: root
         ansible.builtin.import_tasks:
             file: tasks/mini0-kes.yml
 
 - name: Mini0
-  hosts: rb4-m1
+  hosts: mini0_mini0
+  become: false
+  gather_facts: false
+  tags: never,mini0,mini0_mini0
+  no_log: "{{ cs_no_log | default('true') }}"
+  tasks:
+      - name: Mini0 | Mini0
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/mini0.yml
+
+- name: Postgres
+  hosts: postgres
+  become: true
+  become_user: root
+  gather_facts: false
+  tags: never,postgres
+  no_log: "{{ cs_no_log | default('true') }}"
+  tasks:
+      - name: Postgres
+        ansible.builtin.import_tasks:
+            file: tasks/postgres.yml
+
+- name: Redis
+  hosts: redis
+  become: true
+  become_user: root
+  gather_facts: false
+  no_log: "{{ cs_no_log | default('true') }}"
+  tags: never,redis
+  tasks:
+      - name: Redis
+        ansible.builtin.import_tasks:
+            file: tasks/redis.yml
+
+- name: Elasticsearch
+  hosts: elasticsearch
+  become: true
+  become_user: root
+  gather_facts: false
+  tags: never,elasticsearch
+  no_log: "{{ cs_no_log | default('true') }}"
+  tasks:
+      - name: Elasticsearch
+        ansible.builtin.import_tasks:
+            file: tasks/elasticsearch.yml
+
+- name: Mysql
+  hosts: mysql
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log }}"
   tasks:
-      - name: Mini0 | Disk
-        tags: never,mini0,mini0_disk
+      - name: Mysql
         become: true
         become_user: root
+        tags: never,mysql
         ansible.builtin.import_tasks:
-            file: tasks/mini0/disk.yml
-
-      - name: Mini0 | Mini0
-        tags: never,mini0,mini0_mini0
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/mini0/mini0.yml
+            file: tasks/mysql.yml
 
 - name: NFS Server
   hosts: rb4-m3
   become: false
   gather_facts: false
-  no_log: "{{ cs_no_log }}"
+  no_log: "{{ cs_no_log | default('true') }}"
   tasks:
       - name: NFS Server | Mount Disk
         become: true
@@ -147,7 +189,7 @@
   hosts: rb4-m1:rb4-m2
   become: false
   gather_facts: false
-  no_log: "{{ cs_no_log }}"
+  no_log: "{{ cs_no_log | default('true') }}"
   tasks:
       - name: NFS Client | Install NFS client
         become: true
@@ -155,40 +197,6 @@
         tags: never,nfs-client
         ansible.builtin.import_tasks:
             file: tasks/nfs-client.yml
-
-- name: Database
-  hosts: rb4-m1
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log }}"
-  tasks:
-      - name: Database | Postgres
-        become: true
-        become_user: root
-        tags: never,database,postgres
-        ansible.builtin.import_tasks:
-            file: tasks/database/postgres.yml
-
-      - name: Database | Redis
-        become: true
-        become_user: root
-        tags: never,database,redis
-        ansible.builtin.import_tasks:
-            file: tasks/database/redis.yml
-
-      - name: Database | Elasticsearch
-        become: true
-        become_user: root
-        tags: never,database,elasticsearch
-        ansible.builtin.import_tasks:
-            file: tasks/database/elasticsearch.yml
-
-      - name: Database | Mysql
-        become: true
-        become_user: root
-        tags: never,database,mysql
-        ansible.builtin.import_tasks:
-            file: tasks/database/mysql.yml
 
 - name: Collabora
   hosts: rb4-m2
@@ -204,10 +212,10 @@
             file: tasks/collabora.yml
 
 - name: Nextcloud
-  hosts: rb4-m3
+  hosts: nextcloud
   become: false
   gather_facts: false
-  no_log: "{{ cs_no_log }}"
+  no_log: "{{ cs_no_log | default('true') }}"
   tasks:
       - name: Nextcloud | Test cs_nc_protocol
         tags: never,nextcloud
@@ -294,11 +302,24 @@
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/dump.yml
 
+- name: Collabora
+  hosts: rb4-m2
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log | default('true') }}"
+  tasks:
+      - name: Collabora
+        tags: never,collabora
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/collabora.yml
+
 - name: Delete all
   hosts: patchservers
   become: false
   gather_facts: false
-  no_log: "{{ cs_no_log }}"
+  no_log: "{{ cs_no_log | default('true') }}"
   tags: never,delete_all
   tasks:
       - name: Delete all

@@ -1,0 +1,196 @@
+---
+- name: Crypt Device | Mount | Test variables
+  ansible.builtin.assert:
+      that:
+          - item is defined
+          - item | length > 0
+  with_items:
+      - "{{ cs_crypt_mount_vault_id }}"
+      - "{{ inventory_hostname }}"
+
+- name: Crypt Device | Mount | Get Disk details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/disks/{{ cs_crypt_mount_vault_id }}"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __vault_external_disk_details
+
+- name: Crypt Device | Mount | Set config facts
+  ansible.builtin.set_fact:
+      cs_crypt_mount_enc_key_base64: "{{ __vault_external_disk_details.secret.luks_key_base64 }}"
+      cs_crypt_mount_crypt_device_uuid: "{{ __vault_external_disk_details.secret.crypt_device_uuid }}"
+      cs_crypt_mount_device_uuid: "{{ __vault_external_disk_details.secret.device_uuid }}"
+      cs_crypt_mount_tmp_crypt_key_file: "/etc/cryptsetup-keys/{{ cs_crypt_mount_vault_id }}"
+      cs_crypt_mount_crypt_open_name: "{{ cs_crypt_mount_vault_id }}"
+      cs_crypt_mount_disk_mount_path: "/mnt/{{ cs_crypt_mount_vault_id }}"
+
+- name: Crypt Device | Mount | Information
+  ansible.builtin.debug:
+      msg: "Mounting disk {{ cs_crypt_mount_vault_id }} on {{ cs_crypt_mount_disk_mount_path }}"
+
+- name: Crypt Device | Mount | Install cryptsetup
+  become: true
+  become_user: root
+  ansible.builtin.package:
+      name: cryptsetup
+      state: present
+
+- name: Crypt Device | Mount | Create crypt key directory
+  become: true
+  become_user: root
+  ansible.builtin.file:
+      path: "{{ cs_crypt_mount_tmp_crypt_key_file | dirname }}"
+      state: directory
+      mode: "0000"
+      owner: root
+      group: root
+
+- name: Crypt Device | Mount | Remove mount point
+  ansible.posix.mount:
+      path: "{{ cs_crypt_mount_disk_mount_path }}"
+      state: absent
+      backup: true
+
+- name: Crypt Device | Mount | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
+      state: absent
+      backup: true
+
+- name: Crypt Device | Mount | Copy key file
+  become: true
+  become_user: root
+  ansible.builtin.copy:
+      content: "{{ cs_crypt_mount_enc_key_base64 | b64decode }}"
+      dest: "{{ cs_crypt_mount_tmp_crypt_key_file }}"
+      mode: "0000"
+      remote_src: false
+
+- name: Crypt Device | Mount | Create mount point
+  become: true
+  become_user: root
+  ansible.builtin.file:
+      path: "{{ cs_crypt_mount_disk_mount_path }}"
+      state: directory
+      mode: "0755"
+
+# Do not use community.general.crypttab
+- name: Crypt Device | Mount | Add to crypttab
+  ansible.builtin.lineinfile:
+      path: /etc/crypttab
+      line: "{{ cs_crypt_mount_crypt_open_name }} UUID={{ cs_crypt_mount_crypt_device_uuid }}
+          {{ cs_crypt_mount_tmp_crypt_key_file }} luks"
+      create: true
+      mode: "0644"
+      owner: root
+      group: root
+      regexp: "^{{ cs_crypt_mount_crypt_open_name }}"
+      backup: true
+
+- name: Crypt Device | Mount | Reload daemon
+  ansible.builtin.systemd_service:
+      daemon_reload: true
+
+- name: Crypt Device | Mount | Restart cryptsetup.target
+  ansible.builtin.systemd_service:
+      name: cryptsetup.target
+      enabled: true
+      state: restarted
+      daemon_reload: true
+
+- name: Crypt Device | Mount | Gather facts for crypt device uuid
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Crypt Device | Mount | Search for crypt device uuid
+  ansible.builtin.set_fact:
+      cs_crypt_mount_tmp_device_details: "{{ item.value }}"
+  with_items: "{{ ansible_devices | dict2items }}"
+  when: >
+      item.value.links.uuids | length > 0 and
+      cs_crypt_mount_crypt_device_uuid == item.value.links.uuids[0]
+
+- name: Crypt Device | Mount | Fail if crypt device uuid doesn't match
+  ansible.builtin.fail:
+      msg: "Device UUID doesn't match"
+  when: >
+      cs_crypt_mount_tmp_device_details is not defined or cs_crypt_mount_tmp_device_details.holders | length == 0 or
+      cs_crypt_mount_tmp_device_details.holders[0] != cs_crypt_mount_crypt_open_name
+
+- name: Crypt Device | Mount | Fstab Mount
+  ansible.posix.mount:
+      src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
+      path: "{{ cs_crypt_mount_disk_mount_path }}"
+      fstype: ext4
+      state: mounted
+      boot: true
+      opts: defaults,noatime,rw,noexec,nofail,user
+      fstab: /etc/fstab
+      opts_no_log: false
+      dump: 0
+      passno: 2
+      backup: true
+
+- name: Crypt Device | Mount | Gather facts for device uuid
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Crypt Device | Mount | Search for device uuid
+  ansible.builtin.set_fact:
+      cs_crypt_mount_tmp_crypt_device_details: "{{ item.value }}"
+  with_items: "{{ ansible_devices | dict2items }}"
+  when: >
+      item.value.links.uuids | length > 0 and
+      cs_crypt_mount_device_uuid == item.value.links.uuids[0]
+
+- name: Crypt Device | Mount | Fail if device uuid doesn't match
+  ansible.builtin.fail:
+      msg: "Crypt Device UUID doesn't match"
+  when: >
+      cs_crypt_mount_tmp_crypt_device_details is not defined or
+      cs_crypt_mount_tmp_crypt_device_details | length < 1
+
+- name: Crypt Device | Mount | Get df
+  ansible.builtin.command:
+      argv:
+          - "df"
+          - "-h"
+  register: __df_output
+  changed_when: false
+
+- name: Crypt Device | Mount | Debug df
+  ansible.builtin.debug:
+      msg: "{{ __df_output.stdout_lines }}"
+
+- name: Crypt Device | Mount | Look for mount
+  ansible.builtin.set_fact:
+      cs_crypt_mount_disk_df_lookup: "{{ item }}"
+  with_items: "{{ __df_output.stdout_lines }}"
+  when: cs_crypt_mount_disk_mount_path in item
+
+- name: Crypt Device | Mount | Disk df mount not present
+  ansible.builtin.fail:
+      msg: "Mount doesn't exist"
+  when: cs_crypt_mount_disk_df_lookup is not defined
+
+- name: Crypt Device | Mount | Reset facts
+  ansible.builtin.set_fact:
+      cs_crypt_mount_vault_id: null
+      cs_crypt_mount_enc_key_base64: null
+      cs_crypt_mount_crypt_device_uuid: null
+      cs_crypt_mount_device_uuid: null
+      cs_crypt_mount_tmp_crypt_key_file: null
+      cs_crypt_mount_disk_mount_path: null
+      cs_crypt_mount_crypt_open_name: null
+      cs_crypt_mount_tmp_device_details: null
+      cs_crypt_mount_tmp_crypt_device_details: null

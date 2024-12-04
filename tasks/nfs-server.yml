@@ -98,5 +98,7 @@
       from_ip: "{{ item }}"
       state: enabled
       port: nfs
+      comment: "Allow NFS Server port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   with_items: "{{ cs_nfs_client_ips }}"
   when: cs_nfs_client_ips | length > 0

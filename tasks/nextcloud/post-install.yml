@@ -29,11 +29,34 @@
   vars:
       nc_current_status: "{{ nc_status.stdout | from_json }}"
 
+- name: Nextcloud | Post Install | Get Config details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __nextcloud_app_details
+
+- name: Nextcloud | Post Install | Set config facts
+  ansible.builtin.set_fact:
+      cs_nc_port: "{{ __nextcloud_app_details.secret.port }}"
+
 - name: Nextcloud | Post Install | Enable UFW port
   community.general.ufw:
       rule: allow
       port: "{{ item }}"
       state: enabled
+      proto: tcp
+      comment: "Allow Nextcloud port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
   with_items:
       - "{{ cs_nc_port }}"
 
@@ -87,13 +110,5 @@
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
       cmd: "php occ maintenance:repair --include-expensive"
-      chdir: "{{ cs_nc_web_dir }}"
-  changed_when: true
-
-- name: Nextcloud | Post Install | Disable admin user
-  become: true
-  become_user: "{{ cs_nc_run_user }}"
-  ansible.builtin.command:
-      cmd: "php occ user:disable {{ cs_nc_admin_user }}"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
