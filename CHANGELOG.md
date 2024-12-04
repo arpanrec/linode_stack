@@ -1,6 +1,6 @@
-# [1.14.0](https://github.com/arpanrec/home-lab/compare/1.13.3...1.14.0) (2024-12-04)
+## [1.14.1](https://github.com/arpanrec/home-lab/compare/1.14.0...1.14.1) (2024-12-04)
 
 
-### Features
+### Bug Fixes
 
-* add Nextcloud data dump script and environment configuration ([#51](https://github.com/arpanrec/home-lab/issues/51)) ([6b49b6f](https://github.com/arpanrec/home-lab/commit/6b49b6fb351e05bde760e1fb0b85dbd02e0e7f6e))
+* update Nextcloud external disk ID and improve crypt device UUID handling ([7cb8735](https://github.com/arpanrec/home-lab/commit/7cb8735be71b0a7d76b2b14736bf56fac9efa678))
