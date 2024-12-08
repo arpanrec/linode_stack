@@ -32,6 +32,8 @@ def build_raft_server_nodes_map(
     server_raft_nodes: Dict[str, Dict[str, VaultRaftNode]] = {}
     validation_node_id: Set[str] = set()
     for vault_server_name, vault_server_details in vault_servers.items():
+        if not vault_server_details.is_vault_server:
+            continue
         vault_nodes: Dict[str, VaultNode] = vault_server_details.vault_nodes
         validation_node_port: Set[int] = set()
         server_raft_nodes[vault_server_name] = {}

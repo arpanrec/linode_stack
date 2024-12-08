@@ -202,16 +202,14 @@ class InventoryModule(BaseInventoryPlugin):
 
         vault_servers: Dict[str, VaultServer] = vault_config.vault_servers
         for vault_server_name, vault_server_details in vault_servers.items():
-
+            ip: str = str(vault_server_details.ansible_opts.get("ansible_host", None))
             try:
-                ip = vault_server_details.ansible_opts["ansible_host"]
                 ip_address = ipaddress.ip_address(ip)
                 if ip_address.is_loopback or ip_address.is_link_local or ip_address.is_multicast:
                     raise ValueError(f"Invalid IP address: {ip}")
             except ValueError as e:
                 raise ValueError(f"Invalid IP address: {ip}") from e
 
-            self.inventory.add_host(vault_server_name, group=self.ansible_vault_server_group_name)
             for ansible_inventory_extra_group in vault_server_details.ansible_inventory_extra_groups:
                 if ansible_inventory_extra_group in [
                     "all",
@@ -237,6 +235,11 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.set_variable(
                     vault_server_name, "ansible_ssh_private_key_file", ssh_private_key_temp_file
                 )
+            print(f"vault_server_details.is_vault_server {vault_server_details.is_vault_server}")
+            if not vault_server_details.is_vault_server:
+                continue
+
+            self.inventory.add_host(vault_server_name, group=self.ansible_vault_server_group_name)
             raft_nodes_id_details: Dict[str, VaultRaftNode] = server_raft_nodes[vault_server_name]
 
             for node_id, raft_node_details in raft_nodes_id_details.items():

@@ -100,6 +100,7 @@ vault_servers:
             ansible_user: # TODO: The user to connect to the server, Type: str
             ansible_host: # TODO: The way to connect to the server, IP address or FQDN, Type: str
             ansible_ssh_host: # TODO: The way to connect to the server, IP address or FQDN, Type: str
+        is_vault_server: true # TODO: The server is a vault server, Type: bool, Default: True
         cluster_addr_fqdn: # TODO: The way to connect to vault cluster FQDN, Type: str
         cluster_ip: # TODO: The way to connect to vault cluster, IP address, Type: str
         api_addr_fqdn: # TODO: The way to connect to vault API, FQDN, Type: str
