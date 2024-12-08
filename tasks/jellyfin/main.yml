@@ -1,7 +1,5 @@
 ---
 - name: Jellyfin | Include common crypt mount
-  when: false # TODO: Remove when ready
-  # when: cs_jellyfin_external_disk_id is defined
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:
@@ -78,7 +76,6 @@
         comment: "Public HTTPS Port"
 
 - name: Jellyfin | Enable UFW UDP Firewall
-  when: false # TODO: Remove when ready
   community.general.ufw:
       rule: allow
       port: "{{ item.port }}"
@@ -100,7 +97,6 @@
       state: present
 
 - name: Jellyfin | Data directory
-  when: false # TODO: Remove when ready
   ansible.builtin.file:
       path: "{{ cs_jellyfin_data_dir }}"
       state: directory
