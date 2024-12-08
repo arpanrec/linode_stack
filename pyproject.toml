@@ -18,7 +18,7 @@ line-length = 120
 
 [tool.poetry]
 name = "home-lab"
-version = "1.14.3"
+version = "1.15.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
@@ -31,19 +31,19 @@ scripts = { "vaultops" = "vaultops.__main__:main" }
 
 [tool.poetry.dependencies]
 python = "^3.11"
-ansible = "11.0.0"
+ansible = "11.1.0"
 bcrypt = "4.2.1"
 hvac = "2.3.0"
 passlib = "1.7.4"
 jmespath = "1.0.1"
-pydantic = "2.10.2"
+pydantic = "2.10.3"
 pydantic-settings = "2.6.1"
 prettytable = "3.12.0"
 python-terraform = "0.10.1"
 pygithub = "2.5.0"
 python-gnupg = "0.5.3"
-boto3 = "1.35.72"
-boto3-stubs = { extras = ["s3"], version = "1.35.72" } # extras = ["all"]
+boto3 = "1.35.76"
+boto3-stubs = { extras = ["s3"], version = "1.35.76" } # extras = ["all"]
 cachier = "3.1.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -52,7 +52,7 @@ pylint = "3.3.2"
 mypy = "1.13.0"
 ansible-lint = { version = "24.10.0", markers = "platform_system != 'Windows'" }
 poetry-plugin-export = "1.8.0"
-pyright = "1.1.389"
+pyright = "1.1.390"
 types-requests = "2.32.0.20241016"
 types-pyyaml = "6.0.12.20240917"
 isort = "5.13.2"

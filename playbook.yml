@@ -21,7 +21,7 @@
         throttle: 1
         when: ansible_host != 'localhost'
 
-- name: Patch System
+- name: Patch
   hosts: patchservers
   become: true
   become_user: root
@@ -29,9 +29,9 @@
   no_log: "{{ cs_no_log | default('true') }}"
   tags: never,patch
   tasks:
-      - name: Patch System
+      - name: Patch | System
         ansible.builtin.import_tasks:
-            file: tasks/patch.yml
+            file: tasks/patch/system.yml
 
 - name: Vaultops | Prepare
   hosts: localhost

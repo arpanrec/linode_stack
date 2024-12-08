@@ -19,6 +19,7 @@ class VaultServer(BaseModel):
     Represents the details of a Vault server.
 
     Attributes:
+        is_vault_server (bool): Whether the server is a Vault server.
         cluster_addr_fqdn (str, optional): The fully qualified domain name of the cluster address.
         cluster_ip (str, optional): The IP address of the cluster.
         api_addr_fqdn (str, optional): The fully qualified domain name of the API address.
@@ -30,11 +31,12 @@ class VaultServer(BaseModel):
         ansible_inventory_extra_groups (List[str], optional): A list of extra groups to add to the Ansible inventory.
     """
 
+    is_vault_server: bool = Field(default=True)
     cluster_addr_fqdn: Optional[str] = Field(default=None)
     cluster_ip: Optional[str] = Field(default=None)
     api_addr_fqdn: Optional[str] = Field(default=None)
     api_ip: Optional[str] = Field(default=None)
-    vault_nodes: Dict[str, VaultNode] = Field(...)
+    vault_nodes: Dict[str, VaultNode] = Field(default={})
     ansible_opts: Dict[str, str] = Field(default={})
     host_keys: List[str] = Field(default=[])
     root_ca_key_pem_as_ansible_priv_ssh_key: bool = Field(default=True)
