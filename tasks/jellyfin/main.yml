@@ -7,6 +7,7 @@
       cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
 
 - name: Jellyfin | Install packages
+  when: false # TODO: Remove when ready
   ansible.builtin.apt:
       name: "{{ item }}"
       state: present
@@ -14,11 +15,102 @@
       - apt-transport-https
       - lsb-release
       - ca-certificates
+      - python3-lxml
 
-# curl https://repo.jellyfin.org/debian/jellyfin_team.gpg.key
-# | gpg --dearmor | sudo tee /usr/share/keyrings/jellyfin-archive-keyring.gpg >/dev/null
-
-- name: Jellyfin | Add Jellyfin repository
+- name: Jellyfin | Add Jellyfin gpg key
+  when: false # TODO: Remove when ready
   ansible.builtin.apt_key:
       url: https://repo.jellyfin.org/debian/jellyfin_team.gpg.key
       state: present
+      validate_certs: true
+      keyring: /usr/share/keyrings/jellyfin-archive-keyring.gpg
+
+- name: Jellyfin | Gather facts
+  when: false # TODO: Remove when ready
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Jellyfin | Add Jellyfin repository
+  when: false # TODO: Remove when ready
+  ansible.builtin.apt_repository:
+      repo: "deb [signed-by=/usr/share/keyrings/jellyfin-archive-keyring.gpg
+          arch={{ cs_jellyfin_ansible_arch_map[ansible_architecture] }}]
+          https://repo.jellyfin.org/debian {{ ansible_distribution_release }} main"
+      state: present
+      validate_certs: true
+      update_cache: true
+      filename: jellyfin.list
+
+- name: Jellyfin | Install Jellyfin
+  when: false # TODO: Remove when ready
+  ansible.builtin.apt:
+      name: jellyfin
+      state: present
+      update_cache: true
+
+- name: Jellyfin | Configure Network Ports
+  community.general.xml:
+      path: /etc/jellyfin/network.xml
+      xpath: /NetworkConfiguration/{{ item.xpath }}
+      value: "{{ item.value }}"
+  with_items:
+      - xpath: "PublicHttpPort"
+        value: "{{ cs_jellyfin_public_http_port }}"
+      - xpath: "PublicHttpsPort"
+        value: "{{ cs_jellyfin_public_https_port }}"
+      - xpath: "InternalHttpPort"
+        value: "{{ cs_jellyfin_internal_http_port }}"
+      - xpath: "InternalHttpsPort"
+        value: "{{ cs_jellyfin_internal_https_port }}"
+
+- name: Jellyfin | Enable UFW Firewall
+  community.general.ufw:
+      rule: allow
+      port: "{{ item.port }}"
+      proto: tcp
+      state: enabled
+      comment: "Allow Jellyfin {{ item.comment }}, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+  with_items:
+      - port: "{{ cs_jellyfin_internal_http_port }}"
+        comment: "Internal HTTP Port"
+      - port: "{{ cs_jellyfin_internal_https_port }}"
+        comment: "Internal HTTPS Port"
+      - port: "{{ cs_jellyfin_public_http_port }}"
+        comment: "Public HTTP Port"
+      - port: "{{ cs_jellyfin_public_https_port }}"
+        comment: "Public HTTPS Port"
+
+- name: Jellyfin | Enable UFW UDP Firewall
+  when: false # TODO: Remove when ready
+  community.general.ufw:
+      rule: allow
+      port: 1900
+      proto: udp
+      state: enabled
+      comment: "Allow Jellyfin DLNA port, Managed by Ansible home-lab playbook {{
+          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+
+- name: Jellyfin | Add jellyfin to video group
+  when: false # TODO: Remove when ready
+  ansible.builtin.user:
+      name: jellyfin
+      groups: video
+      append: true
+      state: present
+
+- name: Jellyfin | Data directory
+  ansible.builtin.file:
+      path: "{{ cs_jellyfin_data_dir }}"
+      state: directory
+      owner: jellyfin
+      group: jellyfin
+      recurse: true
+      mode: "0755"
+
+- name: Jellyfin | Start Jellyfin
+  ansible.builtin.systemd_service:
+      name: jellyfin
+      state: restarted
+      enabled: true
+      daemon_reload: true
