@@ -1,6 +1,6 @@
-## [1.14.3](https://github.com/arpanrec/home-lab/compare/1.14.2...1.14.3) (2024-12-04)
+# [1.15.0](https://github.com/arpanrec/home-lab/compare/1.14.3...1.15.0) (2024-12-08)
 
 
-### Bug Fixes
+### Features
 
-* remove deprecated delete_all task from playbook.yml ([6d9f596](https://github.com/arpanrec/home-lab/commit/6d9f5962116becd9594939143f7c0ff0a839912c))
+* ignore vault server ([#54](https://github.com/arpanrec/home-lab/issues/54)) ([dcd255e](https://github.com/arpanrec/home-lab/commit/dcd255ef5414304002f4bea566542fef5a36ddf2))
