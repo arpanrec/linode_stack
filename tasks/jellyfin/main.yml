@@ -1,6 +1,24 @@
 ---
 - name: Jellyfin | Include common crypt mount
+  when: false
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:
       cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
+
+- name: Jellyfin | Install packages
+  ansible.builtin.apt:
+      name: "{{ item }}"
+      state: present
+  with_items:
+      - apt-transport-https
+      - lsb-release
+      - ca-certificates
+
+# curl https://repo.jellyfin.org/debian/jellyfin_team.gpg.key
+# | gpg --dearmor | sudo tee /usr/share/keyrings/jellyfin-archive-keyring.gpg >/dev/null
+
+- name: Jellyfin | Add Jellyfin repository
+  ansible.builtin.apt_key:
+      url: https://repo.jellyfin.org/debian/jellyfin_team.gpg.key
+      state: present
