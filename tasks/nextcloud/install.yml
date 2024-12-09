@@ -366,6 +366,7 @@
       - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
       - "config:system:set trusted_domains 2 --value=localhost"
       - "config:system:set trusted_domains 3 --value=127.0.0.1"
+      - "config:system:set trusted_domains 3 --value={{ ansible_host }}"
 
 - name: Nextcloud | Install | Add missing indices
   become: true
@@ -467,9 +468,13 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
-      - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
-      - "config:system:set overwritehost --value {{ cs_nc_domain }}:{{ cs_nc_port }}"
-      - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
+      # Do not delete because i might forget to set it back
+      # - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
+      # - "config:system:set overwritehost --value {{ cs_nc_domain }}:{{ cs_nc_port }}"
+      # - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
+      - "config:system:delete overwrite.cli.url"
+      - "config:system:delete overwritehost"
+      - "config:system:delete overwriteprotocol"
       - "config:system:set htaccess.RewriteBase --value /"
 
 - name: Nextcloud | Install | Remove default skeleton and template directories
