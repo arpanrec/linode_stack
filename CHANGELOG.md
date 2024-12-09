@@ -1,6 +1,6 @@
-# [1.15.0](https://github.com/arpanrec/home-lab/compare/1.14.3...1.15.0) (2024-12-08)
+# [1.16.0](https://github.com/arpanrec/home-lab/compare/1.15.0...1.16.0) (2024-12-09)
 
 
 ### Features
 
-* ignore vault server ([#54](https://github.com/arpanrec/home-lab/issues/54)) ([dcd255e](https://github.com/arpanrec/home-lab/commit/dcd255ef5414304002f4bea566542fef5a36ddf2))
+* nc private ([#56](https://github.com/arpanrec/home-lab/issues/56)) ([334393f](https://github.com/arpanrec/home-lab/commit/334393fea0b1d3ea28315f87cc8e471e9994c58d))
