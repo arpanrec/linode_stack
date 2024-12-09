@@ -12,6 +12,7 @@
       )
 
 - name: Jellyfin | Include common crypt mount
+  when: false # TODO: Uncomment when ready
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:
@@ -19,13 +20,12 @@
 
 - name: Jellyfin | Install packages
   ansible.builtin.apt:
-      name: "{{ item }}"
+      name:
+          - apt-transport-https
+          - lsb-release
+          - ca-certificates
+          - python3-lxml
       state: present
-  with_items:
-      - apt-transport-https
-      - lsb-release
-      - ca-certificates
-      - python3-lxml
 
 - name: Jellyfin | Add Jellyfin gpg key
   ansible.builtin.apt_key:
@@ -54,6 +54,14 @@
       state: present
       update_cache: true
 
+- name: Jellyfin | Make sure Jellyfin is restarted after upgrade
+  ansible.builtin.systemd_service:
+      name: jellyfin
+      state: restarted
+      enabled: true
+      daemon_reload: true
+
+# TODO: Config files are not recreated after purge and reinstall
 - name: Jellyfin | Configure Network Ports
   community.general.xml:
       path: /etc/jellyfin/network.xml
