@@ -1,4 +1,12 @@
 ---
+- name: Jellyfin | Stop Jellyfin if running
+  ansible.builtin.systemd_service:
+      name: jellyfin
+      state: stopped
+      enabled: false
+      daemon_reload: true
+  register: __jellyfin_service_is_running
+
 - name: Jellyfin | Include common crypt mount
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
@@ -56,6 +64,8 @@
         value: "{{ cs_jellyfin_internal_http_port }}"
       - xpath: "InternalHttpsPort"
         value: "{{ cs_jellyfin_internal_https_port }}"
+      - xpath: "EnableRemoteAccess"
+        value: "true"
 
 - name: Jellyfin | Enable UFW Firewall
   community.general.ufw:
@@ -63,8 +73,7 @@
       port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Jellyfin {{ item.comment }}, Managed by Ansible home-lab playbook {{
-          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      comment: "Allow Jellyfin {{ item.comment }}, Managed by Ansible home-lab playbook."
   with_items:
       - port: "{{ cs_jellyfin_internal_http_port }}"
         comment: "Internal HTTP Port"
