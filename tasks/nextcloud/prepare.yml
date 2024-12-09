@@ -246,6 +246,7 @@
       data:
           common_name: "{{ cs_nc_domain }}"
           alt_names: "{{ cs_nc_domain }}"
+          ip_sans: "127.0.0.1,{{ ansible_host }}" # Because in the inv plugin ansible host hast to be a ip
   register: __nextcloud_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
