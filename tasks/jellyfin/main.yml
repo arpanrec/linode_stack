@@ -6,6 +6,10 @@
       enabled: false
       daemon_reload: true
   register: __jellyfin_service_is_running
+  failed_when: __jellyfin_service_is_running.failed and
+      (
+      __jellyfin_service_is_running.msg.find("Could not find the requested service") == -1
+      )
 
 - name: Jellyfin | Include common crypt mount
   ansible.builtin.include_tasks:
