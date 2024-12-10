@@ -1,6 +1,5 @@
 ---
 - name: Jellyfin | Stop Jellyfin if running
-  when: false # TODO: Uncomment when ready
   ansible.builtin.systemd_service:
       name: jellyfin
       state: stopped
@@ -13,14 +12,12 @@
       )
 
 - name: Jellyfin | Include common crypt mount
-  when: false # TODO: Uncomment when ready
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:
       cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
 
 - name: Jellyfin | Install packages
-  when: false # TODO: Uncomment when ready
   ansible.builtin.apt:
       name:
           - apt-transport-https
@@ -30,7 +27,6 @@
       state: present
 
 - name: Jellyfin | Add Jellyfin gpg key
-  when: false # TODO: Uncomment when ready
   ansible.builtin.apt_key:
       url: https://repo.jellyfin.org/debian/jellyfin_team.gpg.key
       state: present
@@ -42,7 +38,6 @@
       gather_subset: all
 
 - name: Jellyfin | Add Jellyfin repository
-  when: false # TODO: Uncomment when ready
   ansible.builtin.apt_repository:
       repo: "deb [signed-by=/usr/share/keyrings/jellyfin-archive-keyring.gpg
           arch={{ cs_jellyfin_ansible_arch_map[ansible_architecture] }}]
@@ -53,7 +48,6 @@
       filename: jellyfin.list
 
 - name: Jellyfin | Install Jellyfin
-  when: false # TODO: Uncomment when ready
   ansible.builtin.apt:
       name: jellyfin
       state: present
@@ -243,7 +237,6 @@
         comment: "Public HTTPS Port"
 
 - name: Jellyfin | Enable UFW UDP Firewall
-  when: false # TODO: Uncomment when ready
   community.general.ufw:
       rule: allow
       port: "{{ item.port }}"
@@ -257,7 +250,6 @@
         comment: "auto-discovery"
 
 - name: Jellyfin | Add jellyfin to video group
-  when: false # TODO: Uncomment when ready
   ansible.builtin.user:
       name: jellyfin
       groups: video
@@ -265,7 +257,6 @@
       state: present
 
 - name: Jellyfin | Data directory
-  when: false # TODO: Uncomment when ready
   ansible.builtin.file:
       path: "{{ cs_jellyfin_data_dir }}"
       state: directory
