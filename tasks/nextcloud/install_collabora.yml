@@ -72,8 +72,8 @@
                 apps:
                     richdocuments:
                         types: prevent_group_restriction
-                        wopi_url: "{{ cs_nc_url }}"
-                        public_wopi_url: "{{ cs_nc_url }}"
+                        wopi_url: "{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
+                        public_wopi_url: "{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
                         doc_format: ooxml
                         disable_certificate_verification: "no"
                         wopi_allowlist: "{{ cs_public_ingress_ip }},\

@@ -165,7 +165,7 @@
       validate_certs: true
       data:
           common_name: "{{ cs_nc_db_user }}"
-          alt_names: "{{ cs_nc_domain }}"
+          alt_names: "{{ cs_public_ingress_dns_entry }}"
   register: __nextcloud_db_client_certificate
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -362,10 +362,12 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
-      - "config:system:set trusted_domains 0 --value={{ cs_nc_domain }}"
+      - "config:system:set trusted_domains 0 --value={{ cs_public_ingress_dns_entry }}"
       - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
       - "config:system:set trusted_domains 2 --value=localhost"
       - "config:system:set trusted_domains 3 --value=127.0.0.1"
+      - "config:system:set trusted_domains 4 --value={{ ansible_host }}"
+      - "config:system:set trusted_domains 5 --value={{ cs_public_ingress_ip }}"
 
 - name: Nextcloud | Install | Add missing indices
   become: true
@@ -467,9 +469,14 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
-      - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}"
-      - "config:system:set overwritehost --value {{ cs_nc_domain }}:{{ cs_nc_port }}"
-      - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
+      # Do not delete because i might forget to set it back
+      # - "config:system:set overwrite.cli.url
+      #   --value {{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
+      - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://127.0.0.1:{{ cs_nc_port }}"
+      # - "config:system:set overwritehost --value {{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
+      # - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
+      - "config:system:delete overwritehost"
+      - "config:system:delete overwriteprotocol"
       - "config:system:set htaccess.RewriteBase --value /"
 
 - name: Nextcloud | Install | Remove default skeleton and template directories
@@ -493,7 +500,7 @@
   with_items:
       - "theming:config name 'Home Server'"
       - "theming:config slogan 'Where bytes go to retire and data parties in pajamas!'"
-      - "theming:config url '{{ cs_nc_protocol }}://{{ cs_nc_domain }}:{{ cs_nc_port }}'"
+      - "theming:config url '{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}'"
       - "theming:config color '#2C2222'"
       - "theming:config favicon '/tmp/nc-favicon.ico'"
       - "theming:config logo '/tmp/nc-logo.png'"
