@@ -119,6 +119,8 @@
   with_items:
       - cert
       - chain
+      - issuing_ca
+      - key
   register: __jellyfin_temp_files
 
 - name: Jellyfin | Create cert dir
@@ -127,19 +129,23 @@
       state: directory
       owner: jellyfin
       group: jellyfin
-      mode: "0755"
+      mode: "0777"
 
 - name: Jellyfin | Write Server Certificate
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
-      mode: "0600"
+      mode: "0644"
   loop:
       - content: "{{ __jellyfin_server_cert.data.data.certificate }}\n\
             {{ __jellyfin_server_cert.data.data.ca_chain | join('\n') }}"
         dest: "{{ __jellyfin_temp_files.results[0].path }}"
       - content: "{{ __jellyfin_server_cert.data.data.ca_chain | join('\n') }}"
         dest: "{{ __jellyfin_temp_files.results[1].path }}"
+      - content: "{{ __jellyfin_server_cert.data.data.issuing_ca }}"
+        dest: "{{ __jellyfin_temp_files.results[2].path }}"
+      - content: "{{ __jellyfin_server_cert.data.data.private_key }}"
+        dest: "{{ __jellyfin_temp_files.results[3].path }}"
 
 - name: Jellyfin | Set random password
   ansible.builtin.set_fact:
@@ -147,22 +153,38 @@
           chars=['ascii_letters', 'digits']) }}"
 
 - name: Jellyfin | Generate PKCS#12 file
-  community.crypto.openssl_pkcs12:
-      action: export
-      path: /etc/jellyfin/cert/jellyfin.p12
-      mode: "0444"
-      owner: jellyfin
-      group: jellyfin
-      friendly_name: raclette
-      encryption_level: auto
-      privatekey_content: "{{ __jellyfin_server_cert.data.data.private_key }}"
-      certificate_path: "{{ __jellyfin_temp_files.results[0].path }}"
-      other_certificates_parse_all: false
-      passphrase: "{{ cs_jellyfin_p12_cert_password }}"
-      other_certificates:
-          - "{{ __jellyfin_temp_files.results[1].path }}"
-          - "{{ __jellyfin_temp_files.results[0].path }}"
-      state: present
+  changed_when: true
+  become: true
+  become_user: root
+  ansible.builtin.shell:
+      cmd: |+
+          openssl pkcs12 -export -out /etc/jellyfin/cert/jellyfin.pfx \
+          -inkey {{ __jellyfin_temp_files.results[3].path }} \
+          -in "{{ __jellyfin_temp_files.results[0].path }}" \
+          -certfile "{{ __jellyfin_temp_files.results[2].path }}" \
+          -password "pass:{{ cs_jellyfin_p12_cert_password }}"
+
+          chmod 0444 /etc/jellyfin/cert/jellyfin.pfx
+          chown jellyfin:jellyfin /etc/jellyfin/cert/jellyfin.pfx
+
+# - name: Jellyfin | Generate PKCS#12 file
+#   community.crypto.openssl_pkcs12:
+#       action: export
+#       path: /etc/jellyfin/cert/jellyfin.pfx
+#       mode: "0444"
+#       owner: jellyfin
+#       group: jellyfin
+#       friendly_name: raclette
+#       encryption_level: auto
+#       privatekey_content: "{{ __jellyfin_server_cert.data.data.private_key }}"
+#       certificate_path: "{{ __jellyfin_temp_files.results[0].path }}"
+#       other_certificates_parse_all: false
+#       passphrase: "{{ cs_jellyfin_p12_cert_password }}"
+#       other_certificates:
+#           - "{{ __jellyfin_temp_files.results[2].path }}"
+#           - "{{ __jellyfin_temp_files.results[1].path }}"
+#           - "{{ __jellyfin_temp_files.results[0].path }}"
+#       state: present
 
 - name: Jellyfin | Configure Network Ports
   when: __jellyfin_network_xml_exists.stat.exists
@@ -171,36 +193,36 @@
       xpath: /NetworkConfiguration/{{ item.xpath }}
       value: "{{ item.value }}"
   with_items:
-    #   - xpath: "PublicHttpPort"
-    #     value: "{{ cs_jellyfin_public_http_port }}"
-    #   - xpath: "PublicHttpsPort"
-    #     value: "{{ cs_jellyfin_public_https_port }}"
-    #   - xpath: "InternalHttpPort"
-    #     value: "{{ cs_jellyfin_internal_http_port }}"
-    #   - xpath: "InternalHttpsPort"
-    #     value: "{{ cs_jellyfin_internal_https_port }}"
-    #   - xpath: "EnableRemoteAccess"
-    #     value: "true"
-    #   - xpath: "EnableHttps"
-    #     value: "true"
-    #   - xpath: "RequireHttps"
-    #     value: "true"
-    #   - xpath: "CertificatePath"
-    #     value: "/etc/jellyfin/cert/jellyfin.p12"
+      - xpath: "PublicHttpPort"
+        value: "{{ cs_jellyfin_public_http_port }}"
+      - xpath: "PublicHttpsPort"
+        value: "{{ cs_jellyfin_public_https_port }}"
+      - xpath: "InternalHttpPort"
+        value: "{{ cs_jellyfin_internal_http_port }}"
+      - xpath: "InternalHttpsPort"
+        value: "{{ cs_jellyfin_internal_https_port }}"
+      - xpath: "EnableRemoteAccess"
+        value: "true"
+      - xpath: "EnableHttps"
+        value: "true"
+      - xpath: "RequireHttps"
+        value: "false"
+      - xpath: "CertificatePath"
+        value: "/etc/jellyfin/cert/jellyfin.pfx"
       - xpath: "CertificatePassword"
         value: "{{ cs_jellyfin_p12_cert_password }}"
-    #   - xpath: "AutoDiscovery"
-    #     value: "true"
-    #   - xpath: "EnableUPnP"
-    #     value: "true"
-    #   - xpath: "EnableIPv4"
-    #     value: "true"
-    #   - xpath: "EnableIPv6"
-    #     value: "false"
-    #   - xpath: "EnableRemoteAccess"
-    #     value: "true"
-    #   - xpath: "IgnoreVirtualInterfaces"
-    #     value: "true"
+      - xpath: "AutoDiscovery"
+        value: "true"
+      - xpath: "EnableUPnP"
+        value: "true"
+      - xpath: "EnableIPv4"
+        value: "true"
+      - xpath: "EnableIPv6"
+        value: "false"
+      - xpath: "EnableRemoteAccess"
+        value: "true"
+      - xpath: "IgnoreVirtualInterfaces"
+        value: "true"
 
 - name: Jellyfin | Enable UFW Firewall
   when: false # TODO: Uncomment when ready
