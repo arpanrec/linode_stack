@@ -18,7 +18,7 @@ line-length = 120
 
 [tool.poetry]
 name = "home-lab"
-version = "1.15.0"
+version = "1.17.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
@@ -42,9 +42,10 @@ prettytable = "3.12.0"
 python-terraform = "0.10.1"
 pygithub = "2.5.0"
 python-gnupg = "0.5.3"
-boto3 = "1.35.76"
-boto3-stubs = { extras = ["s3"], version = "1.35.76" } # extras = ["all"]
+boto3 = "1.35.77"
+boto3-stubs = { extras = ["s3"], version = "1.35.77" } # extras = ["all"]
 cachier = "3.1.2"
+lxml = "5.3.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "24.10.0"
