@@ -146,6 +146,7 @@
       cs_jellyfin_p12_cert_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
 
+# Certificate is not working, for some reason ca_chain is not being added to the certificate
 - name: Jellyfin | Generate PKCS#12 file
   changed_when: true
   become: true
@@ -219,7 +220,6 @@
         value: "true"
 
 - name: Jellyfin | Enable UFW Firewall
-  when: false # TODO: Uncomment when ready
   community.general.ufw:
       rule: allow
       port: "{{ item.port }}"
