@@ -54,15 +54,21 @@
       state: present
       update_cache: true
 
-- name: Jellyfin | Make sure Jellyfin is restarted after upgrade
+- name: Jellyfin | Make sure Jellyfin is restarted after install
   ansible.builtin.systemd_service:
       name: jellyfin
       state: restarted
       enabled: true
       daemon_reload: true
 
+- name: Jellyfin | Check if /etc/jellyfin/network.xml exists
+  ansible.builtin.stat:
+      path: /etc/jellyfin/network.xml
+  register: __jellyfin_network_xml_exists
+
 # TODO: Config files are not recreated after purge and reinstall
 - name: Jellyfin | Configure Network Ports
+  when: __jellyfin_network_xml_exists.stat.exists
   community.general.xml:
       path: /etc/jellyfin/network.xml
       xpath: /NetworkConfiguration/{{ item.xpath }}

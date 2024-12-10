@@ -244,9 +244,10 @@
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       data:
-          common_name: "{{ cs_nc_domain }}"
-          alt_names: "{{ cs_nc_domain }}"
-          ip_sans: "127.0.0.1,{{ ansible_host }}" # Because in the inv plugin ansible host hast to be a ip
+          common_name: "{{ cs_public_ingress_dns_entry }}"
+          alt_names: "{{ cs_public_ingress_dns_entry }},localhost,{{ ansible_fqdn }}"
+          # Because in the inv plugin ansible host hast to be a ip
+          ip_sans: "127.0.0.1,{{ ansible_host }},{{ cs_public_ingress_ip }}"
   register: __nextcloud_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
