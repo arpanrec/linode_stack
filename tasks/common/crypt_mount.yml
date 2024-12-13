@@ -71,7 +71,30 @@
       owner: root
       group: root
 
+- name: Crypt Device | Mount | Get df pre mount
+  ansible.builtin.command:
+      argv:
+          - "df"
+          - "-h"
+  register: __df_output_pre_mount
+  changed_when: false
+
+- name: Crypt Device | Mount | Look for mount pre mount
+  ansible.builtin.set_fact:
+      cs_crypt_already_mounted: "{{ item }}"
+  with_items: "{{ __df_output_pre_mount.stdout_lines }}"
+  when: >
+      cs_crypt_mount_disk_mount_path in item
+      and
+      '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
+
+- name: Crypt Device | Mount | Disk df mount not present
+  ansible.builtin.debug:
+      msg: "Mount already exists: {{ cs_crypt_already_mounted }}"
+  when: cs_crypt_already_mounted is defined
+
 - name: Crypt Device | Mount | Remove mount point
+  when: cs_crypt_already_mounted is not defined
   ansible.posix.mount:
       path: "{{ cs_crypt_mount_disk_mount_path }}"
       state: absent
@@ -158,28 +181,31 @@
       passno: 2
       backup: true
 
-- name: Crypt Device | Mount | Get df
+- name: Crypt Device | Mount | Get df post mount
   ansible.builtin.command:
       argv:
           - "df"
           - "-h"
-  register: __df_output
+  register: __df_output_post_mount
   changed_when: false
 
 - name: Crypt Device | Mount | Debug df
   ansible.builtin.debug:
-      msg: "{{ __df_output.stdout_lines }}"
+      msg: "{{ __df_output_post_mount.stdout_lines }}"
 
 - name: Crypt Device | Mount | Look for mount
   ansible.builtin.set_fact:
-      cs_crypt_mount_disk_df_lookup: "{{ item }}"
-  with_items: "{{ __df_output.stdout_lines }}"
+      cs_crypt_post_mount_disk_df_lookup: "{{ item }}"
+  with_items: "{{ __df_output_post_mount.stdout_lines }}"
   when: cs_crypt_mount_disk_mount_path in item
 
 - name: Crypt Device | Mount | Disk df mount not present
   ansible.builtin.fail:
       msg: "Mount doesn't exist"
-  when: cs_crypt_mount_disk_df_lookup is not defined
+  when: >
+      cs_crypt_post_mount_disk_df_lookup is not defined
+      and
+      '/dev/mapper/' + cs_crypt_mount_crypt_open_name not in cs_crypt_post_mount_disk_df_lookup
 
 - name: Crypt Device | Mount | Reset facts
   ansible.builtin.set_fact:
@@ -192,3 +218,5 @@
       cs_crypt_mount_crypt_open_name: null
       cs_crypt_mount_tmp_device_details: null
       cs_crypt_mount_tmp_crypt_device_details: null
+      cs_crypt_already_mounted: null
+      cs_crypt_post_mount_disk_df_lookup: null
