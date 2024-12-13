@@ -354,20 +354,26 @@
 - name: Nextcloud | Install | Gather facts
   ansible.builtin.setup:
 
+- name: Nextcloud | Install | Delete Trusted Domains
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ config:system:delete trusted_domains"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+
 - name: Nextcloud | Install | Set Trusted Domains
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
-      cmd: "php occ {{ item }}"
+      cmd: "php occ config:system:set trusted_domains {{ item_index }} --value={{ item }}"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
+  loop_control:
+      index_var: item_index
   with_items:
-      - "config:system:set trusted_domains 0 --value={{ cs_public_ingress_dns_entry }}"
-      - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
-      - "config:system:set trusted_domains 2 --value=localhost"
-      - "config:system:set trusted_domains 3 --value=127.0.0.1"
-      - "config:system:set trusted_domains 4 --value={{ ansible_host }}"
-      - "config:system:set trusted_domains 5 --value={{ cs_public_ingress_ip }}"
+      "{{ ([cs_public_ingress_dns_entry, ansible_fqdn, 'localhost',
+      ansible_host, cs_public_ingress_ip, '127.0.0.1'] + ansible_all_ipv4_addresses) }}"
 
 - name: Nextcloud | Install | Add missing indices
   become: true

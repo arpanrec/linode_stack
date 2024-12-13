@@ -1,4 +1,7 @@
 ---
+- name: Database | Redis | Gather Facts
+  ansible.builtin.setup:
+
 # cs_redis_tls_privkey_pass: "{{ vault_cred_cs_redis_tls_privkey_pass }}"
 - name: Database | Redis | Get config from Vault
   become: false
@@ -69,7 +72,7 @@
       data:
           common_name: "{{ cs_redis_private_ip }}"
           alt_names: "localhost"
-          ip_sans: "{{ cs_redis_private_ip }},127.0.0.1"
+          ip_sans: "{{ ([cs_redis_private_ip, '127.0.0.1'] + ansible_all_ipv4_addresses) | join(',') }}"
   register: __redis_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
