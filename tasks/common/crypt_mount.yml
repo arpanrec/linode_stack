@@ -88,7 +88,7 @@
       and
       '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
 
-- name: Crypt Device | Mount | Disk df mount not present
+- name: Crypt Device | Mount | Disk df mount present
   ansible.builtin.debug:
       msg: "Mount already exists: {{ cs_crypt_already_mounted }}"
   when: cs_crypt_already_mounted is defined
@@ -197,15 +197,15 @@
   ansible.builtin.set_fact:
       cs_crypt_post_mount_disk_df_lookup: "{{ item }}"
   with_items: "{{ __df_output_post_mount.stdout_lines }}"
-  when: cs_crypt_mount_disk_mount_path in item
+  when: >
+    cs_crypt_mount_disk_mount_path in item
+    and
+    '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
 
 - name: Crypt Device | Mount | Disk df mount not present
   ansible.builtin.fail:
       msg: "Mount doesn't exist"
-  when: >
-      cs_crypt_post_mount_disk_df_lookup is not defined
-      and
-      '/dev/mapper/' + cs_crypt_mount_crypt_open_name not in cs_crypt_post_mount_disk_df_lookup
+  when: cs_crypt_post_mount_disk_df_lookup is not defined
 
 - name: Crypt Device | Mount | Reset facts
   ansible.builtin.set_fact:
