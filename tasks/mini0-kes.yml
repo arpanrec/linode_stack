@@ -1,4 +1,7 @@
 ---
+- name: KES | Install | Gather Facts
+  ansible.builtin.setup:
+
 - name: KES | Assert | cs_mini0_kes_hostnames
   ansible.builtin.assert:
       that:
@@ -12,9 +15,6 @@
           - cs_mini0_kes_ips | type_debug == 'list'
           - cs_mini0_kes_ips | length > 0
       fail_msg: "cs_mini0_kes_ips must be a list with at least one element"
-
-- name: KES | Install | Gather Facts
-  ansible.builtin.setup:
 
 - name: KES | Install | Create group
   ansible.builtin.group:

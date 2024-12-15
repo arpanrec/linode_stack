@@ -59,6 +59,15 @@
             owner: "{{ pv_vault_user }}"
             group: "{{ pv_vault_group }}"
 
+      - name: Vaultops | Vault Virtual Node Server | Install | TLS | Gather ansible facts
+        ansible.builtin.setup:
+
+      - name: Vaultops | Vault Virtual Node Server | Install | TLS | Make subject_names
+        ansible.builtin.set_fact:
+            subject_names_manipulation: "IP:{{ item }}"
+        with_items: "{{ ansible_all_ipv4_addresses }}"
+        register: subject_names_all
+
       - name: Vaultops | Vault Virtual Node Server | Install | TLS | Create Openssl Certificate Signing Request
         community.crypto.openssl_csr:
             path: "{{ pv_vault_tls_dir }}/vault.csr"
@@ -71,7 +80,8 @@
                 - keyEncipherment
             extended_key_usage:
                 - serverAuth
-            subject_alt_name: "{{ pv_vault_subject_alt_name }}"
+            subject_alt_name: "{{ subject_names_all.results | map(attribute='ansible_facts.subject_names_manipulation')
+                | list + pv_vault_subject_alt_name }}"
             subject_alt_name_critical: true
             backup: false
             mode: "0o600"
