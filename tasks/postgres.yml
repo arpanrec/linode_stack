@@ -1,4 +1,7 @@
 ---
+- name: Database | Postgres | Gather Facts
+  ansible.builtin.setup:
+
 - name: Database | Postgres | Get config from Vault
   become: false
   delegate_facts: true
@@ -78,7 +81,8 @@
           common_name: "{{ inventory_hostname }}"
           alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
               {{ cs_postgres_container_name }},localhost"
-          ip_sans: "{{ cs_postgres_host_public_ip }},{{ cs_postgres_host_private_ip }},127.0.0.1"
+          ip_sans: "{{ ([cs_postgres_host_public_ip, cs_postgres_host_private_ip, '127.0.0.1']
+              + ansible_all_ipv4_addresses) | join(',') }}"
   register: __postgresql_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"

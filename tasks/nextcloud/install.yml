@@ -59,6 +59,21 @@
             owner: "{{ cs_nc_run_user }}"
             group: "{{ cs_nc_run_group }}"
             mode: "0755"
+
+      - name: Nextcloud | Install | Download New | Reset permissions and ownership
+        ansible.builtin.shell:
+            cmd: |+
+                set -euo pipefail;
+                find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
+                find {{ cs_nc_web_dir }}/ -type f -exec chmod 0640 {} \;
+                chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
+            executable: /bin/bash
+        changed_when: true
+
+      - name: Nextcloud | Install | Download New | Remove AD
+        ansible.builtin.command:
+            cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
+        changed_when: true
   rescue:
       - name: Nextcloud | Install | Download New | Fail | Cleanup
         ansible.builtin.file:
@@ -74,11 +89,6 @@
         ansible.builtin.fail:
             msg: "Failed to download/install Nextcloud {{ cs_nc_version }}
                 Please check the logs for more information"
-
-- name: Nextcloud | Install | Remove AD
-  ansible.builtin.command:
-      cmd: truncate -s 0 {{ cs_nc_web_dir }}/apps/settings/templates/settings/personal/development.notice.php
-  changed_when: true
 
 - name: Nextcloud | Install | Create Nextcloud directory
   ansible.builtin.file:
@@ -119,14 +129,9 @@
   ansible.builtin.shell:
       cmd: |+
           set -euo pipefail;
-
           find {{ cs_nc_data_dir }}/ -type d -exec chmod 0750 {} \;
           find {{ cs_nc_data_dir }}/ -type f -exec chmod 0640 {} \;
           chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_data_dir }};
-
-          find {{ cs_nc_web_dir }}/ -type d -exec chmod 0750 {} \;
-          find {{ cs_nc_web_dir }}/ -type f -exec chmod 0640 {} \;
-          chown -R {{ cs_nc_run_user }}:{{ cs_nc_run_group }} {{ cs_nc_web_dir }};
       executable: /bin/bash
   changed_when: true
 
@@ -354,20 +359,25 @@
 - name: Nextcloud | Install | Gather facts
   ansible.builtin.setup:
 
+- name: Nextcloud | Install | Delete Trusted Domains
+  become: true
+  become_user: "{{ cs_nc_run_user }}"
+  ansible.builtin.command:
+      cmd: "php occ config:system:delete trusted_domains"
+      chdir: "{{ cs_nc_web_dir }}"
+  changed_when: true
+
 - name: Nextcloud | Install | Set Trusted Domains
   become: true
   become_user: "{{ cs_nc_run_user }}"
   ansible.builtin.command:
-      cmd: "php occ {{ item }}"
+      cmd: "php occ config:system:set trusted_domains {{ item_index }} --value={{ item }}"
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
-  with_items:
-      - "config:system:set trusted_domains 0 --value={{ cs_public_ingress_dns_entry }}"
-      - "config:system:set trusted_domains 1 --value={{ ansible_fqdn }}"
-      - "config:system:set trusted_domains 2 --value=localhost"
-      - "config:system:set trusted_domains 3 --value=127.0.0.1"
-      - "config:system:set trusted_domains 4 --value={{ ansible_host }}"
-      - "config:system:set trusted_domains 5 --value={{ cs_public_ingress_ip }}"
+  loop_control:
+      index_var: item_index
+  with_items: "{{ ([cs_public_ingress_dns_entry, ansible_fqdn, 'localhost',
+      ansible_host, cs_public_ingress_ip, '127.0.0.1'] + ansible_all_ipv4_addresses) }}"
 
 - name: Nextcloud | Install | Add missing indices
   become: true

@@ -5,6 +5,10 @@
   vars:
       cs_crypt_mount_vault_id: "{{ cs_mini0_external_disk_id }}"
 
+- name: Minio | Install | Gather Facts
+  ansible.builtin.setup:
+      gather_subset: all
+
 - name: Mini0 | Get Config details
   become: false
   delegate_facts: true
@@ -90,9 +94,6 @@
           - cs_mini0_mini0_ips | type_debug == 'list'
           - cs_mini0_mini0_ips | length > 0
       fail_msg: "cs_mini0_mini0_ips must be a list with at least one element"
-
-- name: Minio | Install | Gather Facts
-  ansible.builtin.setup:
 
 - name: Minio | Install | Create group
   ansible.builtin.group:
