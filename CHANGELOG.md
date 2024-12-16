@@ -1,6 +1,6 @@
-# [1.20.0](https://github.com/arpanrec/home-lab/compare/1.19.1...1.20.0) (2024-12-16)
+## [1.20.1](https://github.com/arpanrec/home-lab/compare/1.20.0...1.20.1) (2024-12-16)
 
 
-### Features
+### Bug Fixes
 
-* **jellyfin:** ensure Jellyfin service is started on deployment ([00266dc](https://github.com/arpanrec/home-lab/commit/00266dcf71d0b7ec659c850b4fcdb8a3f546f1f9))
+* **crypt_mount:** reorder fstab removal task for clarity and consistency ([9dc30d0](https://github.com/arpanrec/home-lab/commit/9dc30d073747c0ef66fe3c5ea6f5ca64858f863a))
