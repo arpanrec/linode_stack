@@ -1,6 +1,6 @@
-## [1.19.1](https://github.com/arpanrec/home-lab/compare/1.19.0...1.19.1) (2024-12-16)
+# [1.20.0](https://github.com/arpanrec/home-lab/compare/1.19.1...1.20.0) (2024-12-16)
 
 
-### Bug Fixes
+### Features
 
-* Add UFW firewall rules for Jellyfin service ([b3cf45e](https://github.com/arpanrec/home-lab/commit/b3cf45ebb220a31e838d1f438598feb1011bc816))
+* **jellyfin:** ensure Jellyfin service is started on deployment ([00266dc](https://github.com/arpanrec/home-lab/commit/00266dcf71d0b7ec659c850b4fcdb8a3f546f1f9))
