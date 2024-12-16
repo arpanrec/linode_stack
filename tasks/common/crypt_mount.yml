@@ -100,13 +100,6 @@
       state: absent
       backup: true
 
-- name: Crypt Device | Mount | Remove from fstab
-  ansible.builtin.lineinfile:
-      path: /etc/fstab
-      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
-      state: absent
-      backup: true
-
 - name: Crypt Device | Mount | Copy key file
   become: true
   become_user: root
@@ -167,6 +160,13 @@
       cs_crypt_mount_tmp_device_details is not defined or
       cs_crypt_mount_tmp_device_details | length < 1
 
+- name: Crypt Device | Mount | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
+      state: absent
+      backup: true
+
 - name: Crypt Device | Mount | Fstab Mount
   ansible.posix.mount:
       src: /dev/mapper/{{ cs_crypt_mount_crypt_open_name }}
@@ -198,9 +198,9 @@
       cs_crypt_post_mount_disk_df_lookup: "{{ item }}"
   with_items: "{{ __df_output_post_mount.stdout_lines }}"
   when: >
-    cs_crypt_mount_disk_mount_path in item
-    and
-    '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
+      cs_crypt_mount_disk_mount_path in item
+      and
+      '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
 
 - name: Crypt Device | Mount | Disk df mount not present
   ansible.builtin.fail:
