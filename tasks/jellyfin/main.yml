@@ -53,6 +53,36 @@
       state: present
       update_cache: true
 
+- name: Jellyfin | Enable UFW Firewall
+  community.general.ufw:
+      rule: allow
+      port: "{{ item.port }}"
+      proto: tcp
+      state: enabled
+      comment: "Allow Jellyfin {{ item.comment }}, Managed by Ansible home-lab playbook."
+  with_items:
+      - port: "{{ cs_jellyfin_internal_http_port }}"
+        comment: "Internal HTTP Port"
+      - port: "{{ cs_jellyfin_internal_https_port }}"
+        comment: "Internal HTTPS Port"
+      - port: "{{ cs_jellyfin_public_http_port }}"
+        comment: "Public HTTP Port"
+      - port: "{{ cs_jellyfin_public_https_port }}"
+        comment: "Public HTTPS Port"
+
+- name: Jellyfin | Enable UFW UDP Firewall
+  community.general.ufw:
+      rule: allow
+      port: "{{ item.port }}"
+      proto: udp
+      state: enabled
+      comment: "Allow Jellyfin {{ item.comment }} port, Managed by Ansible home-lab playbook."
+  with_items:
+      - port: 1900
+        comment: "service auto-discovery"
+      - port: 7359
+        comment: "auto-discovery"
+
 - name: Jellyfin | Check if /etc/jellyfin/network.xml exists
   ansible.builtin.stat:
       path: /etc/jellyfin/network.xml
@@ -218,36 +248,6 @@
         value: "true"
       - xpath: "IgnoreVirtualInterfaces"
         value: "true"
-
-- name: Jellyfin | Enable UFW Firewall
-  community.general.ufw:
-      rule: allow
-      port: "{{ item.port }}"
-      proto: tcp
-      state: enabled
-      comment: "Allow Jellyfin {{ item.comment }}, Managed by Ansible home-lab playbook."
-  with_items:
-      - port: "{{ cs_jellyfin_internal_http_port }}"
-        comment: "Internal HTTP Port"
-      - port: "{{ cs_jellyfin_internal_https_port }}"
-        comment: "Internal HTTPS Port"
-      - port: "{{ cs_jellyfin_public_http_port }}"
-        comment: "Public HTTP Port"
-      - port: "{{ cs_jellyfin_public_https_port }}"
-        comment: "Public HTTPS Port"
-
-- name: Jellyfin | Enable UFW UDP Firewall
-  community.general.ufw:
-      rule: allow
-      port: "{{ item.port }}"
-      proto: udp
-      state: enabled
-      comment: "Allow Jellyfin {{ item.comment }} port, Managed by Ansible home-lab playbook."
-  with_items:
-      - port: 1900
-        comment: "service auto-discovery"
-      - port: 7359
-        comment: "auto-discovery"
 
 - name: Jellyfin | Add jellyfin to video group
   ansible.builtin.user:
