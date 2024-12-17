@@ -1,6 +1,6 @@
-## [1.21.1](https://github.com/arpanrec/home-lab/compare/1.21.0...1.21.1) (2024-12-17)
+## [1.21.2](https://github.com/arpanrec/home-lab/compare/1.21.1...1.21.2) (2024-12-17)
 
 
 ### Bug Fixes
 
-* **jellyfin:** enhance container setup by adding directory creation and permission fixes ([1d44010](https://github.com/arpanrec/home-lab/commit/1d44010225d9a431cd239d68b706e034471c7038))
+* **jellyfin:** update directory and file permissions to 0777 for improved access ([a98380f](https://github.com/arpanrec/home-lab/commit/a98380fe968259b4cc440a431e809dc2d51a143d))
