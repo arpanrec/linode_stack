@@ -1,3 +1,6 @@
 ---
 cs_jellyfin_ansible_arch_map:
     aarch64: arm64
+cs_jellyfin_container_name: jellyfin
+cs_jellyfin_container_version: 10.10.3
+cs_jellyfin_container_dri_list: []
