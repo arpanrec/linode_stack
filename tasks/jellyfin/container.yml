@@ -21,7 +21,7 @@
       state: directory
       owner: "{{ cs_jellyfin_uid }}"
       group: "{{ cs_jellyfin_gid }}"
-      mode: "0750"
+      mode: "0777"
   with_items:
       - "{{ cs_jellyfin_config_dir }}"
       - "{{ cs_jellyfin_cache_dir }}"
@@ -32,8 +32,8 @@
   ansible.builtin.shell:
       cmd: |+
           chown -R {{ cs_jellyfin_uid }}:{{ cs_jellyfin_gid }} {{ item }};
-          find {{ item }} -type d -exec chmod 0750 {} \;
-          find {{ item }} -type f -exec chmod 0640 {} \;
+          find {{ item }} -type d -exec chmod 0777 {} \;
+          find {{ item }} -type f -exec chmod 0777 {} \;
   changed_when: true
   with_items:
       - "{{ cs_jellyfin_config_dir }}"
@@ -168,7 +168,7 @@
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
-      mode: "0640"
+      mode: "0777"
   loop:
       - content: "{{ __jellyfin_server_cert.data.data.certificate }}\n\
             {{ __jellyfin_server_cert.data.data.ca_chain | join('\n') }}"
