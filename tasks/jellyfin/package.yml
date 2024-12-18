@@ -57,14 +57,14 @@
 
 - name: Jellyfin | Package | Check if default systemd service file exists
   ansible.builtin.stat:
-      path: /lib/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/{{ cs_jellyfin_systemd_service_name }}.conf
+      path: /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/{{ cs_jellyfin_systemd_service_name }}.conf
   register: __jellyfin_default_systemd_service_file
 
 - name: Jellyfin | Package | Move default systemd service file to override directory
   ansible.builtin.command:
       argv:
           - mv
-          - /lib/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/{{ cs_jellyfin_systemd_service_name }}.conf
+          - /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/{{ cs_jellyfin_systemd_service_name }}.conf
           - /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/00-{{ cs_jellyfin_systemd_service_name }}.conf
       creates: /etc/systemd/system/{{
           cs_jellyfin_systemd_service_name }}.d/00-{{ cs_jellyfin_systemd_service_name }}.conf
