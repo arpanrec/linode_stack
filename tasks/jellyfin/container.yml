@@ -12,8 +12,8 @@
 
 - name: Jellyfin | Container | Set file locations
   ansible.builtin.set_fact:
-      cs_jellyfin_container_network_xml: "{{ cs_jellyfin_config_dir }}/config/network.xml"
-      cs_jellyfin_container_certs_dir: "{{ cs_jellyfin_config_dir }}/config/certs"
+      cs_jellyfin_container_network_xml: "{{ cs_jellyfin_container_config_dir }}/config/network.xml"
+      cs_jellyfin_container_certs_dir: "{{ cs_jellyfin_container_config_dir }}/config/certs"
 
 - name: Jellyfin | Container | Create Jellyfin directories
   ansible.builtin.file:
@@ -23,7 +23,7 @@
       group: "{{ cs_jellyfin_gid }}"
       mode: "0777"
   with_items:
-      - "{{ cs_jellyfin_config_dir }}"
+      - "{{ cs_jellyfin_container_config_dir }}"
       - "{{ cs_jellyfin_cache_dir }}"
       - "{{ cs_jellyfin_container_certs_dir }}"
       - "{{ cs_jellyfin_media_dir }}"
@@ -36,7 +36,7 @@
           find {{ item }} -type f -exec chmod 0777 {} \;
   changed_when: true
   with_items:
-      - "{{ cs_jellyfin_config_dir }}"
+      - "{{ cs_jellyfin_container_config_dir }}"
       - "{{ cs_jellyfin_cache_dir }}"
       - "{{ cs_jellyfin_container_certs_dir }}"
       - "{{ cs_jellyfin_media_dir }}"
@@ -96,7 +96,7 @@
       ports:
           - "8096:8096"
       volumes:
-          - "{{ cs_jellyfin_config_dir }}:/config"
+          - "{{ cs_jellyfin_container_config_dir }}:/config"
           - "{{ cs_jellyfin_cache_dir }}:/cache"
       env:
           TZ: Asia/Kolkata
@@ -291,7 +291,7 @@
           - "7359:7359"
           - "1900:1900"
       volumes:
-          - "{{ cs_jellyfin_config_dir }}:/config"
+          - "{{ cs_jellyfin_container_config_dir }}:/config"
           - "{{ cs_jellyfin_cache_dir }}:/cache"
       mounts:
           - source: "{{ cs_jellyfin_media_dir }}"

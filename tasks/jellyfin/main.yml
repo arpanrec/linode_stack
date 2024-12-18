@@ -5,6 +5,6 @@
   vars:
       cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
 
-- name: Jellyfin | Container
+- name: Jellyfin | Package
   ansible.builtin.include_tasks:
       file: tasks/jellyfin/package.yml
