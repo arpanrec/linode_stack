@@ -44,7 +44,7 @@
       pull: missing
       state: started
       auto_remove: false
-      hostname: "{{ cs_jellyfin_container_name }}"
+      hostname: "{{ ansible_facts.hostname }}"
       detach: true
       privileged: true
       restart_policy: unless-stopped
