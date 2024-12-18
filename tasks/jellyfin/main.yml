@@ -18,6 +18,7 @@
       state: present
       system: true
       group: "{{ cs_jellyfin_group_name }}"
+      append: true
       groups:
           - video
           - render
@@ -60,9 +61,13 @@
       - option: "JELLYFIN_USER"
         value: "{{ cs_jellyfin_user_name }}"
 
-- name: Jellyfin | Package
+# - name: Jellyfin | Package
+#   ansible.builtin.include_tasks:
+#       file: tasks/jellyfin/package.yml
+
+- name: Jellyfin | Container
   ansible.builtin.include_tasks:
-      file: tasks/jellyfin/package.yml
+      file: tasks/jellyfin/container.yml
 
 - name: Jellyfin | Config
   ansible.builtin.include_tasks:
