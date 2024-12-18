@@ -40,7 +40,8 @@
   become_user: "{{ cs_jellyfin_user_name }}"
   community.docker.docker_container:
       name: "{{ cs_jellyfin_container_name }}"
-      image: jellyfin/jellyfin:{{ cs_jellyfin_container_version }}
+      image: jellyfin/jellyfin:latest
+      pull: missing
       state: started
       auto_remove: false
       hostname: "{{ cs_jellyfin_container_name }}"
@@ -48,8 +49,8 @@
       privileged: true
       restart_policy: unless-stopped
       # user: "{{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }}"
-      user: "{{ __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][1] }}:{{
-          __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][2] }}"
+      user: "{{ __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][1] | int }}:{{
+          __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][2] | int }}"
       devices: "{{ cs_jellyfin_container_dri_list }}"
       env_file: "{{ cs_jellyfin_config_dir }}/env"
       groups:

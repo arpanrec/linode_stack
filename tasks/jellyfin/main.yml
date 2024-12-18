@@ -61,6 +61,10 @@
       - option: "JELLYFIN_USER"
         value: "{{ cs_jellyfin_user_name }}"
 
+- name: Jellyfin | Gather facts
+  ansible.builtin.setup:
+      gather_subset: all
+
 # - name: Jellyfin | Package
 #   ansible.builtin.include_tasks:
 #       file: tasks/jellyfin/package.yml

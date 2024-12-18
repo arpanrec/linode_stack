@@ -27,10 +27,6 @@
       validate_certs: true
       keyring: /usr/share/keyrings/jellyfin-archive-keyring.gpg
 
-- name: Jellyfin | Package | Gather facts
-  ansible.builtin.setup:
-      gather_subset: all
-
 - name: Jellyfin | Package | Add Jellyfin repository
   ansible.builtin.apt_repository:
       repo: "deb [signed-by=/usr/share/keyrings/jellyfin-archive-keyring.gpg
