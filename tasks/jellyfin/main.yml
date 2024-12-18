@@ -41,7 +41,7 @@
 
 - name: Jellyfin | Create Env File
   community.general.ini_file:
-      path: "{{ cs_jellyfin_config_dir }}/env"
+      path: "{{ cs_jellyfin_config_dir }}/.env"
       owner: "{{ cs_jellyfin_user_name }}"
       group: "{{ cs_jellyfin_group_name }}"
       mode: "0640"

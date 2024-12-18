@@ -80,7 +80,7 @@
       create: true
   with_items:
       - option: EnvironmentFile
-        value: "-{{ cs_jellyfin_config_dir }}/env"
+        value: "-{{ cs_jellyfin_config_dir }}/.env"
       - option: User
         value: "{{ cs_jellyfin_user_name }}"
       - option: Group
