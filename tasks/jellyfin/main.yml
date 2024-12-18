@@ -7,4 +7,4 @@
 
 - name: Jellyfin | Container
   ansible.builtin.include_tasks:
-      file: tasks/jellyfin/container.yml
+      file: tasks/jellyfin/package.yml
