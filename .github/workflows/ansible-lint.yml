@@ -48,4 +48,6 @@ jobs:
                   ansible-galaxy install -r requirements.yml
 
             - name: Analysing the code with ansible-lint
-              run: poetry run ansible-lint
+              run: |+
+                  echo ${{ secrets.INVENTORY_YAML }} | tee inventory.yml > /dev/null
+                  poetry run ansible-lint
