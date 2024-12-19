@@ -49,5 +49,7 @@ jobs:
 
             - name: Analysing the code with ansible-lint
               run: |+
-                  echo ${{ secrets.INVENTORY_YAML }} | tee inventory.yml > /dev/null
+                  echo "${INVENTORY_YAML}" | tee inventory.yml > /dev/null
                   poetry run ansible-lint
+              env:
+                  INVENTORY_YAML: "${{ secrets.INVENTORY_YAML }}"
