@@ -1,6 +1,6 @@
-## [1.21.4](https://github.com/arpanrec/home-lab/compare/1.21.3...1.21.4) (2024-12-18)
+## [1.21.5](https://github.com/arpanrec/home-lab/compare/1.21.4...1.21.5) (2024-12-20)
 
 
 ### Bug Fixes
 
-* **jellyfin:** update configuration directory references and rename task from container to package ([f8196b8](https://github.com/arpanrec/home-lab/commit/f8196b8a33c4b263925565757e6f157b087d108b))
+* jellyfin install common files ([#59](https://github.com/arpanrec/home-lab/issues/59)) ([44c1189](https://github.com/arpanrec/home-lab/commit/44c118907a153a8bea4943c2caeef3e97e023452))
