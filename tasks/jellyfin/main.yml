@@ -31,7 +31,7 @@
       state: directory
       owner: "{{ cs_jellyfin_user_name }}"
       group: "{{ cs_jellyfin_group_name }}"
-      mode: "0750"
+      mode: "0777"
   with_items:
       - "{{ cs_jellyfin_media_dir }}"
       - "{{ cs_jellyfin_data_dir }}"
@@ -44,7 +44,7 @@
       path: "{{ cs_jellyfin_config_dir }}/.env"
       owner: "{{ cs_jellyfin_user_name }}"
       group: "{{ cs_jellyfin_group_name }}"
-      mode: "0640"
+      mode: "0777"
       option: "{{ item.option }}"
       value: "{{ item.value }}"
       no_extra_spaces: true

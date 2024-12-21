@@ -108,13 +108,13 @@
       state: directory
       owner: "{{ cs_jellyfin_user_name }}"
       group: "{{ cs_jellyfin_group_name }}"
-      mode: "0750"
+      mode: "0777"
 
 - name: Jellyfin | Config | Write Server Certificate to temp files
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
-      mode: "0640"
+      mode: "0777"
   loop:
       - content: "{{ __jellyfin_server_cert.data.data.certificate }}\n\
             {{ __jellyfin_server_cert.data.data.ca_chain | join('\n') }}"
@@ -152,7 +152,7 @@
 #   community.crypto.openssl_pkcs12:
 #       action: export
 #       path: {{ cs_jellyfin_config_dir }}/cert/jellyfin.pfx
-#       mode: "0640"
+#       mode: "0777"
 #       owner: "{{ cs_jellyfin_user_name }}"
 #       group: "{{ cs_jellyfin_group_name }}"
 #       friendly_name: raclette
@@ -209,8 +209,8 @@
   ansible.builtin.shell:
       cmd: |+
           chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
-          find {{ item }} -type d -exec chmod 0750 {} \;
-          find {{ item }} -type f -exec chmod 0640 {} \;
+          find {{ item }} -type d -exec chmod 0777 {} \;
+          find {{ item }} -type f -exec chmod 0777 {} \;
   changed_when: true
   with_items:
       - "{{ cs_jellyfin_media_dir }}"
