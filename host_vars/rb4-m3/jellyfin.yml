@@ -1,0 +1,6 @@
+---
+cs_jellyfin_container_dri_list:
+    - /dev/dri/renderD128:/dev/dri/renderD128
+    - /dev/dri/card0:/dev/dri/card0
+    - /dev/dri/card1:/dev/dri/card1
+    - /dev/video11:/dev/video11

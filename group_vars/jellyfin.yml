@@ -1,6 +1,8 @@
 ---
 cs_jellyfin_ansible_arch_map:
     aarch64: arm64
+    x86_64: amd64
+
 cs_jellyfin_container_name: jellyfin
 cs_jellyfin_container_dri_list: []
 cs_jellyfin_data_dir: /var/lib/jellyfin

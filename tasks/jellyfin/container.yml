@@ -44,6 +44,12 @@
       pull: missing
       state: started
       auto_remove: false
+      runtime: nvidia
+      device_requests:
+          - capabilities:
+                - gpu
+            count: -1
+            driver: nvidia
       hostname: "{{ ansible_facts.hostname }}"
       detach: true
       privileged: true
@@ -65,14 +71,13 @@
           - "7359:7359"
           - "1900:1900"
       volumes:
-          - "{{ cs_jellyfin_media_dir }}:{{ cs_jellyfin_media_dir }}"
           - "{{ cs_jellyfin_data_dir }}:{{ cs_jellyfin_data_dir }}"
           - "{{ cs_jellyfin_config_dir }}:{{ cs_jellyfin_config_dir }}"
           - "{{ cs_jellyfin_log_dir }}:{{ cs_jellyfin_log_dir }}"
           - "{{ cs_jellyfin_cache_dir }}:{{ cs_jellyfin_cache_dir }}"
       mounts:
           - source: "{{ cs_jellyfin_media_dir }}"
-            target: "/media"
+            target: "{{ cs_jellyfin_media_dir }}"
             type: bind
             read_only: false
       env:

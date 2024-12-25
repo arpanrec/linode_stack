@@ -205,7 +205,7 @@
       - xpath: "IgnoreVirtualInterfaces"
         value: "true"
 
-- name: Jellyfin | Container | Fix Permissions
+- name: Jellyfin | Config | Fix Permissions
   ansible.builtin.shell:
       cmd: |+
           chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
