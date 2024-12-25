@@ -1,6 +1,5 @@
 ---
 - name: Jellyfin | Include common crypt mount
-  when: false
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:
@@ -60,6 +59,15 @@
         value: "{{ cs_jellyfin_cache_dir }}"
       - option: "JELLYFIN_USER"
         value: "{{ cs_jellyfin_user_name }}"
+
+- name: Jellyfin | Install packages
+  ansible.builtin.apt:
+      name:
+          - apt-transport-https
+          - lsb-release
+          - ca-certificates
+          - python3-lxml
+      state: present
 
 - name: Jellyfin | Gather facts
   ansible.builtin.setup:

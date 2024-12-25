@@ -277,7 +277,7 @@
             file: tasks/nextcloud/dump.yml
 
 - name: Jellyfin
-  hosts: rb4-m3
+  hosts: s1-home
   become: false
   gather_facts: false
   no_log: "{{ cs_no_log | default('true') }}"
