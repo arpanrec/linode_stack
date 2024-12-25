@@ -1,6 +1,6 @@
-## [1.21.7](https://github.com/arpanrec/home-lab/compare/1.21.6...1.21.7) (2024-12-23)
+## [1.21.8](https://github.com/arpanrec/home-lab/compare/1.21.7...1.21.8) (2024-12-25)
 
 
 ### Bug Fixes
 
-* **dependencies:** update boto3, mypy, and types-pyyaml versions ([50c2a78](https://github.com/arpanrec/home-lab/commit/50c2a788a92532d23f21f2bdd471492a7d4ccc33))
+* **jellyfin:** update host configuration and install required packages ([8ab0900](https://github.com/arpanrec/home-lab/commit/8ab0900cac1bff762b3d8bcd0755868666e387ee))
