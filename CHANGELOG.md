@@ -1,6 +1,6 @@
-## [1.23.1](https://github.com/arpanrec/home-lab/compare/1.23.0...1.23.1) (2024-12-26)
+# [1.24.0](https://github.com/arpanrec/home-lab/compare/1.23.1...1.24.0) (2024-12-26)
 
 
-### Bug Fixes
+### Features
 
-* update error message for crypt device UUID mismatch ([a8eb36d](https://github.com/arpanrec/home-lab/commit/a8eb36d18f21c6235cc1bc450d1a1283456f357c))
+* install python3-lxml and update package installation tasks for Jellyfin ([f7496aa](https://github.com/arpanrec/home-lab/commit/f7496aa45da9339de31cfaf71a0fba81dceb7cd7))
