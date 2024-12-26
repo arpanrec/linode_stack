@@ -1,6 +1,6 @@
-# [1.23.0](https://github.com/arpanrec/home-lab/compare/1.22.0...1.23.0) (2024-12-26)
+## [1.23.1](https://github.com/arpanrec/home-lab/compare/1.23.0...1.23.1) (2024-12-26)
 
 
-### Features
+### Bug Fixes
 
-* add custom Ansible filter to retrieve partition UUIDs from ansible_devices ([8fbf4fb](https://github.com/arpanrec/home-lab/commit/8fbf4fb2d63f1f31aa1b61ee7daac5194b75ec1b))
+* update error message for crypt device UUID mismatch ([a8eb36d](https://github.com/arpanrec/home-lab/commit/a8eb36d18f21c6235cc1bc450d1a1283456f357c))
