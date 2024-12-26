@@ -41,18 +41,10 @@
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Crypt Device | Mount | Search for crypt device uuid
-  ansible.builtin.set_fact:
-      cs_crypt_mount_tmp_crypt_device_details: "{{ item.value }}"
-  with_items: "{{ ansible_devices | dict2items }}"
-  when: >
-      item.value.links.uuids | length > 0 and
-      cs_crypt_mount_crypt_device_uuid == item.value.links.uuids[0]
-
 - name: Crypt Device | Mount | Fail if crypt device uuid doesn't match
   ansible.builtin.fail:
       msg: "Device UUID doesn't match"
-  when: cs_crypt_mount_tmp_crypt_device_details is not defined
+  when: cs_crypt_mount_crypt_device_uuid not in (ansible_devices | get_part_uuids_from_ansible_devices)
 
 - name: Crypt Device | Mount | Install cryptsetup
   become: true
