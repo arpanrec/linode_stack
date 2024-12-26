@@ -1,6 +1,6 @@
-# [1.24.0](https://github.com/arpanrec/home-lab/compare/1.23.1...1.24.0) (2024-12-26)
+## [1.24.1](https://github.com/arpanrec/home-lab/compare/1.24.0...1.24.1) (2024-12-26)
 
 
-### Features
+### Bug Fixes
 
-* install python3-lxml and update package installation tasks for Jellyfin ([f7496aa](https://github.com/arpanrec/home-lab/commit/f7496aa45da9339de31cfaf71a0fba81dceb7cd7))
+* update Nextcloud version SHA512 checksum to match version 30.0.4 ([8e22172](https://github.com/arpanrec/home-lab/commit/8e2217217db5562c8eaeb6168b7e8c231eb2492b))
