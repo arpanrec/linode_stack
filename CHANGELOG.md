@@ -1,6 +1,6 @@
-# [1.22.0](https://github.com/arpanrec/home-lab/compare/1.21.8...1.22.0) (2024-12-25)
+# [1.23.0](https://github.com/arpanrec/home-lab/compare/1.22.0...1.23.0) (2024-12-26)
 
 
 ### Features
 
-* jellyfin for laptop ([e96877b](https://github.com/arpanrec/home-lab/commit/e96877b4bfff0678755a29fc809b0780ebd516b2))
+* add custom Ansible filter to retrieve partition UUIDs from ansible_devices ([8fbf4fb](https://github.com/arpanrec/home-lab/commit/8fbf4fb2d63f1f31aa1b61ee7daac5194b75ec1b))
