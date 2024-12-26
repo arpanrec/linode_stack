@@ -11,6 +11,15 @@
       __jellyfin_service_is_running.msg.find("Could not find the requested service") == -1
       )
 
+- name: Jellyfin | Package | Install dependencies
+  ansible.builtin.apt:
+      name:
+          - apt-transport-https
+          - lsb-release
+          - ca-certificates
+          - python3-lxml
+      state: present
+
 - name: Jellyfin | Package | Add Jellyfin gpg key
   ansible.builtin.apt_key:
       url: https://repo.jellyfin.org/debian/jellyfin_team.gpg.key

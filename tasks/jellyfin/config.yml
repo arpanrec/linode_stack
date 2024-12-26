@@ -167,6 +167,12 @@
 #           - "{{ __jellyfin_temp_files.results[0].path }}"
 #       state: present
 
+- name: Jellyfin | Config | Install python3-lxml
+  ansible.builtin.apt:
+      name:
+          - python3-lxml
+      state: present
+
 - name: Jellyfin | Config | Configure Network Ports
   when: __jellyfin_network_xml_exists.stat.exists
   community.general.xml:

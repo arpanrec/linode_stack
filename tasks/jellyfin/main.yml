@@ -60,15 +60,6 @@
       - option: "JELLYFIN_USER"
         value: "{{ cs_jellyfin_user_name }}"
 
-- name: Jellyfin | Install packages
-  ansible.builtin.apt:
-      name:
-          - apt-transport-https
-          - lsb-release
-          - ca-certificates
-          - python3-lxml
-      state: present
-
 - name: Jellyfin | Gather facts
   ansible.builtin.setup:
       gather_subset: all
