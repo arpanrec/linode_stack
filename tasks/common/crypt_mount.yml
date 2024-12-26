@@ -147,7 +147,7 @@
 
 - name: Crypt Device | Mount | Fail if device uuid doesn't match
   ansible.builtin.fail:
-      msg: "Crypt Device UUID doesn't match"
+      msg: "Device UUID doesn't match"
   when: >
       cs_crypt_mount_tmp_device_details is not defined or
       cs_crypt_mount_tmp_device_details | length < 1
