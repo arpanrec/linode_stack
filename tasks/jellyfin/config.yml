@@ -1,4 +1,52 @@
 ---
+- name: Jellyfin | Config | Install python3-lxml
+  ansible.builtin.apt:
+      name:
+          - python3-lxml
+      state: present
+
+- name: Jellyfin | Config | Configure System
+  community.general.xml:
+      path: "{{ cs_jellyfin_config_dir }}/system.xml"
+      xpath: /ServerConfiguration/{{ item.xpath }}
+      value: "{{ item.value }}"
+  with_items:
+      - xpath: "CachePath"
+        value: "{{ cs_jellyfin_cache_dir }}"
+      - xpath: "MetadataPath"
+        value: "{{ cs_jellyfin_data_dir }}/metadata"
+      - xpath: "EnableFolderView"
+        value: "true"
+      - xpath: "MetadataCountryCode"
+        value: "IN"
+
+- name: Jellyfin | Config | Configure Encoding
+  community.general.xml:
+      path: "{{ cs_jellyfin_config_dir }}/encoding.xml"
+      xpath: /EncodingOptions/{{ item.xpath }}
+      value: "{{ item.value }}"
+  with_items:
+      - xpath: "TranscodingTempPath"
+        value: "{{ cs_jellyfin_cache_dir }}/transcodes"
+  retries: 5
+  delay: 5
+
+- name: Jellyfin | Config | Copy xbmcmetadata
+  ansible.builtin.copy:
+      src: "files/jellyfin/xbmcmetadata.xml"
+      dest: "{{ cs_jellyfin_config_dir }}/xbmcmetadata.xml"
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+      mode: "0777"
+
+- name: Jellyfin | Config | Copy branding
+  ansible.builtin.copy:
+      src: "files/jellyfin/branding.xml"
+      dest: "{{ cs_jellyfin_config_dir }}/branding.xml"
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+      mode: "0777"
+
 - name: Jellyfin | Config | Check if network.xml exists
   ansible.builtin.stat:
       path: "{{ cs_jellyfin_config_dir }}/network.xml"
@@ -16,8 +64,10 @@
 - name: Jellyfin | Config | Fail if network.xml does not exist
   no_log: false
   ansible.builtin.fail:
-      msg: "Jellyfin network.xml does not exist,
-          Do the initial setup manually and re-run the playbook."
+      msg: |+
+          Jellyfin network.xml does not exist.
+          Do the initial setup manually. This will create the network.xml.
+          Then re-run the playbook.
   when: not __jellyfin_network_xml_exists.stat.exists
 
 - name: Jellyfin | Config | Enable UFW Firewall
@@ -167,14 +217,7 @@
 #           - "{{ __jellyfin_temp_files.results[0].path }}"
 #       state: present
 
-- name: Jellyfin | Config | Install python3-lxml
-  ansible.builtin.apt:
-      name:
-          - python3-lxml
-      state: present
-
 - name: Jellyfin | Config | Configure Network Ports
-  when: __jellyfin_network_xml_exists.stat.exists
   community.general.xml:
       path: "{{ cs_jellyfin_config_dir }}/network.xml"
       xpath: /NetworkConfiguration/{{ item.xpath }}
@@ -210,26 +253,6 @@
         value: "true"
       - xpath: "IgnoreVirtualInterfaces"
         value: "true"
-
-- name: Jellyfin | Config | Configure System
-  community.general.xml:
-      path: "{{ cs_jellyfin_config_dir }}/system.xml"
-      xpath: /ServerConfiguration/{{ item.xpath }}
-      value: "{{ item.value }}"
-  with_items:
-      - xpath: "CachePath"
-        value: "{{ cs_jellyfin_cache_dir }}"
-      - xpath: "MetadataPath"
-        value: "{{ cs_jellyfin_data_dir }}/metadata"
-
-- name: Jellyfin | Config | Configure Transcoding
-  community.general.xml:
-      path: "{{ cs_jellyfin_config_dir }}/encoding.xml"
-      xpath: /EncodingOptions/{{ item.xpath }}
-      value: "{{ item.value }}"
-  with_items:
-      - xpath: "TranscodingTempPath"
-        value: "{{ cs_jellyfin_cache_dir }}/transcodes"
 
 - name: Jellyfin | Config | Fix Permissions
   ansible.builtin.shell:
