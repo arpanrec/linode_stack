@@ -87,50 +87,6 @@
       daemon_reload: true
 
 - name: Jellyfin | Restart Jellyfin
-  become: true
-  become_user: "{{ cs_jellyfin_user_name }}"
   when: cs_jellyfin_install_mode == "container"
-  community.docker.docker_container:
-      name: "{{ cs_jellyfin_container_name }}"
-      image: jellyfin/jellyfin:latest
-      pull: missing
-      state: started
-      auto_remove: false
-      runtime: nvidia
-      device_requests:
-          - capabilities:
-                - gpu
-            count: -1
-            driver: nvidia
-      hostname: "{{ ansible_facts.hostname }}"
-      detach: true
-      privileged: true
-      restart_policy: unless-stopped
-      # user: "{{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }}"
-      user: "{{ __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][1] | int }}:{{
-          __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][2] | int }}"
-      devices: "{{ cs_jellyfin_container_dri_list }}"
-      env_file: "{{ cs_jellyfin_config_dir }}/.env"
-      groups:
-          - "{{ __jellyfin_video_group.ansible_facts.getent_group['video'][1] }}"
-          - "{{ __jellyfin_render_group.ansible_facts.getent_group['render'][1] }}"
-      ports:
-          - "{{ cs_jellyfin_internal_http_port }}:{{ cs_jellyfin_internal_http_port }}"
-          - "{{ cs_jellyfin_internal_https_port }}:{{ cs_jellyfin_internal_https_port }}"
-          - "{{ cs_jellyfin_public_http_port }}:{{ cs_jellyfin_public_http_port }}"
-          - "{{ cs_jellyfin_public_https_port }}:{{ cs_jellyfin_public_https_port }}"
-          - "8096:8096"
-          - "7359:7359"
-          - "1900:1900"
-      volumes:
-          - "{{ cs_jellyfin_data_dir }}:{{ cs_jellyfin_data_dir }}"
-          - "{{ cs_jellyfin_config_dir }}:{{ cs_jellyfin_config_dir }}"
-          - "{{ cs_jellyfin_log_dir }}:{{ cs_jellyfin_log_dir }}"
-          - "{{ cs_jellyfin_cache_dir }}:{{ cs_jellyfin_cache_dir }}"
-      mounts:
-          - source: "{{ cs_jellyfin_media_dir }}"
-            target: "{{ cs_jellyfin_media_dir }}"
-            type: bind
-            read_only: false
-      env:
-          TZ: Asia/Kolkata
+  ansible.builtin.include_tasks:
+      file: tasks/jellyfin/container.yml
