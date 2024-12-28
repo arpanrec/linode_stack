@@ -1,6 +1,6 @@
-# [1.26.0](https://github.com/arpanrec/home-lab/compare/1.25.0...1.26.0) (2024-12-28)
+# [1.27.0](https://github.com/arpanrec/home-lab/compare/1.26.0...1.27.0) (2024-12-28)
 
 
 ### Features
 
-* redeploy docker after config ([0d24053](https://github.com/arpanrec/home-lab/commit/0d240533a571eebe85c14865f13da46010792d45))
+* add branding and xbmc metadata configuration for Jellyfin ([b85636b](https://github.com/arpanrec/home-lab/commit/b85636beb69d0499ac734c6301d863220f8c18b2))
