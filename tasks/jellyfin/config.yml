@@ -211,6 +211,26 @@
       - xpath: "IgnoreVirtualInterfaces"
         value: "true"
 
+- name: Jellyfin | Config | Configure System
+  community.general.xml:
+      path: "{{ cs_jellyfin_config_dir }}/system.xml"
+      xpath: /ServerConfiguration/{{ item.xpath }}
+      value: "{{ item.value }}"
+  with_items:
+      - xpath: "CachePath"
+        value: "{{ cs_jellyfin_cache_dir }}"
+      - xpath: "MetadataPath"
+        value: "{{ cs_jellyfin_data_dir }}/metadata"
+
+- name: Jellyfin | Config | Configure Transcoding
+  community.general.xml:
+      path: "{{ cs_jellyfin_config_dir }}/encoding.xml"
+      xpath: /EncodingOptions/{{ item.xpath }}
+      value: "{{ item.value }}"
+  with_items:
+      - xpath: "TranscodingTempPath"
+        value: "{{ cs_jellyfin_cache_dir }}/transcodes"
+
 - name: Jellyfin | Config | Fix Permissions
   ansible.builtin.shell:
       cmd: |+

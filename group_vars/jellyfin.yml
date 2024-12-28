@@ -13,3 +13,5 @@ cs_jellyfin_user_name: jellyfin
 cs_jellyfin_group_name: jellyfin
 
 cs_jellyfin_systemd_service_name: jellyfin.service
+
+cs_jellyfin_install_mode: container # package | container
