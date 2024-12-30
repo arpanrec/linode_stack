@@ -1,6 +1,6 @@
-## [1.27.1](https://github.com/arpanrec/home-lab/compare/1.27.0...1.27.1) (2024-12-30)
+# [1.28.0](https://github.com/arpanrec/home-lab/compare/1.27.1...1.28.0) (2024-12-30)
 
 
-### Bug Fixes
+### Features
 
-* downgrade Python and Ansible versions to ensure compatibility ([04967b2](https://github.com/arpanrec/home-lab/commit/04967b205bfa881d131f36a7dc1b947457343b89))
+* moved nextcloud to laptop ([4ccd313](https://github.com/arpanrec/home-lab/commit/4ccd31349dac82024ebd15174946026d499cb6ae))
