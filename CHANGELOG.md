@@ -1,6 +1,6 @@
-# [1.27.0](https://github.com/arpanrec/home-lab/compare/1.26.0...1.27.0) (2024-12-28)
+## [1.27.1](https://github.com/arpanrec/home-lab/compare/1.27.0...1.27.1) (2024-12-30)
 
 
-### Features
+### Bug Fixes
 
-* add branding and xbmc metadata configuration for Jellyfin ([b85636b](https://github.com/arpanrec/home-lab/commit/b85636beb69d0499ac734c6301d863220f8c18b2))
+* downgrade Python and Ansible versions to ensure compatibility ([04967b2](https://github.com/arpanrec/home-lab/commit/04967b205bfa881d131f36a7dc1b947457343b89))
