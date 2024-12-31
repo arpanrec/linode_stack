@@ -1,9 +1,9 @@
 ---
-- name: Samba | Install | Include common crypt mount
-  ansible.builtin.include_tasks:
-      file: tasks/common/crypt_mount.yml
-  vars:
-      cs_crypt_mount_vault_id: "{{ cs_samba_drive_id }}"
+# - name: Samba | Install | Include common crypt mount
+#   ansible.builtin.include_tasks:
+#       file: tasks/common/crypt_mount.yml
+#   vars:
+#       cs_crypt_mount_vault_id: "{{ cs_samba_drive_id }}"
 
 - name: Samba | Install | Install packages
   ansible.builtin.package:
@@ -13,6 +13,14 @@
       - samba
       - cifs-utils
 
+- name: Samba | Install | Create shared directory
+  ansible.builtin.file:
+      path: "{{ cs_samba_share_docs }}"
+      state: directory
+      owner: nobody
+      group: nobody
+      mode: "0755"
+
 - name: Samba | Install | Enable and start services
   ansible.builtin.systemd_service:
       name: "{{ item }}"
@@ -21,3 +29,17 @@
   with_items:
       - smb
       - nmb
+
+- name: Samba | Install | UFW Allow Samba
+  community.general.ufw:
+      rule: allow
+      port: 137,138,139,445
+      proto: tcp
+      state: enabled
+- name: Samba | Install | Config
+  community.general.ini_file:
+      path: /etc/samba/smb.conf
+      section: "{{ item.key }}"
+      option: "{{ item.key }}"
+      value: "{{ item.value }}"
+  with_dict:
