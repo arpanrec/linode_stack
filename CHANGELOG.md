@@ -1,6 +1,6 @@
-# [1.28.0](https://github.com/arpanrec/home-lab/compare/1.27.1...1.28.0) (2024-12-30)
+# [1.29.0](https://github.com/arpanrec/home-lab/compare/1.28.0...1.29.0) (2024-12-31)
 
 
 ### Features
 
-* moved nextcloud to laptop ([4ccd313](https://github.com/arpanrec/home-lab/commit/4ccd31349dac82024ebd15174946026d499cb6ae))
+* update Ansible configurations and clean up comments for clarity ([6a41c04](https://github.com/arpanrec/home-lab/commit/6a41c04f619c95e3cc6a28cb2658ed39abd96ce5))
