@@ -244,8 +244,7 @@
       port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook {{
-          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook."
   loop:
       - port: "{{ cs_mini0_mini0_port }}"
         comment: "S3"
