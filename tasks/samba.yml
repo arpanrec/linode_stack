@@ -1,0 +1,23 @@
+---
+- name: Samba | Install | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_samba_drive_id }}"
+
+- name: Samba | Install | Install packages
+  ansible.builtin.package:
+      name: "{{ item }}"
+      state: present
+  with_items:
+      - samba
+      - cifs-utils
+
+- name: Samba | Install | Enable and start services
+  ansible.builtin.systemd_service:
+      name: "{{ item }}"
+      enabled: true
+      state: started
+  with_items:
+      - smb
+      - nmb

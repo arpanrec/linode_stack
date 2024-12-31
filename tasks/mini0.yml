@@ -1,5 +1,5 @@
 ---
-- name: Nextcloud | Disk | Application | Include common crypt mount
+- name: Minio | Install | Include common crypt mount
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:

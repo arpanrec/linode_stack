@@ -289,6 +289,19 @@
         ansible.builtin.import_tasks:
             file: tasks/jellyfin/main.yml
 
+- name: Samba
+  hosts: samba
+  become: false
+  gather_facts: false
+  no_log: "{{ cs_no_log | default('true') }}"
+  tasks:
+      - name: Samba
+        tags: never,samba
+        become: true
+        become_user: root
+        ansible.builtin.import_tasks:
+            file: tasks/samba.yml
+
 - name: Collabora
   hosts: rb4-m2
   become: false
