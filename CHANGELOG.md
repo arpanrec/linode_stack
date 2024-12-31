@@ -1,6 +1,6 @@
-# [1.30.0](https://github.com/arpanrec/home-lab/compare/1.29.0...1.30.0) (2024-12-31)
+## [1.30.1](https://github.com/arpanrec/home-lab/compare/1.30.0...1.30.1) (2024-12-31)
 
 
-### Features
+### Bug Fixes
 
-* migrate mini0 configurations from rb4-m1 to rb4-m2 and update IP references ([581cec4](https://github.com/arpanrec/home-lab/commit/581cec4c317dd4fa9866c7031a5bf4e39d38484d))
+* update user and group names in minio service template for mini0 ([e10511c](https://github.com/arpanrec/home-lab/commit/e10511c45086d35d4ed01718b3c28d37c5ea0eba))
