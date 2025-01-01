@@ -136,8 +136,7 @@
       port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Vault {{ item.comment }} port, Managed by Ansible home-lab playbook {{
-          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      comment: "Allow Vault {{ item.comment }} port, Managed by Ansible home-lab playbook."
   with_items:
       - port: "{{ pv_vault_node_port }}"
         comment: "Node"

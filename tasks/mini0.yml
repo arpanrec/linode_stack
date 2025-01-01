@@ -136,6 +136,18 @@
       - "{{ cs_mini0_mini0_data_dir }}"
       - "{{ cs_mini0_mini0_kes_cert_dir }}"
 
+- name: Minio | Install | Fix Permissions of data directory
+  ansible.builtin.shell:
+      cmd: |+
+          chown -R {{ cs_mini0_mini0_user_name }}:{{ cs_mini0_mini0_group_name }} {{ item }};
+          find {{ item }} -type d -exec chmod 0777 {} \;
+          find {{ item }} -type f -exec chmod 0777 {} \;
+  changed_when: true
+  with_items:
+      - "{{ cs_mini0_mini0_data_dir }}"
+      - "{{ cs_mini0_mini0_certs_dir }}"
+      - "{{ cs_mini0_mini0_kes_cert_dir }}"
+
 - name: Minio | Install | Get Minio Server Certificates from Vault
   become: false
   delegate_facts: true
@@ -244,8 +256,7 @@
       port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook {{
-          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook."
   loop:
       - port: "{{ cs_mini0_mini0_port }}"
         comment: "S3"

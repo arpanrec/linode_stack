@@ -1,0 +1,98 @@
+---
+- name: Jellyfin | Package | Stop Jellyfin if running
+  ansible.builtin.systemd_service:
+      name: "{{ cs_jellyfin_systemd_service_name }}"
+      state: stopped
+      enabled: false
+      daemon_reload: true
+  register: __jellyfin_service_is_running
+  failed_when: __jellyfin_service_is_running.failed and
+      (
+      __jellyfin_service_is_running.msg.find("Could not find the requested service") == -1
+      )
+
+- name: Jellyfin | Package | Install dependencies
+  ansible.builtin.apt:
+      name:
+          - apt-transport-https
+          - lsb-release
+          - ca-certificates
+          - python3-lxml
+      state: present
+
+- name: Jellyfin | Package | Add Jellyfin gpg key
+  ansible.builtin.apt_key:
+      url: https://repo.jellyfin.org/debian/jellyfin_team.gpg.key
+      state: present
+      validate_certs: true
+      keyring: /usr/share/keyrings/jellyfin-archive-keyring.gpg
+
+- name: Jellyfin | Package | Add Jellyfin repository
+  ansible.builtin.apt_repository:
+      repo: "deb [signed-by=/usr/share/keyrings/jellyfin-archive-keyring.gpg
+          arch={{ cs_jellyfin_ansible_arch_map[ansible_architecture] }}]
+          https://repo.jellyfin.org/debian {{ ansible_distribution_release }} main"
+      state: present
+      validate_certs: true
+      update_cache: true
+      filename: jellyfin.list
+
+- name: Jellyfin | Package | Install Jellyfin
+  ansible.builtin.apt:
+      name: jellyfin
+      state: present
+      update_cache: true
+
+- name: Jellyfin | Package | Create systemd override directory
+  ansible.builtin.file:
+      path: /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+
+- name: Jellyfin | Package | Check if default systemd service file exists
+  ansible.builtin.stat:
+      path: /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/{{ cs_jellyfin_systemd_service_name }}.conf
+  register: __jellyfin_default_systemd_service_file
+
+- name: Jellyfin | Package | Move default systemd service file to override directory
+  ansible.builtin.command:
+      argv:
+          - mv
+          - /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/{{ cs_jellyfin_systemd_service_name }}.conf
+          - /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/00-{{ cs_jellyfin_systemd_service_name }}.conf
+      creates: /etc/systemd/system/{{
+          cs_jellyfin_systemd_service_name }}.d/00-{{ cs_jellyfin_systemd_service_name }}.conf
+  changed_when: true
+  when: __jellyfin_default_systemd_service_file.stat.exists
+
+- name: Jellyfin | Package | Create systemd override file
+  community.general.ini_file:
+      path: /etc/systemd/system/{{ cs_jellyfin_systemd_service_name }}.d/10-jellyfin-env.service.conf
+      mode: "0644"
+      owner: root
+      group: root
+      section: Service
+      option: "{{ item.option }}"
+      value: "{{ item.value }}"
+      no_extra_spaces: true
+      create: true
+  with_items:
+      - option: EnvironmentFile
+        value: "-{{ cs_jellyfin_config_dir }}/.env"
+      - option: User
+        value: "{{ cs_jellyfin_user_name }}"
+      - option: Group
+        value: "{{ cs_jellyfin_group_name }}"
+
+- name: Jellyfin | Package | Deamon reload
+  ansible.builtin.systemd_service:
+      daemon_reload: true
+
+- name: Jellyfin | Package | Make sure jellyfin is started post installation
+  ansible.builtin.systemd_service:
+      name: "{{ cs_jellyfin_systemd_service_name }}"
+      state: started
+      enabled: true
+      daemon_reload: true
