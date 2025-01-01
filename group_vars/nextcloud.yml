@@ -19,9 +19,9 @@ cs_nc_db_cert_csr_file: "{{ cs_nc_db_cert_dir }}/db_cert.csr"
 
 cs_nc_cron_system_timer_name: nextcloud-cron
 
-cs_nc_version: 30.0.2
-cs_nc_version_sha512: "98b58c29ef62b2db10bf8c9634491e2076c2117d8fd9648541935edd181baf65019a\
-    d3fb7fc238d558fa95e297815f9adcd6d0e43c3e39ee50e1936a41ce2608"
+cs_nc_version: 30.0.4
+cs_nc_version_sha512: "6249f7111406f1872396567e0c229a4dd0b3440accea82ea52281d97b370ad85c0b167f381\
+    bcc0e57a5dfc200dab5c771bec41dd59ff3c73775084246626ea1b"
 cs_nc_run_user: www-data
 cs_nc_run_group: www-data
 cs_nc_log_file: "{{ cs_nc_data_dir }}/nextcloud.log"
@@ -43,9 +43,6 @@ cs_nc_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
 cs_nc_redis_privkey_file: "{{ cs_nc_redis_cert_dir }}/redis.key"
 cs_nc_redis_cert_file: "{{ cs_nc_redis_cert_dir }}/redis.crt"
 cs_nc_redis_ca_file: "{{ cs_nc_redis_cert_dir }}/redis.ca"
-cs_nc_redis_host: "{{ cs_redis_private_ip }}"
-cs_nc_redis_port: "{{ cs_redis_tls_port }}"
-cs_nc_redis_password: "{{ cs_redis_admin_password }}"
 
 cs_nc_imaginary_docker_container_name: imaginary
 cs_nc_imaginary_docker_image: docker.io/nextcloud/aio-imaginary

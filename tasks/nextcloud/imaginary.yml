@@ -97,5 +97,4 @@
       port: "{{ cs_nc_imaginary_port }}"
       state: enabled
       proto: tcp
-      comment: "Deny Nextcloud Imaginary port, Managed by Ansible home-lab playbook {{
-          now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}"
+      comment: "Deny Nextcloud Imaginary port, Managed by Ansible home-lab playbook."

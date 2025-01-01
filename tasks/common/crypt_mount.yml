@@ -29,7 +29,7 @@
       cs_crypt_mount_enc_key_base64: "{{ __vault_external_disk_details.secret.luks_key_base64 }}"
       cs_crypt_mount_crypt_device_uuid: "{{ __vault_external_disk_details.secret.crypt_device_uuid }}"
       cs_crypt_mount_device_uuid: "{{ __vault_external_disk_details.secret.device_uuid }}"
-      cs_crypt_mount_tmp_crypt_key_file: "/etc/cryptsetup-keys/{{ cs_crypt_mount_vault_id }}"
+      cs_crypt_mount_tmp_crypt_key_file: "/etc/cryptsetup-keys.d/{{ cs_crypt_mount_vault_id }}"
       cs_crypt_mount_crypt_open_name: "{{ cs_crypt_mount_vault_id }}"
       cs_crypt_mount_disk_mount_path: "/mnt/{{ cs_crypt_mount_vault_id }}"
 
@@ -41,18 +41,10 @@
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Crypt Device | Mount | Search for crypt device uuid
-  ansible.builtin.set_fact:
-      cs_crypt_mount_tmp_crypt_device_details: "{{ item.value }}"
-  with_items: "{{ ansible_devices | dict2items }}"
-  when: >
-      item.value.links.uuids | length > 0 and
-      cs_crypt_mount_crypt_device_uuid == item.value.links.uuids[0]
-
 - name: Crypt Device | Mount | Fail if crypt device uuid doesn't match
   ansible.builtin.fail:
       msg: "Device UUID doesn't match"
-  when: cs_crypt_mount_tmp_crypt_device_details is not defined
+  when: cs_crypt_mount_crypt_device_uuid not in (ansible_devices | get_part_uuids_from_ansible_devices)
 
 - name: Crypt Device | Mount | Install cryptsetup
   become: true
@@ -97,13 +89,6 @@
   when: cs_crypt_already_mounted is not defined
   ansible.posix.mount:
       path: "{{ cs_crypt_mount_disk_mount_path }}"
-      state: absent
-      backup: true
-
-- name: Crypt Device | Mount | Remove from fstab
-  ansible.builtin.lineinfile:
-      path: /etc/fstab
-      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
       state: absent
       backup: true
 
@@ -162,10 +147,17 @@
 
 - name: Crypt Device | Mount | Fail if device uuid doesn't match
   ansible.builtin.fail:
-      msg: "Crypt Device UUID doesn't match"
+      msg: "Device UUID doesn't match"
   when: >
       cs_crypt_mount_tmp_device_details is not defined or
       cs_crypt_mount_tmp_device_details | length < 1
+
+- name: Crypt Device | Mount | Remove from fstab
+  ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: "^/dev/mapper/{{ cs_crypt_mount_crypt_open_name }}.*"
+      state: absent
+      backup: true
 
 - name: Crypt Device | Mount | Fstab Mount
   ansible.posix.mount:
@@ -198,9 +190,9 @@
       cs_crypt_post_mount_disk_df_lookup: "{{ item }}"
   with_items: "{{ __df_output_post_mount.stdout_lines }}"
   when: >
-    cs_crypt_mount_disk_mount_path in item
-    and
-    '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
+      cs_crypt_mount_disk_mount_path in item
+      and
+      '/dev/mapper/' + cs_crypt_mount_crypt_open_name in item
 
 - name: Crypt Device | Mount | Disk df mount not present
   ansible.builtin.fail:

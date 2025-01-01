@@ -1,4 +1,10 @@
 ---
+- name: Nextcloud | Data Dump | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_nextcloud_backup_drive_external_disk_id }}"
+
 - name: Nextcloud | Data Dump | Directory
   ansible.builtin.file:
       path: "{{ item }}"
