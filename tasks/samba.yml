@@ -7,39 +7,72 @@
 
 - name: Samba | Install | Install packages
   ansible.builtin.package:
-      name: "{{ item }}"
+      name:
+          - samba
+          - cifs-utils
       state: present
-  with_items:
-      - samba
-      - cifs-utils
 
 - name: Samba | Install | Create shared directory
   ansible.builtin.file:
       path: "{{ cs_samba_share_docs }}"
       state: directory
       owner: nobody
-      group: nobody
+      group: nogroup
       mode: "0755"
+
+- name: Samba | Install | UFW Allow Samba
+  community.general.ufw:
+      rule: allow
+      port: "{{ item }}"
+      proto: any
+      state: enabled
+  with_items:
+      - 137
+      - 138
+      - 139
+      - 445
+
+- name: Samba | Install | Config
+  community.general.ini_file:
+      path: /etc/samba/smb.conf
+      section: "{{ item.section | default(omit) }}"
+      option: "{{ item.key }}"
+      value: "{{ item.value }}"
+      mode: "0644"
+      owner: root
+      group: root
+  with_items:
+      - { section: global, key: workgroup, value: WORKGROUP }
+      - { section: global, key: server string, value: Samba Server }
+      - { section: global, key: map to guest, value: Bad User }
+      - { section: global, key: security, value: user }
+      - { section: global, key: guest account, value: nobody }
+      - { section: global, key: local master, value: "yes" }
+      - { section: global, key: preferred master, value: "yes" }
+      - { section: global, key: wins support, value: "yes" }
+      - { section: homes, key: available, value: "no" }
+
+      - { section: printers, key: available, value: "yes" }
+      - { section: print$, key: available, value: "yes" }
+
+      - { section: smb_test_share, key: comment, value: "Test Share" }
+      - { section: smb_test_share, key: path, value: "{{ cs_samba_share_docs }}" }
+      - { section: smb_test_share, key: browseable, value: "yes" }
+      - { section: smb_test_share, key: read only, value: "no" }
+      - { section: smb_test_share, key: guest ok, value: "yes" }
+      - { section: smb_test_share, key: create mask, value: "0755" }
+      - { section: smb_test_share, key: directory mask, value: "0755" }
+      - { section: smb_test_share, key: available, value: "yes" }
+      - { section: smb_test_share, key: valid users, value: "nobody" }
+      - { section: smb_test_share, key: force user, value: "nobody" }
+      - { section: smb_test_share, key: public, value: "yes" }
 
 - name: Samba | Install | Enable and start services
   ansible.builtin.systemd_service:
       name: "{{ item }}"
       enabled: true
-      state: started
+      state: restarted
+      daemon_reload: true
   with_items:
       - smb
       - nmb
-
-- name: Samba | Install | UFW Allow Samba
-  community.general.ufw:
-      rule: allow
-      port: 137,138,139,445
-      proto: tcp
-      state: enabled
-- name: Samba | Install | Config
-  community.general.ini_file:
-      path: /etc/samba/smb.conf
-      section: "{{ item.key }}"
-      option: "{{ item.key }}"
-      value: "{{ item.value }}"
-  with_dict:
