@@ -275,7 +275,6 @@
         become_user: root
         ansible.builtin.import_tasks:
             file: tasks/samba.yml
-
 # - name: Collabora
 #   hosts: rb4-m2
 #   become: false
