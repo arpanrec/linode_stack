@@ -71,7 +71,7 @@
       validate_certs: true
       data:
           common_name: "{{ cs_redis_private_ip }}"
-          alt_names: "localhost"
+          alt_names: "localhost,{{ ansible_hostname }},{{ ansible_fqdn }}"
           ip_sans: "{{ ([cs_redis_private_ip, '127.0.0.1'] + ansible_all_ipv4_addresses) | join(',') }}"
   register: __redis_server_cert
   environment:

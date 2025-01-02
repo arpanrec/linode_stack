@@ -31,6 +31,7 @@
           - davfs2
       linux_patching_rv_install_devel_packages: false
       linux_patching_rv_root_ca_pem_content: "{{ root_ca_cert_pem }}"
+      linux_patching_rv_domain_name: "blr-home.arpanrec.com"
 
 - name: Patch | System | Fail if service user is root
   ansible.builtin.fail:

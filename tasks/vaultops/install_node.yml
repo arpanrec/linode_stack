@@ -81,7 +81,7 @@
             extended_key_usage:
                 - serverAuth
             subject_alt_name: "{{ subject_names_all.results | map(attribute='ansible_facts.subject_names_manipulation')
-                | list + pv_vault_subject_alt_name }}"
+                | list + pv_vault_subject_alt_name + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
             subject_alt_name_critical: true
             backup: false
             mode: "0o600"

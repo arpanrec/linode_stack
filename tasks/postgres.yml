@@ -79,7 +79,7 @@
       data:
           common_name: "{{ inventory_hostname }}"
           alt_names: "{{ cs_postgres_host_public_domain }},{{ cs_postgres_host_private_domain }},\
-              {{ cs_postgres_container_name }},localhost"
+              {{ cs_postgres_container_name }},localhost,{{ ansible_hostname }},{{ ansible_fqdn }}"
           ip_sans: "{{ ([cs_postgres_host_public_ip, cs_postgres_host_private_ip, '127.0.0.1']
               + ansible_all_ipv4_addresses) | join(',') }}"
   register: __postgresql_server_cert
