@@ -245,7 +245,7 @@
       validate_certs: true
       data:
           common_name: "{{ cs_public_ingress_dns_entry }}"
-          alt_names: "{{ cs_public_ingress_dns_entry }},localhost,{{ ansible_fqdn }}"
+          alt_names: "{{ cs_public_ingress_dns_entry }},localhost,{{ ansible_hostname }},{{ ansible_fqdn }}"
           # Because in the inv plugin ansible host hast to be a ip
           ip_sans: "{{ ([ansible_host, cs_public_ingress_ip, '127.0.0.1']
               + ansible_all_ipv4_addresses) | join(',') }}"
