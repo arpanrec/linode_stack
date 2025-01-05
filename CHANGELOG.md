@@ -1,6 +1,11 @@
-## [1.30.4](https://github.com/arpanrec/home-lab/compare/1.30.3...1.30.4) (2025-01-02)
+# [2.0.0](https://github.com/arpanrec/home-lab/compare/1.30.4...2.0.0) (2025-01-05)
 
 
-### Bug Fixes
+### Features
 
-* update alt_names to include ansible_hostname in various configuration files ([#61](https://github.com/arpanrec/home-lab/issues/61)) ([b879fb0](https://github.com/arpanrec/home-lab/commit/b879fb0317b9ddfb6738bcd1f5c275edf991291c))
+* reorganize host and group variable files, remove unused configurations ([2874f5c](https://github.com/arpanrec/home-lab/commit/2874f5cfdccc7764a7aaaa9f4a83a454e556f6c5))
+
+
+### BREAKING CHANGES
+
+* remove jellyfin
