@@ -1,3 +1,1 @@
 ---
-cs_mini0_kes_hostnames: ["localhost", "{{ ansible_hostname }}", "{{ ansible_fqdn }}"]
-cs_mini0_kes_ips: "{{ ['127.0.0.1', cs_rb4_m2_ip] + ansible_all_ipv4_addresses }}"

@@ -1,11 +1,15 @@
 ---
+- name: Database | Elasticsearch | Gather Facts
+  ansible.builtin.setup:
+      gather_subset: all
+
 - name: Database | Elasticsearch | Get config from Vault
   become: false
   delegate_facts: true
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/elasticsearch"
+      path: "{{ cs_elasticsearch_cluster_name }}/{{ inventory_hostname }}/elasticsearch"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
@@ -36,7 +40,9 @@
           servlet_port: "{{ cs_elasticsearch_servlet_port }}"
           transport_port: "{{ cs_elasticsearch_transport_port }}"
           root_password: "{{ cs_elasticsearch_root_password }}"
-          host: "{{ cs_elasticsearch_host }}"
+          ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          hostname: "{{ ansible_hostname }}"
+          fqdn: "{{ ansible_fqdn }}"
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
@@ -100,7 +106,7 @@
 
 - name: Database | Elasticsearch | Wait for service to start
   ansible.builtin.uri:
-      url: "http://elastic:{{ cs_elasticsearch_root_password }}@{{ cs_elasticsearch_host }}:{{
+      url: "http://elastic:{{ cs_elasticsearch_root_password }}@{{ ansible_all_ipv4_addresses[0] }}:{{
           cs_elasticsearch_servlet_port }}"
       method: GET
       status_code: [200]

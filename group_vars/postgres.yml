@@ -15,5 +15,5 @@ cs_postgres_certs_privkey_file: "{{ cs_postgres_certs_dir }}/privkey.pem"
 cs_postgres_certs_cert_file: "{{ cs_postgres_certs_dir }}/cert.pem"
 cs_postgres_certs_chain_file: "{{ cs_postgres_certs_dir }}/chain.pem"
 cs_postgres_hba_file: "{{ cs_postgres_dir }}/pg_hba.conf"
-cs_postgres_cluster_name: blr-home-lab
+cs_postgres_cluster_name: blr-home
 cs_postgres_docker_image_tag: "{{ cs_postgres_version }}-bookworm"

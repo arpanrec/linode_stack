@@ -1,7 +1,3 @@
 ---
 cs_mini0_external_disk_id: "p2-2tb-rb4-m2"
 cs_mini0_mini0_data_dir: "/mnt/{{ cs_mini0_external_disk_id }}/mini0_data"
-
-cs_mini0_mini0_hostnames:
-    ["localhost", "{{ cs_public_ingress_dns_entry }}", "{{ ansible_hostname }}", "{{ ansible_fqdn }}"]
-cs_mini0_mini0_ips: "{{ ['127.0.0.1', cs_rb4_m2_ip, cs_public_ingress_ip] + ansible_all_ipv4_addresses }}"
