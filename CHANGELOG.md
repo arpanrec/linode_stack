@@ -1,6 +1,6 @@
-## [2.0.1](https://github.com/arpanrec/home-lab/compare/2.0.0...2.0.1) (2025-01-05)
+## [2.0.2](https://github.com/arpanrec/home-lab/compare/2.0.1...2.0.2) (2025-01-05)
 
 
 ### Bug Fixes
 
-* update with_items to use ansible_hostname instead of ansible_host in Nextcloud install task ([67deb85](https://github.com/arpanrec/home-lab/commit/67deb85ae3c4d5db86eeb685a523e7a2fb431303))
+* add new timestamp entry to cs_mini0_kes_bin_info_map in group_vars ([9efb2f1](https://github.com/arpanrec/home-lab/commit/9efb2f1c7a819704bae91bbe5190f39ffe22e5d0))
