@@ -1,7 +1,7 @@
 Listen {{ cs_nc_port }}
 <VirtualHost *:{{ cs_nc_port }}>
     DocumentRoot {{ cs_nc_web_dir }}/
-    ServerName {{ cs_public_ingress_dns_entry }}
+    ServerName {{ ansible_fqdn }}
     <IfModule mod_headers.c>
         Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
         Header always set X-Content-Type-Options "nosniff"

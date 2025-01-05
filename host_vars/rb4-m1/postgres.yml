@@ -1,5 +1,1 @@
 ---
-cs_postgres_host_private_ip: "{{ cs_rb4_m1_ip }}"
-cs_postgres_host_public_ip: "127.0.0.1"
-cs_postgres_host_public_domain: "localhost"
-cs_postgres_host_private_domain: "localhost"

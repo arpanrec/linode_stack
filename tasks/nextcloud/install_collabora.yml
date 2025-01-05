@@ -72,12 +72,11 @@
                 apps:
                     richdocuments:
                         types: prevent_group_restriction
-                        wopi_url: "{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
-                        public_wopi_url: "{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
+                        wopi_url: "{{ cs_nc_protocol }}://{{ ansible_fqdn }}:{{ cs_nc_port }}"
+                        public_wopi_url: "{{ cs_nc_protocol }}://{{ ansible_fqdn }}:{{ cs_nc_port }}"
                         doc_format: ooxml
                         disable_certificate_verification: "no"
-                        wopi_allowlist: "{{ cs_public_ingress_ip }},\
-                            127.0.0.1/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8,fd00::/8,::1"
+                        wopi_allowlist: "10.8.33.1/24"
 
       - name: Nextcloud | Install | Office | Collabora | Install | Write Config | Set Config
         become: true

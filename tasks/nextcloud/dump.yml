@@ -4,6 +4,7 @@
       file: tasks/common/crypt_mount.yml
   vars:
       cs_crypt_mount_vault_id: "{{ cs_nextcloud_backup_drive_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_nc_cluster_name }}"
 
 - name: Nextcloud | Data Dump | Directory
   ansible.builtin.file:
@@ -44,7 +45,7 @@
   ansible.builtin.set_fact:
       cs_nc_db_user: "{{ __nextcloud_db_details.secret.user }}"
       cs_nc_db_password: "{{ __nextcloud_db_details.secret.password }}"
-      cs_nc_db_host: "{{ __nextcloud_db_details.secret.private_ip }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.secret.fqdn }}"
       cs_nc_db_port: "{{ __nextcloud_db_details.secret.server_port }}"
       cs_nc_db_version: "{{ __nextcloud_db_details.secret.server_version }}"
 

@@ -1,9 +1,10 @@
 ---
-- name: Nextcloud | Disk | Application | Include common crypt mount
+- name: Minio | Install | Include common crypt mount
   ansible.builtin.include_tasks:
       file: tasks/common/crypt_mount.yml
   vars:
       cs_crypt_mount_vault_id: "{{ cs_mini0_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_mini0_mini0_cluster_name }}"
 
 - name: Minio | Install | Gather Facts
   ansible.builtin.setup:
@@ -15,7 +16,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/minio"
+      path: "{{ cs_mini0_mini0_cluster_name }}/{{ inventory_hostname }}/minio"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
@@ -31,28 +32,7 @@
       cs_mini0_mini0_console_port: "{{ __minio_details.secret.console_port }}"
       cs_mini0_mini0_region: "{{ __minio_details.secret.region }}"
 
-- name: Minio | Get Public Ingress IP and Hostname from vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "secret"
-      path: "blr-home-lab"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  register: __minio_server_public_ingress_secret_dict
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
-- name: Minio | Set fact Public Ingress IP and Hostname
-  ansible.builtin.set_fact:
-      cs_public_ingress_ip: "{{ __minio_server_public_ingress_secret_dict.secret.public_ingress_ip }}"
-      cs_public_ingress_dns_entry: "{{ __minio_server_public_ingress_secret_dict.secret.public_ingress_dns_entry }}"
-
-- name: Minio | Assert | Set cs_mini0_mini0_kes_cluster_name
+- name: Minio | Assert | Set cs_mini0_mini0_kes_cluster_name and cs_mini0_mini0_kes_cluster_node_name
   ansible.builtin.set_fact:
       cs_mini0_mini0_kes_cluster_name: "{{ cs_mini0_mini0_kes_cluster_name | d(cs_mini0_mini0_cluster_name)
           | mandatory }}"
@@ -78,22 +58,8 @@
 
 - name: Minio | Set cs_mini0_mini0_kes_endpoint
   ansible.builtin.set_fact:
-      cs_mini0_mini0_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.secret.ips[0] }}:\
+      cs_mini0_mini0_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.secret.fqdn }}:\
           {{ __minio_server_kes_secret_dict.secret.port }}"
-
-- name: Minio | Assert | cs_mini0_mini0_hostnames
-  ansible.builtin.assert:
-      that:
-          - cs_mini0_mini0_hostnames | type_debug == 'list'
-          - cs_mini0_mini0_hostnames | length > 0
-      fail_msg: "cs_mini0_mini0_hostnames must be a list with at least one element"
-
-- name: Minio | Assert | cs_mini0_mini0_ips
-  ansible.builtin.assert:
-      that:
-          - cs_mini0_mini0_ips | type_debug == 'list'
-          - cs_mini0_mini0_ips | length > 0
-      fail_msg: "cs_mini0_mini0_ips must be a list with at least one element"
 
 - name: Minio | Install | Create group
   ansible.builtin.group:
@@ -160,8 +126,8 @@
       validate_certs: true
       data:
           common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ cs_mini0_mini0_hostnames | join(',') }}"
-          ip_sans: "{{ cs_mini0_mini0_ips | join(',') }}"
+          alt_names: "{{ ansible_fqdn }},{{ ansible_hostname }}"
+          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
   register: minio_server_tmp_certificate
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -218,8 +184,9 @@
       data:
           root_user: "{{ minio_server_root_user }}"
           root_password: "{{ minio_server_root_password }}"
-          ips: "{{ cs_mini0_mini0_ips }}"
-          hostnames: "{{ cs_mini0_mini0_hostnames }}"
+          ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          hostname: "{{ ansible_hostname }}"
+          fqdn: "{{ ansible_fqdn }}"
           server_port: "{{ cs_mini0_mini0_port }}"
           console_port: "{{ cs_mini0_mini0_console_port }}"
           server_version: "{{ cs_mini0_mini0_version }}"
@@ -282,7 +249,7 @@
 
 - name: Minio | Install | Wait for Minio to start
   ansible.builtin.uri:
-      url: "https://localhost:{{ cs_mini0_mini0_port }}/minio/health/live"
+      url: "https://{{ ansible_all_ipv4_addresses[0] }}:{{ cs_mini0_mini0_port }}/minio/health/live"
       status_code: 200
       timeout: 3
       method: GET

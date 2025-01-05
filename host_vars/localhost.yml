@@ -1,3 +1,3 @@
 ---
 ansible_connection: local
-ansible_python_interpreter: auto
+ansible_python_interpreter: /home/arpan/.cache/pypoetry/virtualenvs/home-lab-5VkaDLJo-py3.13/bin/python

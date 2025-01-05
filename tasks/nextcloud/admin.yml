@@ -24,7 +24,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      path: "{{ cs_nc_cluster_name }}/{{ inventory_hostname }}/nextcloud"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
