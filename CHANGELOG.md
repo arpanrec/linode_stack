@@ -1,11 +1,6 @@
-# [2.0.0](https://github.com/arpanrec/home-lab/compare/1.30.4...2.0.0) (2025-01-05)
+## [2.0.1](https://github.com/arpanrec/home-lab/compare/2.0.0...2.0.1) (2025-01-05)
 
 
-### Features
+### Bug Fixes
 
-* reorganize host and group variable files, remove unused configurations ([2874f5c](https://github.com/arpanrec/home-lab/commit/2874f5cfdccc7764a7aaaa9f4a83a454e556f6c5))
-
-
-### BREAKING CHANGES
-
-* remove jellyfin
+* update with_items to use ansible_hostname instead of ansible_host in Nextcloud install task ([67deb85](https://github.com/arpanrec/home-lab/commit/67deb85ae3c4d5db86eeb685a523e7a2fb431303))
