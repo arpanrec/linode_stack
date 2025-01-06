@@ -33,7 +33,7 @@ jobs:
                   cache-dependency-path: .github/files/package-lock.json
 
             - name: Install poetry 1.8.5
-              run: pipx install poetry==1.8.5
+              run: pipx install poetry==2.0.0
 
             - name: Set up Python "3.12"
               uses: actions/setup-python@v5.3.0
