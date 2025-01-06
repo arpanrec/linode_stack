@@ -43,7 +43,7 @@ jobs:
                   cache-dependency-path: poetry.lock
 
             - name: Install python dependencies
-              run: poetry install
+              run: poetry install --with dev
 
             - name: Install node dependencies
               run: |+
