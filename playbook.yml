@@ -159,32 +159,6 @@
         ansible.builtin.import_tasks:
             file: tasks/elasticsearch.yml
 
-- name: NFS Server
-  hosts: rb4-m3
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: NFS Server | Mount Disk
-        become: true
-        become_user: root
-        tags: never,nfs-server
-        ansible.builtin.import_tasks:
-            file: tasks/nfs-server.yml
-
-- name: NFS Client
-  hosts: rb4-m1:rb4-m2
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: NFS Client | Install NFS client
-        become: true
-        become_user: root
-        tags: never,nfs-client
-        ansible.builtin.import_tasks:
-            file: tasks/nfs-client.yml
-
 - name: OnlyOffice
   hosts: rb4-m2
   become: false
@@ -288,29 +262,3 @@
         tags: never,nextcloud,nextcloud_dump
         ansible.builtin.import_tasks:
             file: tasks/nextcloud/dump.yml
-
-- name: Jellyfin
-  hosts: s1-home
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: Jellyfin
-        tags: never,jellyfin
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/jellyfin/main.yml
-
-- name: Collabora
-  hosts: rb4-m2
-  become: false
-  gather_facts: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: Collabora
-        tags: never,collabora
-        become: true
-        become_user: root
-        ansible.builtin.import_tasks:
-            file: tasks/collabora.yml
