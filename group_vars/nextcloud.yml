@@ -1,4 +1,5 @@
 ---
+cs_nc_cluster_name: blr-home
 cs_nc_root_dir: /app/nextcloud
 cs_nc_web_dir: "{{ cs_nc_root_dir }}/www"
 cs_nc_data_dir: "{{ cs_nc_root_dir }}/data"
@@ -55,7 +56,6 @@ cs_nc_imaginary_port: 9000
 
 cs_nc_fts_elasticsearch_password: "{{ cs_elasticsearch_root_password }}"
 cs_nc_fts_elasticsearch_servlet_port: "{{ cs_elasticsearch_servlet_port }}"
-cs_nc_fts_elasticsearch_host: "{{ cs_elasticsearch_host }}"
 cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
 cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
 

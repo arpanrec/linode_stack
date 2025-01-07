@@ -9,7 +9,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/redis"
+      path: "{{ cs_redis_cluster_name }}/{{ inventory_hostname }}/redis"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
@@ -38,7 +38,9 @@
       data:
           tls_port: "{{ cs_redis_tls_port }}"
           admin_password: "{{ cs_redis_admin_password }}"
-          private_ip: "{{ cs_redis_private_ip }}"
+          ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          hostname: "{{ ansible_hostname }}"
+          fqdn: "{{ ansible_fqdn }}"
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
@@ -70,9 +72,9 @@
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       data:
-          common_name: "{{ cs_redis_private_ip }}"
-          alt_names: "localhost"
-          ip_sans: "{{ ([cs_redis_private_ip, '127.0.0.1'] + ansible_all_ipv4_addresses) | join(',') }}"
+          common_name: "{{ ansible_hostname }}"
+          alt_names: "{{ ansible_hostname }},{{ ansible_fqdn }}"
+          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
   register: __redis_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -138,9 +140,9 @@
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       data:
-          common_name: "{{ cs_redis_private_ip }}"
+          common_name: "{{ ansible_hostname }}"
           alt_names: "localhost"
-          ip_sans: "{{ cs_redis_private_ip }},127.0.0.1"
+          ip_sans: "127.0.0.1"
   register: __redis_client_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"

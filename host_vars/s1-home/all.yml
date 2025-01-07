@@ -1,4 +1,0 @@
----
-cs_elasticsearch_host: "{{ cs_s1_home_ip }}"
-
-cs_redis_private_ip: "{{ cs_s1_home_ip }}"

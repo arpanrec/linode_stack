@@ -4,6 +4,7 @@
       file: tasks/common/crypt_mount.yml
   vars:
       cs_crypt_mount_vault_id: "{{ cs_nextcloud_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_nc_cluster_name }}"
 
 - name: Nextcloud | Disk | Application | Set fact for external drive mount web path
   ansible.builtin.set_fact:

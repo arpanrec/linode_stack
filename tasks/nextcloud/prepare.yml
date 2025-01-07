@@ -1,32 +1,11 @@
 ---
-- name: Nextcloud | Prepare | Get Public Ingress IP and Hostname from vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "secret"
-      path: "blr-home-lab"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  register: __nextcloud_server_public_ingress_secret_dict
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
-- name: Nextcloud | Prepare | Set fact Public Ingress IP and Hostname
-  ansible.builtin.set_fact:
-      cs_public_ingress_ip: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_ip }}"
-      cs_public_ingress_dns_entry: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_dns_entry }}"
-
 - name: Nextcloud | Prepare | Get Config details
   become: false
   delegate_facts: true
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      path: "{{ cs_nc_cluster_name }}/{{ inventory_hostname }}/nextcloud"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
@@ -244,11 +223,9 @@
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       data:
-          common_name: "{{ cs_public_ingress_dns_entry }}"
-          alt_names: "{{ cs_public_ingress_dns_entry }},localhost,{{ ansible_fqdn }}"
-          # Because in the inv plugin ansible host hast to be a ip
-          ip_sans: "{{ ([ansible_host, cs_public_ingress_ip, '127.0.0.1']
-              + ansible_all_ipv4_addresses) | join(',') }}"
+          common_name: "nextcloud"
+          alt_names: "{{ ansible_hostname }},{{ ansible_fqdn }}"
+          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
   register: __nextcloud_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"

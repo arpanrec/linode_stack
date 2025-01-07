@@ -54,7 +54,7 @@
   ansible.builtin.set_fact:
       cs_nc_fts_elasticsearch_servlet_port: "{{ __nextcloud_fts_details.secret.servlet_port }}"
       cs_nc_fts_elasticsearch_password: "{{ __nextcloud_fts_details.secret.root_password }}"
-      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.secret.host }}"
+      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.secret.fqdn }}"
 
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
