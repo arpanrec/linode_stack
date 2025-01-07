@@ -121,6 +121,7 @@
       msg: "{{ _response_proxy_host_create.json }}"
 
 - name: "Nginx Proxy Manager | Add Proxy Hosts | Update Proxy Host | {{ cs_nginx_proxy_host.domains[0] }}"
+  when: cs_nginx_proxy_host.ssl_verify_client | default(true)
   ansible.builtin.uri:
       url: "{{ cs_npm_api_endpoint }}/nginx/proxy-hosts/{{ _response_proxy_host_create.json.id }}"
       headers:
@@ -131,10 +132,7 @@
       status_code:
           - 200
       body:
-          advanced_config: |+
+          advanced_config: |-
+              {{ cs_nginx_proxy_host.advanced_config | default('') }}
               ssl_verify_client on;
               ssl_client_certificate /etc/ssl/certs/CAs.pem;
-
-- name: Hard fail
-  ansible.builtin.fail:
-      msg: "Hard fail"
