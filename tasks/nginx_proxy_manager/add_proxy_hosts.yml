@@ -1,0 +1,116 @@
+---
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Get Server Certificates from Vault
+      | {{ cs_nginx_proxy_host.domains[0] }}"
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      timeout: 60
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/server_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "{{ cs_nginx_proxy_host.domains[0] }}"
+          alt_names: "{{ cs_nginx_proxy_host.domains | join(',') }}"
+  register: __cs_nginx_proxy_manager_server_certificates
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Validate Certificates | {{ cs_nginx_proxy_host.domains[0] }}"
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/certificates/validate"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+          Accept': "application/json"
+      method: POST
+      body_format: form-multipart
+      status_code:
+          - 200
+      body:
+          certificate_key:
+              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.private_key }}"
+              mime_type: "text/plain"
+              filename: certificate_key.pem
+          certificate:
+              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.certificate }}"
+              mime_type: "text/plain"
+              filename: certificate.pem
+          intermediate_certificate:
+              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.ca_chain | join('\n') }}"
+              mime_type: "text/plain"
+              filename: intermediate_certificate.pem
+  register: _response_server_certificates_validate
+  changed_when: false
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Validate Certificates Debug | {{ cs_nginx_proxy_host.domains[0] }}"
+  ansible.builtin.debug:
+      msg: "{{ _response_server_certificates_validate.json }}"
+
+- name: Nginx Proxy Manager | Add Proxy Hosts | Create Server Certificates | {{ cs_nginx_proxy_host.domains[0] }}
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/certificates"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+      method: POST
+      body_format: json
+      status_code:
+          - 201
+      body:
+          provider: other
+          nice_name: "{{ cs_nginx_proxy_host.domains[0] }}"
+          domain_names: "{{ cs_nginx_proxy_host.domains }}"
+  register: _response_server_certificates_create
+  changed_when: true
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Upload Certificates | {{ cs_nginx_proxy_host.domains[0] }}"
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/certificates/{{ _response_server_certificates_create.json.id }}/upload"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+          Accept': "application/json"
+      method: POST
+      body_format: form-multipart
+      status_code:
+          - 200
+      body:
+          certificate_key:
+              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.private_key }}"
+              mime_type: "text/plain"
+              filename: certificate_key.pem
+          certificate:
+              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.certificate }}"
+              mime_type: "text/plain"
+              filename: certificate.pem
+          intermediate_certificate:
+              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.ca_chain | join('\n') }}"
+              mime_type: "text/plain"
+              filename: intermediate_certificate.pem
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Create Proxy Host | {{ cs_nginx_proxy_host.domains[0] }}"
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/proxy-hosts"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+          Accept': "application/json"
+      method: POST
+      body_format: json
+      status_code:
+          - 201
+      body:
+          domain_names: "{{ cs_nginx_proxy_host.domains }}"
+          certificate_id: "{{ _response_server_certificates_create.json.id }}"
+          forward_scheme: "{{ cs_nginx_proxy_host.forward_scheme }}"
+          forward_host: "{{ cs_nginx_proxy_host.forward_host }}"
+          forward_port: "{{ cs_nginx_proxy_host.forward_port }}"
+          ssl_forced: "{{ cs_nginx_proxy_host.ssl_forced | default(true) }}"
+          block_exploits: "{{ cs_nginx_proxy_host.block_exploits | default(true) }}"
+          http2_support: "{{ cs_nginx_proxy_host.http2_support | default(true) }}"
+          hsts_enabled: "{{ cs_nginx_proxy_host.hsts_enabled | default(true) }}"
+          hsts_subdomains: "{{ cs_nginx_proxy_host.hsts_subdomains | default(false) }}"
+          caching_enabled: "{{ cs_nginx_proxy_host.caching_enabled | default(true) }}"
+          advanced_config: "{{ cs_nginx_proxy_host.advanced_config | default('') }}"
+          allow_websocket_upgrade: "{{ cs_nginx_proxy_host.allow_websocket_upgrade | default(false) }}"
+          enabled: "{{ cs_nginx_proxy_host.enabled | default(true) }}"
