@@ -1,2 +1,3 @@
 ---
 cs_nginx_proxy_cluster: blr-home
+cs_nginx_proxy_directory: /app/nginx-proxy-manager

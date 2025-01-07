@@ -114,3 +114,27 @@
           advanced_config: "{{ cs_nginx_proxy_host.advanced_config | default('') }}"
           allow_websocket_upgrade: "{{ cs_nginx_proxy_host.allow_websocket_upgrade | default(false) }}"
           enabled: "{{ cs_nginx_proxy_host.enabled | default(true) }}"
+  register: _response_proxy_host_create
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Create Proxy Host Debug | {{ cs_nginx_proxy_host.domains[0] }}"
+  ansible.builtin.debug:
+      msg: "{{ _response_proxy_host_create.json }}"
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Update Proxy Host | {{ cs_nginx_proxy_host.domains[0] }}"
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/proxy-hosts/{{ _response_proxy_host_create.json.id }}"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+          Accept': "application/json"
+      method: PUT
+      body_format: json
+      status_code:
+          - 200
+      body:
+          advanced_config: |+
+              ssl_verify_client on;
+              ssl_client_certificate /etc/ssl/certs/CAs.pem;
+
+- name: Hard fail
+  ansible.builtin.fail:
+      msg: "Hard fail"

@@ -84,12 +84,20 @@
       mode: "0755"
       state: directory
   with_items:
-      - /app/nginx-proxy-manager/data
-      - /app/nginx-proxy-manager/letsencrypt
+      - "{{ cs_nginx_proxy_directory }}/data"
+      - "{{ cs_nginx_proxy_directory }}/letsencrypt"
+
+- name: Nginx Proxy Manager | Copy root cert
+  ansible.builtin.copy:
+      content: "{{ root_ca_cert_pem }}"
+      dest: "{{ cs_nginx_proxy_directory }}/CAs.pem"
+      owner: 1000
+      group: 1000
+      mode: "0644"
 
 - name: Nginx Proxy Manager | Create healthcheck script
   ansible.builtin.stat:
-      path: /app/nginx-proxy-manager/data/database.sqlite
+      path: "{{ cs_nginx_proxy_directory }}/data/database.sqlite"
   register: _is_sqlite_present
 
 - name: Nginx Proxy Manager | Install sqlite3
@@ -101,7 +109,7 @@
   ansible.builtin.command:
       argv:
           - sqlite3
-          - /app/nginx-proxy-manager/data/database.sqlite
+          - "{{ cs_nginx_proxy_directory }}/data/database.sqlite"
           - "UPDATE user SET is_deleted=1;"
   when: _is_sqlite_present.stat.exists
   changed_when: _is_sqlite_present.stat.exists
@@ -125,8 +133,9 @@
           - "443:443"
           - "{{ cs_npm_admin_port }}:81"
       volumes:
-          - "/app/nginx-proxy-manager/data:/data"
-          - "/app/nginx-proxy-manager/letsencrypt:/etc/letsencrypt"
+          - "{{ cs_nginx_proxy_directory }}/data:/data:rw"
+          - "{{ cs_nginx_proxy_directory }}/letsencrypt:/etc/letsencrypt:rw"
+          - "{{ cs_nginx_proxy_directory }}/CAs.pem:/etc/ssl/certs/CAs.pem:ro"
       healthcheck:
           test: ["CMD", "/usr/bin/check-health"]
           interval: 10s
