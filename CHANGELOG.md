@@ -1,6 +1,6 @@
-# [2.1.0](https://github.com/arpanrec/home-lab/compare/2.0.5...2.1.0) (2025-01-07)
+## [2.1.1](https://github.com/arpanrec/home-lab/compare/2.1.0...2.1.1) (2025-01-07)
 
 
-### Features
+### Bug Fixes
 
-* Nginx Proxy Manager ([#62](https://github.com/arpanrec/home-lab/issues/62)) ([8ad2cd9](https://github.com/arpanrec/home-lab/commit/8ad2cd9a3897510b31ff1afb1caa07a22634f54a))
+* static password for nginx proxy manager ([b4184a7](https://github.com/arpanrec/home-lab/commit/b4184a76ff3858ecf7c056ba4e28b7d032aaa4c7))
