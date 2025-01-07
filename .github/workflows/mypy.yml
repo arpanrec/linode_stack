@@ -2,12 +2,6 @@
 name: "Mypy: Static Typing for Python"
 
 "on":
-    push:
-        paths:
-            - "**.py"
-            - ".github/workflows/mypy.yml"
-            - "poetry.lock"
-            - "pyproject.toml"
     workflow_dispatch:
     pull_request:
         paths:

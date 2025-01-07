@@ -2,14 +2,6 @@
 name: Yamllint
 
 "on":
-    push:
-        paths:
-            - "**.yaml"
-            - "**.yml"
-            - ".github/workflows/yamllint.yml"
-            - ".yamllint"
-            - "poetry.lock"
-            - "pyproject.toml"
     workflow_dispatch:
     pull_request:
         paths:

@@ -2,13 +2,6 @@
 name: Pylint
 
 "on":
-    push:
-        paths:
-            - "**.py"
-            - ".github/workflows/pylint.yml"
-            - ".pylint.*"
-            - "poetry.lock"
-            - "pyproject.toml"
     workflow_dispatch:
     pull_request:
         paths:
