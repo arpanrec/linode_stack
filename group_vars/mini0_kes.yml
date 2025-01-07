@@ -12,6 +12,7 @@ cs_mini0_kes_bin_info_map:
             "2024-04-12T13-50-00Z": 251d7182df96b111008ff98f4c6bdb3b3e06ef9ea2d3b6c9fcbea9a8a80579cd
             "2024-06-17T15-47-05Z": f37515c25cdf5152cfbe03ab32fa7eaf3f22073646668e1913ae8a4a5339c048
             "2024-10-31T07-42-41Z": 90a1216f0f4bbf9568e429312bf8a8dd091bde374cb86049b510a4299f9023f2
+            "2024-12-30T17-40-21Z": ea07e727585557e2b87ee4c6bf78bad09d9e0b1267a6b8e90117aea481f4f2ce
 
 cs_mini0_kes_group_name: kes
 cs_mini0_kes_user_name: "{{ cs_mini0_kes_group_name }}"
@@ -29,4 +30,4 @@ cs_mini0_kes_vault_client_key: "{{ cs_mini0_kes_cert_dir }}/vault-client-key.pem
 cs_mini0_kes_vault_ca_cert: "{{ cs_mini0_kes_cert_dir }}/vault-ca-cert.pem"
 cs_mini0_kes_version: 2024-10-31T07-42-41Z
 cs_mini0_kes_port: 3000
-cs_mini0_kes_cluster_name: blr-home-lab
+cs_mini0_kes_cluster_name: blr-home

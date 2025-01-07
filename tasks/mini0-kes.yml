@@ -2,20 +2,6 @@
 - name: KES | Install | Gather Facts
   ansible.builtin.setup:
 
-- name: KES | Assert | cs_mini0_kes_hostnames
-  ansible.builtin.assert:
-      that:
-          - cs_mini0_kes_hostnames | type_debug == 'list'
-          - cs_mini0_kes_hostnames | length > 0
-      fail_msg: "cs_mini0_kes_hostnames must be a list with at least one element"
-
-- name: KES | Assert | cs_mini0_kes_ips
-  ansible.builtin.assert:
-      that:
-          - cs_mini0_kes_ips | type_debug == 'list'
-          - cs_mini0_kes_ips | length > 0
-      fail_msg: "cs_mini0_kes_ips must be a list with at least one element"
-
 - name: KES | Install | Create group
   ansible.builtin.group:
       name: "{{ cs_mini0_kes_group_name }}"
@@ -86,8 +72,8 @@
       validate_certs: true
       data:
           common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ cs_mini0_kes_hostnames | join(',') }}"
-          ip_sans: "{{ cs_mini0_kes_ips | join(',') }}"
+          alt_names: "{{ ansible_fqdn }},{{ ansible_hostname }}"
+          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
   register: minio_kes_tmp_server_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -122,8 +108,8 @@
       validate_certs: true
       data:
           common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ cs_mini0_kes_hostnames | join(',') }}"
-          ip_sans: "{{ cs_mini0_kes_ips | join(',') }}"
+          alt_names: "{{ ansible_fqdn }},{{ ansible_hostname }}"
+          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
   register: kes_tmp_admin_client_cert_res
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -218,7 +204,7 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: KES | Install | Save KES Admin Key Id into Vault
+- name: KES | Install | Write KES Details Vault
   become: false
   delegate_facts: true
   delegate_to: localhost
@@ -231,9 +217,10 @@
               {{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
           admin_key: "{{ kes_tmp_admin_client_cert_res.data.data.private_key }}"
           admin_ca: "{{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
-          ips: "{{ cs_mini0_kes_ips }}"
           "port": "{{ cs_mini0_kes_port }}"
-          hostnames: "{{ cs_mini0_kes_hostnames }}"
+          ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          hostname: "{{ ansible_hostname }}"
+          fqdn: "{{ ansible_fqdn }}"
           version: "{{ cs_mini0_kes_version }}"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
@@ -347,7 +334,7 @@
 
 - name: KES | Install | Test | Wait for service to start
   ansible.builtin.uri:
-      url: "https://127.0.0.1:{{ cs_mini0_kes_port }}/v1/status"
+      url: "https://{{ ansible_fqdn }}:{{ cs_mini0_kes_port }}/v1/status"
       ca_path: "{{ __temp_file_client_cert.results[2].path }}"
       client_cert: "{{ __temp_file_client_cert.results[1].path }}"
       client_key: "{{ __temp_file_client_cert.results[0].path }}"

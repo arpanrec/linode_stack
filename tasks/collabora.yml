@@ -30,9 +30,10 @@
   community.crypto.openssl_csr:
       path: "{{ cs_collabora_cert_dir }}/csr.pem"
       privatekey_path: "{{ cs_collabora_privkey_pem_file }}"
-      common_name: "{{ cs_public_ingress_dns_entry }}"
+      common_name: "{{ ansible_fqdn }}"
       subject_alt_name:
-          - DNS:{{ cs_public_ingress_dns_entry }}
+          - DNS:{{ ansible_fqdn }}
+          - DNS:{{ ansible_hostname }}
           - IP:127.0.0.1
           - IP:127.0.1.1
           - DNS:localhost
@@ -96,16 +97,16 @@
           - "{{ cs_collabora_chain_pem_file }}:/usr/local/ssl/certs/ca-chain.cert.pem"
           - "{{ cs_collabora_chain_pem_file }}:/etc/coolwsd/ca-chain.cert.pem"
       env:
-          aliasgroup1: "{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
+          aliasgroup1: "{{ cs_nc_protocol }}://{{ ansible_fqdn }}:{{ cs_nc_port }}"
           username: "{{ cs_collabora_admin_user }}"
           password: "{{ cs_collabora_admin_password }}"
-          domain: "{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
-          server_name: "{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
+          domain: "{{ ansible_fqdn }}:{{ cs_nc_port }}"
+          server_name: "{{ ansible_fqdn }}:{{ cs_nc_port }}"
           extra_params: "--port {{ cs_collabora_https_port }} --o:ssl.enable=true --o:ssl.termination=false
               --o:ssl.ssl_verification=false --o:mount_jail_tree=false --o:logging.level=warning
               --o:home_mode.enable=true --o:security.seccomp=true
               --o:remote_font_config.url={{
-              cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{
+              cs_nc_protocol }}://{{ ansible_fqdn }}:{{
               cs_nc_port }}/apps/richdocuments/settings/fonts.json"
           DONT_GEN_SSL_CERT: "1"
           LC_CTYPE: "C.UTF-8"

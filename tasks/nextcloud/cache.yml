@@ -32,7 +32,7 @@
   ansible.builtin.set_fact:
       cs_nc_redis_port: "{{ __nextcloud_redis_details.secret.tls_port }}"
       cs_nc_redis_password: "{{ __nextcloud_redis_details.secret.admin_password }}"
-      cs_nc_redis_host: "{{ __nextcloud_redis_details.secret.private_ip }}"
+      cs_nc_redis_host: "{{ __nextcloud_redis_details.secret.fqdn }}"
 
 - name: Nextcloud | Cache | Redis | Get Client Certificates from Vault
   become: false
@@ -45,8 +45,7 @@
       validate_certs: true
       data:
           common_name: "{{ cs_nc_redis_host }}"
-          alt_names: "localhost"
-          ip_sans: "{{ cs_nc_redis_host }},127.0.0.1"
+          alt_names: "{{ cs_nc_redis_host }}"
   register: __redis_client_cert
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"

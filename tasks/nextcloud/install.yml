@@ -1,25 +1,4 @@
 ---
-- name: Nextcloud | Install | Get Public Ingress IP and Hostname from vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "secret"
-      path: "blr-home-lab"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  register: __nextcloud_server_public_ingress_secret_dict
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
-- name: Nextcloud | Install | Set fact Public Ingress IP and Hostname
-  ansible.builtin.set_fact:
-      cs_public_ingress_ip: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_ip }}"
-      cs_public_ingress_dns_entry: "{{ __nextcloud_server_public_ingress_secret_dict.secret.public_ingress_dns_entry }}"
-
 - name: Nextcloud | Install | Check if Nextcloud config.php exists
   ansible.builtin.stat:
       path: "{{ cs_nc_web_dir }}/occ"
@@ -156,7 +135,7 @@
   ansible.builtin.set_fact:
       cs_nc_db_user: "{{ __nextcloud_db_details.secret.user }}"
       cs_nc_db_password: "{{ __nextcloud_db_details.secret.password }}"
-      cs_nc_db_host: "{{ __nextcloud_db_details.secret.private_ip }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.secret.fqdn }}"
       cs_nc_db_port: "{{ __nextcloud_db_details.secret.server_port }}"
 
 - name: Nextcloud | Install | Get Db client certificate
@@ -170,7 +149,6 @@
       validate_certs: true
       data:
           common_name: "{{ cs_nc_db_user }}"
-          alt_names: "{{ cs_public_ingress_dns_entry }}"
   register: __nextcloud_db_client_certificate
   environment:
       VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
@@ -228,7 +206,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/nextcloud"
+      path: "{{ cs_nc_cluster_name }}/{{ inventory_hostname }}/nextcloud"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
@@ -376,8 +354,7 @@
   changed_when: true
   loop_control:
       index_var: item_index
-  with_items: "{{ ([cs_public_ingress_dns_entry, ansible_fqdn, 'localhost',
-      ansible_host, cs_public_ingress_ip, '127.0.0.1'] + ansible_all_ipv4_addresses) }}"
+  with_items: "{{ ([ansible_fqdn, ansible_hostname] + ansible_all_ipv4_addresses) }}"
 
 - name: Nextcloud | Install | Add missing indices
   become: true
@@ -479,12 +456,7 @@
       chdir: "{{ cs_nc_web_dir }}"
   changed_when: true
   with_items:
-      # Do not delete because i might forget to set it back
-      # - "config:system:set overwrite.cli.url
-      #   --value {{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
       - "config:system:set overwrite.cli.url --value {{ cs_nc_protocol }}://127.0.0.1:{{ cs_nc_port }}"
-      # - "config:system:set overwritehost --value {{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}"
-      # - "config:system:set overwriteprotocol --value {{ cs_nc_protocol }}"
       - "config:system:delete overwritehost"
       - "config:system:delete overwriteprotocol"
       - "config:system:set htaccess.RewriteBase --value /"
@@ -510,7 +482,7 @@
   with_items:
       - "theming:config name 'Home Server'"
       - "theming:config slogan 'Where bytes go to retire and data parties in pajamas!'"
-      - "theming:config url '{{ cs_nc_protocol }}://{{ cs_public_ingress_dns_entry }}:{{ cs_nc_port }}'"
+      - "theming:config url '{{ cs_nc_protocol }}://{{ ansible_fqdn }}:{{ cs_nc_port }}'"
       - "theming:config color '#2C2222'"
       - "theming:config favicon '/tmp/nc-favicon.ico'"
       - "theming:config logo '/tmp/nc-logo.png'"

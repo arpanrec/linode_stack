@@ -2,8 +2,6 @@
 cs_env_debug: "{{ lookup('ansible.builtin.env', 'DEBUG', default=false) | bool }}"
 cs_no_log: "{{ not cs_env_debug }}"
 
-ansible_python_interpreter: /usr/bin/python3
-
 # cs_vm_ssh_service_user_id: "arpan" # Only for patching
 cs_vm_ssh_service_user_id: "cloudinit" # Only for patching
 

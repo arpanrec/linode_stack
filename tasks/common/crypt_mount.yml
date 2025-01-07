@@ -7,6 +7,7 @@
   with_items:
       - "{{ cs_crypt_mount_vault_id }}"
       - "{{ inventory_hostname }}"
+      - "{{ cs_crypt_machine_cluster }}"
 
 - name: Crypt Device | Mount | Get Disk details
   become: false
@@ -14,7 +15,7 @@
   delegate_to: localhost
   community.hashi_vault.vault_kv2_get:
       url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "blr-home-lab/{{ inventory_hostname }}/disks/{{ cs_crypt_mount_vault_id }}"
+      path: "{{ cs_crypt_machine_cluster }}/{{ inventory_hostname }}/disks/{{ cs_crypt_mount_vault_id }}"
       token: "{{ vault_ha_client.token }}"
       validate_certs: true
       engine_mount_point: "secret"
@@ -212,3 +213,4 @@
       cs_crypt_mount_tmp_crypt_device_details: null
       cs_crypt_already_mounted: null
       cs_crypt_post_mount_disk_df_lookup: null
+      cs_crypt_machine_cluster: null

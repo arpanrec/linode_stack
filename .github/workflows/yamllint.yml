@@ -2,14 +2,6 @@
 name: Yamllint
 
 "on":
-    push:
-        paths:
-            - "**.yaml"
-            - "**.yml"
-            - ".github/workflows/yamllint.yml"
-            - ".yamllint"
-            - "poetry.lock"
-            - "pyproject.toml"
     workflow_dispatch:
     pull_request:
         paths:
@@ -39,7 +31,7 @@ jobs:
               uses: actions/checkout@v4.2.2
 
             - name: Install poetry 1.8.5
-              run: pipx install poetry==1.8.5
+              run: pipx install poetry==2.0.0
 
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v5.3.0
