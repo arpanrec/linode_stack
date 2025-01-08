@@ -261,7 +261,7 @@
         become: true
         become_user: root
         ansible.builtin.import_tasks:
-            file: tasks/jellyfin/main.yml
+            file: tasks/jellyfin.yml
 
 - name: Nginx Proxy Manager
   hosts: nginx_proxy_manager
