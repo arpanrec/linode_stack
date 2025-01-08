@@ -1,0 +1,120 @@
+---
+- name: Jellyfin | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_jellyfin_cluster }}"
+
+- name: Jellyfin | Create Group
+  ansible.builtin.group:
+      name: "{{ cs_jellyfin_group_name }}"
+      state: present
+      system: true
+
+- name: Jellyfin | Create User
+  ansible.builtin.user:
+      name: "{{ cs_jellyfin_user_name }}"
+      state: present
+      system: true
+      group: "{{ cs_jellyfin_group_name }}"
+      append: true
+      groups:
+          - video
+          - render
+          - docker
+      shell: /bin/false
+      home: "{{ cs_jellyfin_container_root }}"
+
+- name: Jellyfin | Create Jellyfin directories
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+      mode: "0750"
+  with_items:
+      - "{{ cs_jellyfin_media_dir }}"
+      - "{{ cs_jellyfin_container_root }}"
+
+- name: Jellyfin | Gather facts
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Jellyfin | Container | Enable Docker
+  ansible.builtin.systemd_service:
+      name: docker
+      enabled: true
+      state: started
+
+- name: Jellyfin | Container | Remove Jellyfin Docker container
+  community.docker.docker_container:
+      name: "{{ cs_jellyfin_container_name }}"
+      state: absent
+
+- name: Jellyfin | Container | Get video group id
+  ansible.builtin.getent:
+      database: group
+      key: video
+  register: __jellyfin_video_group
+
+- name: Jellyfin | Container | Get render group id
+  ansible.builtin.getent:
+      database: group
+      key: render
+  register: __jellyfin_render_group
+
+- name: Jellyfin | Container | Get render group id
+  ansible.builtin.getent:
+      database: passwd
+      key: "{{ cs_jellyfin_user_name }}"
+  register: __jellyfin_jellyfin_user
+
+- name: Jellyfin | Container | Fix Permissions
+  ansible.builtin.shell:
+      cmd: |+
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
+          find {{ item }} -type d -exec chmod 0750 {} \;
+          find {{ item }} -type f -exec chmod 0640 {} \;
+  changed_when: true
+  with_items:
+      - "{{ cs_jellyfin_media_dir }}"
+      - "{{ cs_jellyfin_container_root }}"
+
+- name: Jellyfin | Container | Start Container
+  become: true
+  become_user: "{{ cs_jellyfin_user_name }}"
+  community.docker.docker_container:
+      name: "{{ cs_jellyfin_container_name }}"
+      image: jellyfin/jellyfin:10.10.3
+      pull: missing
+      state: started
+      auto_remove: false
+      runtime: nvidia
+      device_requests:
+          - capabilities:
+                - gpu
+            count: -1
+            driver: nvidia
+      hostname: "{{ ansible_facts.hostname }}"
+      detach: true
+      privileged: false
+      restart_policy: unless-stopped
+      # user: "{{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }}"
+      user: "{{ __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][1] | int }}:{{
+          __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][2] | int }}"
+      devices: "{{ cs_jellyfin_container_dri_list }}"
+      groups:
+          - "{{ __jellyfin_video_group.ansible_facts.getent_group['video'][1] }}"
+          - "{{ __jellyfin_render_group.ansible_facts.getent_group['render'][1] }}"
+      network_mode: host
+      volumes:
+          - "{{ cs_jellyfin_container_root }}/config:/config"
+          - "{{ cs_jellyfin_container_root }}/cache:/cache"
+      mounts:
+          - source: "{{ cs_jellyfin_media_dir }}"
+            target: "/media"
+            type: bind
+            read_only: false
+      env:
+          TZ: Asia/Kolkata

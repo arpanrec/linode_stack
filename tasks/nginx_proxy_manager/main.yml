@@ -1,0 +1,191 @@
+---
+- name: Nginx Proxy Manager | Gather Facts
+  ansible.builtin.setup:
+
+- name: Nginx Proxy Manager | Get Config details
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: "{{ cs_nginx_proxy_cluster }}/{{ inventory_hostname }}/nginx_proxy_manager"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      engine_mount_point: "secret"
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+  register: __vault_details
+
+- name: Nginx Proxy Manager | Set Facts
+  ansible.builtin.set_fact:
+      cs_nginx_proxy_hosts: "{{ __vault_details.secret.proxy_hosts }}"
+      cs_npm_admin_user: "{{ __vault_details.secret.admin_user }}"
+      cs_npm_admin_port: "{{ __vault_details.secret.admin_port }}"
+      cs_npm_admin_password: "{{ __vault_details.secret.admin_password }}"
+
+- name: Nginx Proxy Manager | Set Facts
+  ansible.builtin.set_fact:
+      cs_npm_api_endpoint: "http://127.0.0.1:{{ cs_npm_admin_port }}/api"
+
+- name: Nginx Proxy Manager | Enable Docker
+  ansible.builtin.systemd_service:
+      name: docker
+      enabled: true
+      state: started
+
+- name: Nginx Proxy Manager | Stop old containers
+  community.docker.docker_container:
+      name: "nginx-proxy-manager"
+      state: absent
+      force_kill: true
+
+- name: Nginx Proxy Manager | Enable UFW Port
+  community.general.ufw:
+      rule: allow
+      port: "{{ item }}"
+      proto: tcp
+      state: enabled
+      comment: "Nginx Proxy Manager, Managed by Ansible"
+  with_items:
+      - 80
+      - 443
+      - "{{ cs_npm_admin_port }}"
+
+- name: Nginx Proxy Manager | Create directories
+  ansible.builtin.file:
+      path: "{{ item }}"
+      owner: 1000
+      group: 1000
+      mode: "0755"
+      state: directory
+  with_items:
+      - "{{ cs_nginx_proxy_directory }}/data"
+      - "{{ cs_nginx_proxy_directory }}/letsencrypt"
+
+- name: Nginx Proxy Manager | Copy root cert
+  ansible.builtin.copy:
+      content: "{{ root_ca_cert_pem }}"
+      dest: "{{ cs_nginx_proxy_directory }}/CAs.pem"
+      owner: 1000
+      group: 1000
+      mode: "0644"
+
+- name: Nginx Proxy Manager | Create healthcheck script
+  ansible.builtin.stat:
+      path: "{{ cs_nginx_proxy_directory }}/data/database.sqlite"
+  register: _is_sqlite_present
+
+- name: Nginx Proxy Manager | Install sqlite3
+  ansible.builtin.apt:
+      name: sqlite3
+      state: present
+
+- name: Nginx Proxy Manager | Reset admin user password
+  ansible.builtin.command:
+      argv:
+          - sqlite3
+          - "{{ cs_nginx_proxy_directory }}/data/database.sqlite"
+          - "UPDATE user SET is_deleted=1;"
+  when: _is_sqlite_present.stat.exists
+  changed_when: _is_sqlite_present.stat.exists
+
+- name: Nginx Proxy Manager | Start Container
+  community.docker.docker_container:
+      name: "nginx-proxy-manager"
+      image: "jc21/nginx-proxy-manager:latest"
+      restart_policy: unless-stopped
+      state: healthy
+      user: "0:0"
+      env:
+          DB_SQLITE_FILE: "/data/database.sqlite"
+          PUID: "1000"
+          PGID: "1000"
+          TZ: "Asia/Kolkata"
+          INITIAL_ADMIN_EMAIL: "{{ cs_npm_admin_user }}"
+          INITIAL_ADMIN_PASSWORD: "{{ cs_npm_admin_password }}"
+      ports:
+          - "80:80"
+          - "443:443"
+          - "{{ cs_npm_admin_port }}:81"
+      volumes:
+          - "{{ cs_nginx_proxy_directory }}/data:/data:rw"
+          - "{{ cs_nginx_proxy_directory }}/letsencrypt:/etc/letsencrypt:rw"
+          - "{{ cs_nginx_proxy_directory }}/CAs.pem:/etc/ssl/certs/CAs.pem:ro"
+      healthcheck:
+          test: ["CMD", "/usr/bin/check-health"]
+          interval: 10s
+          retries: 3
+          start_period: 30s
+          timeout: 3s
+
+- name: Nginx Proxy Manager | healthcheck
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}"
+      method: GET
+      status_code: 200
+      return_content: true
+  register: _response_healthcheck
+
+- name: Nginx Proxy Manager | Assert healthcheck
+  ansible.builtin.assert:
+      that:
+          - _response_healthcheck.status == 200
+          - _response_healthcheck.json.status == "OK"
+      fail_msg: "Nginx Proxy Manager is not healthy"
+      success_msg: "Nginx Proxy Manager is healthy"
+
+- name: Nginx Proxy Manager | Clean | Get Bearer token
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/tokens"
+      method: POST
+      body_format: json
+      body:
+          identity: "{{ cs_npm_admin_user }}"
+          secret: "{{ cs_npm_admin_password }}"
+      return_content: true
+  register: _response_bearer_token
+
+- name: Nginx Proxy Manager | Clean | Get All Proxy Hosts
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/proxy-hosts"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+      method: GET
+      return_content: true
+  register: _response_existing_proxy_hosts
+
+- name: Nginx Proxy Manager | Clean | Delete All Proxy Hosts
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/proxy-hosts/{{ item.id }}"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+      method: DELETE
+  with_items: "{{ _response_existing_proxy_hosts.json | list }}"
+  changed_when: true
+
+- name: Nginx Proxy Manager | Clean | Get All Certificates
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/certificates"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+      method: GET
+      return_content: true
+  register: _response_existing_certificates
+
+- name: Nginx Proxy Manager | Clean | Delete All Certificates
+  ansible.builtin.uri:
+      url: "{{ cs_npm_api_endpoint }}/nginx/certificates/{{ item.id }}"
+      headers:
+          Authorization: "Bearer {{ _response_bearer_token.json.token }}"
+      method: DELETE
+  with_items: "{{ _response_existing_certificates.json | list }}"
+  changed_when: true
+
+- name: Nginx Proxy Manager | Add Proxy Hosts
+  ansible.builtin.include_tasks:
+      file: tasks/nginx_proxy_manager/add_proxy_hosts.yml
+  loop: "{{ cs_nginx_proxy_hosts }}"
+  loop_control:
+      loop_var: cs_nginx_proxy_host
