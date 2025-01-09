@@ -11,3 +11,4 @@ cs_jellyfin_group_name: jellyfin
 cs_jellyfin_systemd_service_name: jellyfin.service
 
 cs_jellyfin_cluster: blr-home
+cs_jellyfin_version: 10.10.3
