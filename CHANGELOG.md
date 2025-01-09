@@ -1,11 +1,6 @@
-# [2.2.0](https://github.com/arpanrec/home-lab/compare/2.1.1...2.2.0) (2025-01-09)
-
-
-### Bug Fixes
-
-* update mount options for crypt_mount.yml ([480b05a](https://github.com/arpanrec/home-lab/commit/480b05aacc4ed9e7dbadf8914e073c7e6b82fbbf))
+# [2.3.0](https://github.com/arpanrec/home-lab/compare/2.2.0...2.3.0) (2025-01-09)
 
 
 ### Features
 
-* jellyfin docker ([#64](https://github.com/arpanrec/home-lab/issues/64)) ([607f776](https://github.com/arpanrec/home-lab/commit/607f776fc8f0f7120e0e0b88adbcd606602f13c9))
+* Qbittorrent ([#66](https://github.com/arpanrec/home-lab/issues/66)) ([c2a9c79](https://github.com/arpanrec/home-lab/commit/c2a9c79043dcd508dbf51b6d920be36fbec448ae))
