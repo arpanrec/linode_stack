@@ -476,11 +476,11 @@
       no_extra_spaces: true
   with_items:
       - section: "Preferences"
-        option: 'WebUI\Port'
-        value: "{{ cs_jellyfin_qbittorrent_nox_https_port }}"
-      - section: "Preferences"
         option: 'General\Locale'
         value: "en"
+      - section: "Preferences"
+        option: 'WebUI\HTTPS\CertificatePath'
+        value: "/config/qBittorrent/config/server.crt"
       - section: "Preferences"
         option: 'WebUI\HTTPS\Enabled'
         value: "true"
@@ -488,13 +488,16 @@
         option: 'WebUI\HTTPS\KeyPath'
         value: "/config/qBittorrent/config/server.key"
       - section: "Preferences"
-        option: 'WebUI\HTTPS\CertificatePath'
-        value: "/config/qBittorrent/config/server.crt"
+        option: 'WebUI\HostHeaderValidation'
+        value: "true"
+      - section: "Preferences"
+        option: 'WebUI\Port'
+        value: "{{ cs_jellyfin_qbittorrent_nox_https_port }}"
       - section: "Preferences"
         option: 'WebUI\ReverseProxySupportEnabled'
         value: "true"
       - section: "Preferences"
-        option: 'WebUI\HostHeaderValidation'
+        option: 'WebUI\UseUPnP'
         value: "true"
 
       - section: "Preferences"
@@ -525,11 +528,23 @@
             __qbittorrent_server_bot_email.secret.domain }}"
 
       - section: "BitTorrent"
-        option: 'Session\Port'
-        value: "{{ cs_jellyfin_qbittorrent_nox_listen_port }}"
+        option: 'Session\AddTorrentStopped'
+        value: "false"
+      - section: "BitTorrent"
+        option: 'Session\BTProtocol'
+        value: "TCP"
       - section: "BitTorrent"
         option: 'Session\DefaultSavePath'
         value: "/downloads"
+      - section: "BitTorrent"
+        option: 'Session\ProxyPeerConnections'
+        value: "true"
+      - section: "BitTorrent"
+        option: 'Session\QueueingSystemEnabled'
+        value: "true"
+      - section: "BitTorrent"
+        option: 'Session\Port'
+        value: "{{ cs_jellyfin_qbittorrent_nox_listen_port }}"
       - section: "BitTorrent"
         option: 'Session\TempPath'
         value: "/downloads/temp"
@@ -539,9 +554,14 @@
       - section: "BitTorrent"
         option: 'Session\TorrentExportDirectory'
         value: "/torrents"
-      - section: "BitTorrent"
-        option: 'Session\AddTorrentStopped'
-        value: "false"
+
+      - section: "Network"
+        option: "PortForwardingEnabled"
+        value: "true"
+
+      - section: "Core"
+        option: "AutoDeleteAddedTorrentFile"
+        value: "Never"
 
 - name: Jellyfin | QBittorrent Nox | Start Container
   ansible.builtin.command:
