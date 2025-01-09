@@ -19,6 +19,7 @@
       system: true
       group: "{{ cs_jellyfin_group_name }}"
       append: true
+      create_home: false
       groups:
           - video
           - render
@@ -35,7 +36,8 @@
       mode: "0750"
   with_items:
       - "{{ cs_jellyfin_media_dir }}"
-      - "{{ cs_jellyfin_container_root }}"
+      - "{{ cs_jellyfin_container_root }}/config"
+      - "{{ cs_jellyfin_container_root }}/cache"
 
 - name: Jellyfin | Gather facts
   ansible.builtin.setup:
@@ -62,9 +64,9 @@
 - name: Jellyfin | Container | Fix Permissions
   ansible.builtin.shell:
       cmd: |+
-          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
           find {{ item }} -type d -exec chmod 0750 {} \;
           find {{ item }} -type f -exec chmod 0640 {} \;
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
   changed_when: true
   with_items:
       - "{{ cs_jellyfin_media_dir }}"
@@ -91,15 +93,14 @@
       detach: true
       privileged: false
       restart_policy: unless-stopped
-      # user: "{{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }}"
       user: "{{ ansible_facts.getent_passwd['jellyfin'][1] }}:{{ ansible_facts.getent_passwd['jellyfin'][2] }}"
       devices: "{{ cs_jellyfin_container_dri_list }}"
       groups:
           - "{{ ansible_facts.getent_group['video'][1] }}"
           - "{{ ansible_facts.getent_group['render'][1] }}"
       volumes:
-          - "{{ cs_jellyfin_container_root }}/config:/config"
-          - "{{ cs_jellyfin_container_root }}/cache:/cache"
+          - "{{ cs_jellyfin_container_root }}/config:/config:rw"
+          - "{{ cs_jellyfin_container_root }}/cache:/cache:rw"
       mounts:
           - source: "{{ cs_jellyfin_media_dir }}"
             target: "/media"
@@ -124,6 +125,14 @@
       name:
           - python3-lxml
       state: present
+
+- name: Jellyfin | Config | Check if system.xml exists
+  ansible.builtin.stat:
+      path: "{{ cs_jellyfin_container_root }}/config/config/system.xml"
+  register: __jellyfin_system_xml_exists
+  until: __jellyfin_system_xml_exists.stat.exists
+  retries: 10
+  delay: 2
 
 - name: Jellyfin | Config | Configure System
   become: true
