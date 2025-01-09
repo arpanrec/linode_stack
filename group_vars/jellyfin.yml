@@ -7,7 +7,7 @@ cs_jellyfin_container_name: jellyfin
 cs_jellyfin_container_dri_list: []
 cs_jellyfin_user_name: jellyfin
 cs_jellyfin_group_name: jellyfin
-
+cs_jellyfin_server_dns: 10.8.33.1
 cs_jellyfin_cluster: blr-home
 cs_jellyfin_version: 10.10.3
 cs_jellyfin_qbittorrent_nox_version: 5.0.2-1
