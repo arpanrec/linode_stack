@@ -167,7 +167,7 @@
       fstype: ext4
       state: mounted
       boot: true
-      opts: defaults,noatime,rw,noexec,nofail,user
+      opts: rw,relatime
       fstab: /etc/fstab
       opts_no_log: false
       dump: 0
