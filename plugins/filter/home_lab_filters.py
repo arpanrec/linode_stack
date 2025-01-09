@@ -6,10 +6,10 @@ This is a custom Ansible filter plugin that provides a filter to get a list of p
 # Make coding more python3-ish, this is required for contributions to Ansible
 from __future__ import absolute_import, division, print_function
 
-from typing import Any, Dict, List, Union
+import base64
 import hashlib
 import os
-import base64
+from typing import Any, Dict, List, Union
 
 # pylint: disable=C0103,invalid-name
 __metaclass__ = type
