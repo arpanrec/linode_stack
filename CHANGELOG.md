@@ -1,6 +1,6 @@
-# [2.3.0](https://github.com/arpanrec/home-lab/compare/2.2.0...2.3.0) (2025-01-09)
+## [2.3.1](https://github.com/arpanrec/home-lab/compare/2.3.0...2.3.1) (2025-01-09)
 
 
-### Features
+### Bug Fixes
 
-* Qbittorrent ([#66](https://github.com/arpanrec/home-lab/issues/66)) ([c2a9c79](https://github.com/arpanrec/home-lab/commit/c2a9c79043dcd508dbf51b6d920be36fbec448ae))
+* update qbittorrent-nox version to 5.0.3-1 in jellyfin configuration ([1ded8da](https://github.com/arpanrec/home-lab/commit/1ded8dacc7bde4ca33f1f1bda117f028cba5b70e))
