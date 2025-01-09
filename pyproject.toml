@@ -18,7 +18,7 @@ line-length = 120
 
 [tool.poetry]
 name = "home-lab"
-version = "2.1.1"
+version = "2.2.0"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
