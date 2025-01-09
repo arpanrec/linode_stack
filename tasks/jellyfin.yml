@@ -475,6 +475,24 @@
       - section: "Preferences"
         option: 'WebUI\HostHeaderValidation'
         value: "true"
+      - section: "BitTorrent"
+        option: 'Session\Port'
+        value: "{{ cs_jellyfin_qbittorrent_nox_listen_port }}"
+      - section: "BitTorrent"
+        option: 'Session\DefaultSavePath'
+        value: "/downloads"
+      - section: "BitTorrent"
+        option: 'Session\TempPath'
+        value: "/downloads/temp"
+      - section: "BitTorrent"
+        option: 'Session\TempPathEnabled'
+        value: "true"
+      - section: "BitTorrent"
+        option: 'Session\TorrentExportDirectory'
+        value: "/torrents"
+      - section: "BitTorrent"
+        option: 'Session\AddTorrentStopped'
+        value: "false"
 
 - name: Jellyfin | QBittorrent Nox | Start Container
   ansible.builtin.command:
