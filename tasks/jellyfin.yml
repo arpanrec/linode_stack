@@ -1,10 +1,10 @@
 ---
-- name: Jellyfin | Include common crypt mount
-  ansible.builtin.include_tasks:
-      file: tasks/common/crypt_mount.yml
-  vars:
-      cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
-      cs_crypt_machine_cluster: "{{ cs_jellyfin_cluster }}"
+# - name: Jellyfin | Include common crypt mount
+#   ansible.builtin.include_tasks:
+#       file: tasks/common/crypt_mount.yml
+#   vars:
+#       cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
+#       cs_crypt_machine_cluster: "{{ cs_jellyfin_cluster }}"
 
 - name: Jellyfin | Create Group
   ansible.builtin.group:
@@ -52,23 +52,12 @@
       name: "{{ cs_jellyfin_container_name }}"
       state: absent
 
-- name: Jellyfin | Container | Get video group id
+- name: Jellyfin | Container | Getent
   ansible.builtin.getent:
-      database: group
-      key: video
-  register: __jellyfin_video_group
-
-- name: Jellyfin | Container | Get render group id
-  ansible.builtin.getent:
-      database: group
-      key: render
-  register: __jellyfin_render_group
-
-- name: Jellyfin | Container | Get render group id
-  ansible.builtin.getent:
-      database: passwd
-      key: "{{ cs_jellyfin_user_name }}"
-  register: __jellyfin_jellyfin_user
+      database: "{{ item }}"
+  with_items:
+      - group
+      - passwd
 
 # - name: Jellyfin | Container | Fix Permissions
 #   ansible.builtin.shell:
@@ -101,12 +90,11 @@
       privileged: false
       restart_policy: unless-stopped
       # user: "{{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }}"
-      user: "{{ __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][1] | int }}:{{
-          __jellyfin_jellyfin_user.ansible_facts.getent_passwd['jellyfin'][2] | int }}"
+      user: "{{ ansible_facts.getent_passwd['jellyfin'][1] }}:{{ ansible_facts.getent_passwd['jellyfin'][2] }}"
       devices: "{{ cs_jellyfin_container_dri_list }}"
       groups:
-          - "{{ __jellyfin_video_group.ansible_facts.getent_group['video'][1] }}"
-          - "{{ __jellyfin_render_group.ansible_facts.getent_group['render'][1] }}"
+          - "{{ ansible_facts.getent_group['video'][1] }}"
+          - "{{ ansible_facts.getent_group['render'][1] }}"
       volumes:
           - "{{ cs_jellyfin_container_root }}/config:/config"
           - "{{ cs_jellyfin_container_root }}/cache:/cache"
@@ -117,6 +105,9 @@
             read_only: false
       env:
           TZ: Asia/Kolkata
+          PUID: "{{ ansible_facts.getent_passwd['jellyfin'][1] }}"
+          PGID: "{{ ansible_facts.getent_passwd['jellyfin'][2] }}"
+          HEALTHCHECK_URL: "http://localhost:{{ cs_jellyfin_internal_http_port }}/health"
       ports:
           - "{{ cs_jellyfin_internal_http_port }}:{{ cs_jellyfin_internal_http_port }}"
           - "{{ cs_jellyfin_internal_https_port }}:{{ cs_jellyfin_internal_https_port }}"
@@ -330,3 +321,136 @@
           - restart
           - "{{ cs_jellyfin_container_name }}"
   changed_when: true
+
+- name: Jellyfin | QBittorrent Nox | Create Directories
+  ansible.builtin.file:
+      path: "{{ cs_jellyfin_qbittorrent_nox_container_root }}/{{ item }}"
+      state: directory
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+      mode: "0750"
+  with_items:
+      - config
+      - downloads
+      - torrents
+
+- name: Jellyfin | QBittorrent Nox | Fix Permissions
+  ansible.builtin.shell:
+      cmd: |+
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} \
+              {{ cs_jellyfin_qbittorrent_nox_container_root }};
+          find {{ cs_jellyfin_qbittorrent_nox_container_root }} -type d -exec chmod 0750 {} \;
+          find {{ cs_jellyfin_qbittorrent_nox_container_root }} -type f -exec chmod 0640 {} \;
+  changed_when: true
+
+- name: Jellyfin | QBittorrent Nox | Start Container
+  community.docker.docker_container:
+      name: "{{ cs_jellyfin_qbittorrent_nox_container_name }}"
+      image: qbittorrentofficial/qbittorrent-nox:{{ cs_jellyfin_qbittorrent_nox_version }}
+      pull: missing
+      state: started
+      auto_remove: false
+      hostname: "{{ ansible_facts.hostname }}"
+      detach: true
+      restart_policy: unless-stopped
+      user: "0:0"
+      volumes:
+          - "{{ cs_jellyfin_qbittorrent_nox_container_root }}/config:/config"
+          - "{{ cs_jellyfin_qbittorrent_nox_container_root }}/downloads:/downloads"
+          - "{{ cs_jellyfin_qbittorrent_nox_container_root }}/torrents:/torrents"
+      ports:
+          - "{{ cs_jellyfin_qbittorrent_nox_https_port }}:{{ cs_jellyfin_qbittorrent_nox_https_port }}/tcp"
+          - "{{ cs_jellyfin_qbittorrent_nox_listen_port }}:{{ cs_jellyfin_qbittorrent_nox_listen_port }}/tcp"
+          - "{{ cs_jellyfin_qbittorrent_nox_listen_port }}:{{ cs_jellyfin_qbittorrent_nox_listen_port }}/udp"
+      env:
+          TZ: Asia/Kolkata
+          PUID: "{{ ansible_facts.getent_passwd['jellyfin'][1] }}"
+          PGID: "{{ ansible_facts.getent_passwd['jellyfin'][2] }}"
+          QBT_WEBUI_PORT: "{{ cs_jellyfin_qbittorrent_nox_https_port | string }}"
+          QBT_LEGAL_NOTICE: confirm
+
+- name: Jellyfin | QBittorrent Nox | allow ufw
+  community.general.ufw:
+      rule: allow
+      port: "{{ item.port }}"
+      proto: "{{ item.proto }}"
+      state: enabled
+      comment: "Allow {{ item.comment }}, Managed by Ansible home-lab playbook."
+  with_items:
+      - port: "{{ cs_jellyfin_qbittorrent_nox_listen_port }}"
+        comment: "QBittorrent Nox Listen Port TCP"
+        proto: tcp
+      - port: "{{ cs_jellyfin_qbittorrent_nox_listen_port }}"
+        comment: "QBittorrent Nox Listen Port UDP"
+        proto: udp
+      - port: "{{ cs_jellyfin_qbittorrent_nox_https_port }}"
+        comment: "QBittorrent Nox HTTPS Port"
+        proto: tcp
+
+- name: Jellyfin | QBittorrent Nox | Get Server Certificates from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_write:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      path: pki/issue/server_certificate
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+      data:
+          common_name: "qbittorrent-nox"
+          alt_names: "qbittorrent-nox,qbittorrent-nox.{{ ansible_domain }},{{ ansible_hostname }},{{ ansible_fqdn }}"
+          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
+  register: __jellyfin_qbittorrent_server_cert
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Jellyfin | QBittorrent Nox | Write certificates
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
+      mode: "0640"
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+  loop:
+      - content: "{{ __jellyfin_qbittorrent_server_cert.data.data.certificate }}\n\
+            {{ __jellyfin_qbittorrent_server_cert.data.data.ca_chain | join('\n') }}"
+        dest: "{{ cs_jellyfin_qbittorrent_nox_container_root }}/config/qBittorrent/config/server.crt"
+      - content: "{{ __jellyfin_qbittorrent_server_cert.data.data.private_key }}"
+        dest: "{{ cs_jellyfin_qbittorrent_nox_container_root }}/config/qBittorrent/config/server.key"
+
+- name: Jellyfin | QBittorrent Nox | Set Config
+  community.general.ini_file:
+      path: "{{ cs_jellyfin_qbittorrent_nox_container_root }}/config/qBittorrent/qBittorrent.conf"
+      section: "{{ item.section }}"
+      option: "{{ item.option }}"
+      value: "{{ item.value }}"
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+      mode: "0640"
+      create: true
+      backup: true
+      no_extra_spaces: true
+  with_items:
+      - section: "Preferences"
+        option: 'WebUI\Port'
+        value: "{{ cs_jellyfin_qbittorrent_nox_https_port }}"
+      - section: "Preferences"
+        option: 'General\Locale'
+        value: "en"
+      - section: "Preferences"
+        option: 'WebUI\HTTPS\Enabled'
+        value: "true"
+      - section: "Preferences"
+        option: 'WebUI\HTTPS\KeyPath'
+        value: "/config/qBittorrent/config/server.key"
+      - section: "Preferences"
+        option: 'WebUI\HTTPS\CertificatePath'
+        value: "/config/qBittorrent/config/server.crt"
+      - section: "Preferences"
+        option: 'WebUI\ReverseProxySupportEnabled'
+        value: "true"
+      - section: "Preferences"
+        option: 'WebUI\HostHeaderValidation'
+        value: "true"

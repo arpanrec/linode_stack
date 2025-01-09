@@ -11,3 +11,7 @@ cs_jellyfin_internal_http_port: 1111
 cs_jellyfin_internal_https_port: 3459
 cs_jellyfin_public_http_port: 5644
 cs_jellyfin_public_https_port: 8921
+
+cs_jellyfin_qbittorrent_nox_container_root: "/mnt/{{ cs_jellyfin_external_disk_id }}/qbittorrent-nox-container-root"
+cs_jellyfin_qbittorrent_nox_https_port: 9077
+cs_jellyfin_qbittorrent_nox_listen_port: 9078
