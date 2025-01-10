@@ -17,7 +17,6 @@
       pv_vault_data_dir: "{{ pv_vault_base_path }}/{{ pv_vault_node_id }}/data"
       pv_vault_log_dir: "{{ pv_vault_base_path }}/{{ pv_vault_node_id }}/log"
       pv_vault_tls_dir: "{{ pv_vault_base_path }}/{{ pv_vault_node_id }}/tls"
-      pv_vault_backup_dir: "{{ pv_vault_backup_base_path }}/{{ pv_vault_node_id }}"
 
 - name: Vaultops | Vault Virtual Node Server | Install | Node | Create Directory
   ansible.builtin.file:
@@ -31,7 +30,6 @@
       - "{{ pv_vault_data_dir }}"
       - "{{ pv_vault_log_dir }}"
       - "{{ pv_vault_tls_dir }}"
-      - "{{ pv_vault_backup_dir }}"
 
 - name: Vaultops | Vault Virtual Node Server | Install | Node | Create Configuration File
   ansible.builtin.template:
@@ -145,13 +143,7 @@
 
 - name: Vaultops | Vault Virtual Node Server | Install | Node | Enable Vault Service
   ansible.builtin.systemd_service:
-      name: "{{ item }}"
+      name: "{{ pv_vault_systemd_service }}@{{ pv_vault_node_id }}.service"
       state: started
       enabled: true
       daemon_reload: true
-  loop:
-      - "{{ pv_vault_systemd_service }}@{{ pv_vault_node_id }}.service"
-  # - "{{ pv_vault_backup_systemd_service }}@{{ pv_vault_node_id }}.service"
-  # - "{{ pv_vault_backup_systemd_service }}@{{ pv_vault_node_id }}.timer"
-  loop_control:
-      pause: 5
