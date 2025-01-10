@@ -24,8 +24,6 @@ pv_vault_group: vault
 pv_vault_cluster_name: vault-cluster
 pv_vault_bin_path: /usr/local/bin/vault
 pv_vault_base_path: /opt/vault
-pv_vault_backup_base_path: /var/backups/vault
 pv_vault_autopilot_update_interval_seconds: 5
 pv_vault_autopilot_reconcile_interval_seconds: "{{ pv_vault_autopilot_update_interval_seconds + 5 }}"
 pv_vault_systemd_service: vault
-pv_vault_backup_systemd_service: vault-backup
