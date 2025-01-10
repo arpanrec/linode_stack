@@ -1,6 +1,6 @@
-# [2.4.0](https://github.com/arpanrec/home-lab/compare/2.3.2...2.4.0) (2025-01-10)
+# [2.5.0](https://github.com/arpanrec/home-lab/compare/2.4.0...2.5.0) (2025-01-10)
 
 
 ### Features
 
-* vault updated to 1.18.3 ([f6a6bcf](https://github.com/arpanrec/home-lab/commit/f6a6bcf398e3a82c18088a7497bb0aa86afd137f))
+* integrate Jellyfin with Vault for dynamic configuration management ([b3e3535](https://github.com/arpanrec/home-lab/commit/b3e3535fdbc2edd4d2e1f9187e58fdb1a33efcb9))
