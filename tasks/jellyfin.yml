@@ -6,6 +6,31 @@
       cs_crypt_mount_vault_id: "{{ cs_jellyfin_external_disk_id }}"
       cs_crypt_machine_cluster: "{{ cs_jellyfin_cluster }}"
 
+- name: Jellyfin | Get Jellyfin details from Vault
+  become: false
+  delegate_facts: true
+  delegate_to: localhost
+  community.hashi_vault.vault_kv2_get:
+      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
+      engine_mount_point: "secret"
+      path: "blr-home/s1-home/Jellyfin"
+      token: "{{ vault_ha_client.token }}"
+      validate_certs: true
+  register: __jellyfin_vault_details
+  environment:
+      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
+      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
+      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+- name: Jellyfin | Set facts
+  ansible.builtin.set_fact:
+      cs_jellyfin_internal_http_port: "{{ __jellyfin_vault_details.secret.internal_http_port }}"
+      cs_jellyfin_internal_https_port: "{{ __jellyfin_vault_details.secret.internal_https_port }}"
+      cs_jellyfin_public_http_port: "{{ __jellyfin_vault_details.secret.public_http_port }}"
+      cs_jellyfin_public_https_port: "{{ __jellyfin_vault_details.secret.public_https_port }}"
+      cs_jellyfin_qbittorrent_nox_https_port: "{{ __jellyfin_vault_details.secret.qbittorrent_nox_https_port }}"
+      cs_jellyfin_qbittorrent_nox_listen_port: "{{ __jellyfin_vault_details.secret.qbittorrent_nox_listen_port }}"
+
 - name: Jellyfin | Create Group
   ansible.builtin.group:
       name: "{{ cs_jellyfin_group_name }}"
@@ -375,6 +400,11 @@
           - "{{ cs_jellyfin_qbittorrent_nox_container_root }}/config:/config"
           - "{{ cs_jellyfin_qbittorrent_nox_container_root }}/downloads:/downloads"
           - "{{ cs_jellyfin_qbittorrent_nox_container_root }}/torrents:/torrents"
+      mounts:
+          - source: "{{ cs_jellyfin_media_dir }}"
+            target: "/media"
+            type: bind
+            read_only: false
       ports:
           - "{{ cs_jellyfin_qbittorrent_nox_https_port }}:{{ cs_jellyfin_qbittorrent_nox_https_port }}/tcp"
           - "{{ cs_jellyfin_qbittorrent_nox_listen_port }}:{{ cs_jellyfin_qbittorrent_nox_listen_port }}/tcp"
@@ -469,22 +499,6 @@
       VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
-- name: Jellyfin | QBittorrent Nox | Admin Users
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "secret"
-      path: "blr-home/s1-home/Jellyfin"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  register: __jellyfin_vault_details
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
 - name: Jellyfin | QBittorrent Nox | Set Config
   community.general.ini_file:
       path: "{{ cs_jellyfin_qbittorrent_nox_container_root }}/config/qBittorrent/config/qBittorrent.conf"
@@ -573,6 +587,9 @@
         option: 'Session\DefaultSavePath'
         value: "/downloads"
       - section: "BitTorrent"
+        option: 'Session\FinishedTorrentExportDirectory'
+        value: "/torrents/completed"
+      - section: "BitTorrent"
         option: 'Session\LSDEnabled'
         value: "true"
       - section: "BitTorrent"
@@ -592,7 +609,7 @@
         value: "/downloads/temp"
       - section: "BitTorrent"
         option: 'Session\TempPathEnabled'
-        value: "true"
+        value: "false"
       - section: "BitTorrent"
         option: 'Session\TorrentExportDirectory'
         value: "/torrents"
