@@ -124,5 +124,5 @@ class FilterModule:
             "get_part_uuids_from_ansible_devices": get_part_uuids_from_ansible_devices,
             "generate_qbittorrent_hash": generate_qbittorrent_hash,
             "openssh_pub_key_from_encrypted_pem_priv_key": openssh_pub_key_from_encrypted_pem_priv_key,
-            "unencrypted_openssh_priv_key_from_encrypted_pem_priv_key": unencrypted_openssh_priv_key_from_encrypted_pem_priv_key,
+            "unencrypted_openssh_priv_key_from_encrypted_pem_priv_key": unencrypted_openssh_priv_key_from_encrypted_pem_priv_key, # pylint: disable=C0301
         }

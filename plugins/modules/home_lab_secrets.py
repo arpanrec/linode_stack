@@ -1,14 +1,15 @@
 """
-Ansible Module for managing Secret Squirrel secrets.
+Ansible Module for managing secrets.
 """
 
 # Copyright: (c) 2022, Arpan Mandal <arpan.rec@gmail.com>
 # MIT (see LICENSE or https://en.wikipedia.org/wiki/MIT_License)
 from __future__ import absolute_import, division, print_function
 
-import os
 import json
+import os
 from typing import Any, Dict
+
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 
 # pylint: disable=C0103
@@ -19,11 +20,11 @@ DOCUMENTATION = r"""
 ---
 module: home_lab_secrets
 
-short_description: Ansible Module for managing Secret Squirrel secrets.
+short_description: ""
 
 version_added: "1.0.0"
 
-description: Ansible Module for managing Secret Squirrel secrets.
+description: ""
 
 options:
     key:
