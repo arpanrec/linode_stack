@@ -6,7 +6,9 @@ Ansible Module for managing Secret Squirrel secrets.
 # MIT (see LICENSE or https://en.wikipedia.org/wiki/MIT_License)
 from __future__ import absolute_import, division, print_function
 
+import os
 import json
+from typing import Any, Dict
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 
 # pylint: disable=C0103
@@ -41,7 +43,7 @@ options:
     value:
         description: Value of the secret
         required: false
-        type: str | dict
+        type: dict
 author:
     - Arpan Mandal (mailto:arpan.rec@gmail.com)
 """
@@ -67,11 +69,12 @@ def run_module() -> None:
     Ansible main module
     """
     # define available arguments/parameters a user can pass to the module
-    __secret_file = "foo.secret.json"
+    __secret_dir = "foo.secret"
+    __data_file = "data.json"
     module_args = {
         "path": {"type": "str", "required": True},
         "action": {"type": "str", "required": False, "default": "get", "choices": ["get", "update", "delete"]},
-        "value": {"required": False},
+        "value": {"required": False, "type": "dict"},
     }
 
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
@@ -79,24 +82,21 @@ def run_module() -> None:
     action = module.params.get("action", "get")
     value = module.params.get("value", None)
 
-    all_secrets = {}
-    with open(__secret_file, "r", encoding="utf-8") as f:
-        all_secrets = json.load(f)
-
-    path_list = path.split("/")
     if action == "get":
-        for key in path_list:
-            all_secrets = all_secrets[key]
-        module.exit_json(changed=False, secret=all_secrets)
+        data_file_path = os.path.join(__secret_dir, path, __data_file)
+        with open(data_file_path, "r", encoding="utf-8") as data_file:
+            data: Dict[str, Any] = json.load(data_file)
+        module.exit_json(changed=False, secret=data)
     elif action == "update":
         if value is None:
             module.fail_json(msg="Value is required for update action")
-        for key in path_list[:-1]:
-            all_secrets = all_secrets.get(key, {})
-        all_secrets[path_list[-1]] = value
-        with open(__secret_file, "w", encoding="utf-8") as f:
-            json.dump(all_secrets, f, indent=4)
-        module.exit_json(changed=True, secret=all_secrets)
+        data_file_dir = os.path.join(__secret_dir, path)
+        if not os.path.exists(data_file_dir):
+            os.makedirs(data_file_dir)
+        data_file_path = os.path.join(data_file_dir, __data_file)
+        with open(data_file_path, "w", encoding="utf-8") as data_file:
+            json.dump(value, data_file, indent=4, sort_keys=True)
+        module.exit_json(changed=True, secret=value)
 
 
 def main() -> None:
