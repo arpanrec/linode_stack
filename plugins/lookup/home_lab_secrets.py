@@ -37,7 +37,7 @@ class LookupModule(LookupBase):
     ) -> List[Dict[str, Any]]:
         self.set_options(var_options=variables, direct=kwargs)
         if len(terms) != 1:
-            raise AnsibleLookupError("vaultops_secrets lookup expects a single argument")
+            raise AnsibleLookupError("home_lab_secrets lookup expects a single argument")
 
         key: str = terms[0]
 

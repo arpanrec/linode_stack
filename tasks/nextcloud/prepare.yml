@@ -242,7 +242,7 @@
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
 
-- name: Nextcloud | Prepare | Write CA certificate
+- name: Nextcloud | Prepare | Write certificate chain
   ansible.builtin.copy:
       content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_nc_cert_chain_file }}"
