@@ -1,31 +1,37 @@
 ---
-- name: Add Host Keys
+- name: Access Key
   hosts: all
-  gather_facts: false
   become: false
-  timeout: 100
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
   tags: always
-  any_errors_fatal: true
-  no_log: "{{ cs_no_log | default('true') }}"
+  strategy: free # noqa: run-once[play]
   serial: 1
   tasks:
-      - name: Add Host Keys | Add keys to known_hosts file /tmp/vault_vm_server_ssh_known_hosts
-        become: false
-        ansible.builtin.known_hosts:
-            name: "{{ ansible_host }}"
-            key: "{{ ansible_host }} {{ item }}"
-            path: "{{ vault_vm_server_ssh_user_known_hosts_file }}"
-            state: present
+      - name: Access Key | Create directory # noqa: run-once[task]
         delegate_to: localhost
-        loop: "{{ host_keys }}"
-        throttle: 1
-        when: ansible_host != 'localhost'
+        become: false
+        run_once: true
+        ansible.builtin.file:
+            path: "{{ ansible_ssh_private_key_file | dirname }}"
+            state: directory
+            mode: "0700"
+
+      - name: Access Key | Write SSH Private Key # noqa: run-once[task]
+        delegate_to: localhost
+        become: false
+        run_once: true
+        ansible.builtin.copy:
+            content: "{{ root_ca_key_pem
+                | unencrypted_openssh_priv_key_from_encrypted_pem_priv_key(password=root_ca_key_password) }}"
+            mode: "0600"
+            dest: "{{ ansible_ssh_private_key_file }}"
 
 - name: Patch
   hosts: patchservers
   become: true
   become_user: root
-  gather_facts: true
+  gather_facts: false
   no_log: "{{ cs_no_log | default('true') }}"
   tags: never,patch
   tasks:

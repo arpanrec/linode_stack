@@ -19,7 +19,8 @@
       user_add_rv_user_default_shell: "/bin/zsh"
       user_add_rv_user_extra_groups: ["wheel"]
       user_add_rv_ssh_access_public_key_content_list:
-          - "{{ ansible_ssh_public_key_content }}"
+          - "{{ root_ca_key_pem
+            | openssh_pub_key_from_encrypted_pem_priv_key(password=root_ca_key_password) }}"
 
 - name: Patch | System | Linux Patching
   ansible.builtin.import_role:
