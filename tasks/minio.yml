@@ -10,7 +10,7 @@
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Mini0 | Get Config details
+- name: Minio | Get Config details
   become: false
   delegate_facts: true
   delegate_to: localhost
@@ -26,7 +26,7 @@
       VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
   register: __minio_details
 
-- name: Mini0 | Set config facts
+- name: Minio | Set config facts
   ansible.builtin.set_fact:
       cs_minio_minio_port: "{{ __minio_details.secret.port }}"
       cs_minio_minio_console_port: "{{ __minio_details.secret.console_port }}"
@@ -223,7 +223,7 @@
       port: "{{ item.port }}"
       proto: tcp
       state: enabled
-      comment: "Allow Mini0 {{ item.comment }} port, Managed by Ansible home-lab playbook."
+      comment: "Allow Minio {{ item.comment }} port, Managed by Ansible home-lab playbook."
   loop:
       - port: "{{ cs_minio_minio_port }}"
         comment: "S3"
