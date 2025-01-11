@@ -45,7 +45,7 @@
   tags: never,minio,minio_kes
   no_log: "{{ cs_no_log | default('true') }}"
   tasks:
-      - name: Minio | KES
+      - name: MinIO KES
         become: true
         become_user: root
         ansible.builtin.import_tasks:
