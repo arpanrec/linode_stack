@@ -2,6 +2,15 @@
 - name: Database | Postgres | Gather Facts
   ansible.builtin.setup:
 
+- name: Database | Postgres | Set config facts
+  ansible.builtin.set_fact:
+      cs_postgres_port: "{{ __postgresql_config.port }}"
+      cs_postgres_maintenance_db: "{{ __postgresql_config.maintenance_db }}"
+      cs_postgres_apps_dict: "{{ __postgresql_config.apps_dict }}"
+  vars:
+      __postgresql_config: "{{ lookup('home_lab_secrets', 'secret/' + cs_postgres_cluster_name + '/'
+          + inventory_hostname + '/postgresql') }}"
+
 - name: Database | Postgres | Enable Docker
   ansible.builtin.systemd_service:
       name: docker

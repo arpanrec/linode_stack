@@ -1,7 +1,0 @@
----
-cs_postgres_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_postgres_cluster_name + '/' + inventory_hostname
-    + '/postgresql').port }}"
-cs_postgres_maintenance_db: "{{ lookup('home_lab_secrets', 'secret/' + cs_postgres_cluster_name + '/'
-    + inventory_hostname + '/postgresql').maintenance_db }}"
-cs_postgres_apps_dict: "{{ lookup('home_lab_secrets', 'secret/' + cs_postgres_cluster_name + '/' + inventory_hostname
-    + '/postgresql').apps_dict }}"
