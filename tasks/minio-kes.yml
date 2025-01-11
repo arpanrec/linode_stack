@@ -155,7 +155,7 @@
 
 - name: KES | Install | Write Admin Client Certificate
   ansible.builtin.copy:
-      content: "{{ __minio_kes_tmp_admin_client_cert }}\n{{ root_ca_cert_pem }}"
+      content: "{{ __minio_kes_tmp_admin_client_cert.certificate }}\n{{ root_ca_cert_pem }}"
       dest: "{{ kes_tmp_admin_client_cert_tmp_file.path }}"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
@@ -271,12 +271,11 @@
       dest: "{{ item.dest }}"
       mode: "0600"
   loop:
-      - content: "{{ kes_tmp_admin_client_cert_res.data.data.certificate }}\n\
-            {{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
+      - content: "{{ __minio_kes_tmp_admin_client_cert.certificate }}"
         dest: "{{ __temp_file_client_cert.results[1].path }}"
-      - content: "{{ kes_tmp_admin_client_cert_res.data.data.private_key }}"
+      - content: "{{ __minio_kes_tmp_admin_client_cert_key.privatekey }}"
         dest: "{{ __temp_file_client_cert.results[0].path }}"
-      - content: "{{ kes_tmp_admin_client_cert_res.data.data.ca_chain | join('\n') }}"
+      - content: "{{ root_ca_cert_pem }}"
         dest: "{{ __temp_file_client_cert.results[2].path }}"
 
 - name: KES | Install | Test | Wait for service to start
