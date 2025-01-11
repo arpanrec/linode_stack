@@ -1,4 +1,11 @@
 ---
+- name: KES | Install | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_minio_kes_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_minio_kes_cluster_name }}"
+
 - name: KES | Install | Gather Facts
   ansible.builtin.setup:
 
@@ -24,11 +31,12 @@
       name: "{{ item }}"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
-      mode: "0755"
+      mode: "0750"
       state: directory
   with_items:
       - "{{ cs_minio_kes_working_dir }}"
       - "{{ cs_minio_kes_cert_dir }}"
+      - "{{ cs_minio_kes_data_dir }}"
       - "{{ cs_minio_kes_cert_file | dirname }}"
       - "{{ cs_minio_kes_cert_key_file | dirname }}"
       - "{{ cs_minio_kes_cert_id_file | dirname }}"
@@ -166,13 +174,11 @@
 
 - name: KES | Install | Write KES Details Vault
   become: false
-  delegate_facts: true
   delegate_to: localhost
-  community.hashi_vault.vault_kv2_write:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "minio-kes/clusters/{{ cs_minio_kes_cluster_name }}/servers/{{ inventory_hostname }}/config"
-      engine_mount_point: "managed-secrets"
-      data:
+  home_lab_secrets:
+      key: "managed-secrets/minio-kes/clusters/{{ cs_minio_kes_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      action: write
+      value:
           admin_key: "{{ __minio_kes_tmp_admin_client_cert_key.privatekey }}"
           admin_cert: "{{ __minio_kes_tmp_admin_client_cert.certificate }}"
           admin_ca: "{{ root_ca_cert_pem }}"
@@ -181,12 +187,6 @@
           hostname: "{{ ansible_hostname }}"
           fqdn: "{{ ansible_fqdn }}"
           version: "{{ cs_minio_kes_version }}"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
 - name: KES | Install | Create Config
   ansible.builtin.set_fact:
@@ -220,20 +220,8 @@
                       - /v1/log/audit
                       - /v1/log/error
           keystore:
-              vault:
-                  endpoint: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-                  engine: "managed-secrets" # "kv"
-                  version: "v2" # "v1"
-                  prefix: "minio-kes/clusters/{{ cs_minio_kes_cluster_name }}/kms"
-                  approle:
-                      id: "{{ minio_kes_tmp_vault_role_id.data.data.role_id }}"
-                      secret: "{{ minio_kes_tmp_vault_secret_id.data.data.secret_id }}"
-                  tls:
-                      key: "{{ cs_minio_kes_vault_client_key }}"
-                      cert: "{{ cs_minio_kes_vault_client_cert }}"
-                      ca: "{{ cs_minio_kes_vault_ca_cert }}"
-                  status:
-                      ping: 10s
+              fs:
+                  path: "cs_minio_kes_data_dir"
 
 - name: KES | Install | Write Config
   ansible.builtin.copy:
@@ -245,7 +233,7 @@
 
 - name: KES | Install | Create Systemd Service
   ansible.builtin.template:
-      src: "templates/mini0-kes/{{ cs_minio_kes_systemd_service_name }}.j2"
+      src: "templates/minio-kes/{{ cs_minio_kes_systemd_service_name }}.j2"
       dest: "/etc/systemd/system/{{ cs_minio_kes_systemd_service_name }}"
       owner: root
       group: root
