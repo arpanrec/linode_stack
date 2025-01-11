@@ -24,30 +24,16 @@
           - zstd
       state: present
 
-- name: Nextcloud | Data Dump | Get DB Details
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "managed-secrets"
-      path: "postgresql/clusters/{{ cs_nc_db_cluster_name }}/servers/{{ cs_nc_db_cluster_node }}/db/{{
-          cs_nc_db_database }}"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  register: __nextcloud_db_details
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
 - name: Nextcloud | Data Dump | Set db fact
   ansible.builtin.set_fact:
-      cs_nc_db_user: "{{ __nextcloud_db_details.secret.user }}"
-      cs_nc_db_password: "{{ __nextcloud_db_details.secret.password }}"
-      cs_nc_db_host: "{{ __nextcloud_db_details.secret.fqdn }}"
-      cs_nc_db_port: "{{ __nextcloud_db_details.secret.server_port }}"
-      cs_nc_db_version: "{{ __nextcloud_db_details.secret.server_version }}"
+      cs_nc_db_user: "{{ __nextcloud_db_details.user }}"
+      cs_nc_db_password: "{{ __nextcloud_db_details.password }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.fqdn }}"
+      cs_nc_db_port: "{{ __nextcloud_db_details.server_port }}"
+      cs_nc_db_version: "{{ __nextcloud_db_details.server_version }}"
+  vars:
+      __nextcloud_app_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+          + '/nextcloud') }}"
 
 - name: Nextcloud | Data Dump | Create Environment File
   ansible.builtin.template:
