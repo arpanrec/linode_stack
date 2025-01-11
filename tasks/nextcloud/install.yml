@@ -85,7 +85,6 @@
       - "{{ cs_nc_db_cert_pem_file | dirname }}"
       - "{{ cs_nc_db_privkey_pem_file | dirname }}"
       - "{{ cs_nc_db_chain_pem_file | dirname }}"
-      - "{{ cs_nc_db_cert_csr_file | dirname }}"
 
 - name: Nextcloud | Install | Copy icons
   ansible.builtin.copy:

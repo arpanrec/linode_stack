@@ -2,28 +2,6 @@
 - name: Database | Postgres | Gather Facts
   ansible.builtin.setup:
 
-- name: Database | Postgres | Get config from Vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "{{ cs_postgres_cluster_name }}/{{ inventory_hostname }}/postgresql"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "secret"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-  register: __postgresql_config
-
-- name: Database | Postgres | Set config facts
-  ansible.builtin.set_fact:
-      cs_postgres_port: "{{ __postgresql_config.secret.port }}"
-      cs_postgres_maintenance_db: "{{ __postgresql_config.secret.maintenance_db }}"
-      cs_postgres_apps_dict: "{{ __postgresql_config.secret.apps_dict }}"
-
 - name: Database | Postgres | Enable Docker
   ansible.builtin.systemd_service:
       name: docker
@@ -67,40 +45,59 @@
       - "{{ cs_postgres_data_dir }}"
       - "{{ cs_postgres_certs_dir }}"
 
-- name: Database | Postgres | Get Server Certificates from Vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_write:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: pki/issue/server_certificate
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      data:
-          common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ ansible_hostname }},{{ ansible_fqdn }}"
-          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
-  register: __postgresql_server_cert
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
-- name: Database | Postgres | Write Server Certificate
-  ansible.builtin.copy:
-      content: "{{ item.content }}"
-      dest: "{{ item.dest }}"
+- name: Database | Postgres | Write private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_postgres_certs_privkey_file }}"
+      type: RSA
+      size: 4096
+      backup: false
+      mode: "0o600"
       owner: "{{ cs_postgres_run_user }}"
       group: "{{ cs_postgres_run_group }}"
-      mode: "0600"
-  loop:
-      - content: "{{ __postgresql_server_cert.data.data.certificate }}\n\
-            {{ __postgresql_server_cert.data.data.ca_chain | join('\n') }}"
-        dest: "{{ cs_postgres_certs_cert_file }}"
-      - content: "{{ __postgresql_server_cert.data.data.private_key }}"
-        dest: "{{ cs_postgres_certs_privkey_file }}"
-      - content: "{{ __postgresql_server_cert.data.data.ca_chain | join('\n') }}"
-        dest: "{{ cs_postgres_certs_chain_file }}"
+
+- name: Database | Postgres | Write CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_postgres_certs_privkey_file | dirname }}/server.csr"
+      privatekey_path: "{{ cs_postgres_certs_privkey_file }}"
+      common_name: "postgres"
+      basic_constraints: CA:FALSE
+      basic_constraints_critical: true
+      key_usage:
+          - digitalSignature
+          - keyEncipherment
+      extended_key_usage:
+          - serverAuth
+      subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname,
+          'DNS:postgres' + 'DNS:postgres.' + ansible_domain] }}"
+      subject_alt_name_critical: true
+      backup: false
+      mode: "0o600"
+      owner: "{{ cs_postgres_run_user }}"
+      group: "{{ cs_postgres_run_group }}"
+
+- name: Database | Postgres | Write Certificate
+  community.crypto.x509_certificate:
+      path: "{{ cs_postgres_certs_cert_file }}"
+      csr_path: "{{ cs_postgres_certs_privkey_file | dirname }}/server.csr"
+      ownca_content: "{{ root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
+      provider: ownca
+      backup: false
+      mode: "0o600"
+      return_content: true
+      owner: "{{ cs_postgres_run_user }}"
+      group: "{{ cs_postgres_run_group }}"
+
+- name: Database | Postgres | Write CA certificate
+  ansible.builtin.copy:
+      content: "{{ root_ca_cert_pem }}"
+      dest: "{{ cs_postgres_certs_chain_file }}"
+      mode: "0644"
+      owner: "{{ cs_postgres_run_user }}"
+      group: "{{ cs_postgres_run_group }}"
+      remote_src: false
 
 - name: Database | Postgres | Create pg_hba.conf
   ansible.builtin.copy:
@@ -127,15 +124,12 @@
 
       - name: Database | Postgres | First Run | Write the Password to Vault
         become: false
-        delegate_facts: true
         delegate_to: localhost
-        community.hashi_vault.vault_kv2_write:
-            url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-            path: "postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
-            token: "{{ vault_ha_client.token }}"
-            validate_certs: true
-            engine_mount_point: "managed-secrets"
-            data:
+        home_lab_secrets:
+            path: "managed-secrets/postgresql/clusters/\
+                {{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
+            action: update
+            value:
                 maintenance_user: "{{ cs_postgres_maintenance_user }}"
                 maintenance_password: "{{ cs_postgres_maintenance_password }}"
                 maintenance_db: "{{ cs_postgres_maintenance_db }}"
@@ -144,10 +138,9 @@
                 fqdn: "{{ ansible_fqdn }}"
                 server_port: "{{ cs_postgres_port }}"
                 server_version: "{{ cs_postgres_version }}"
-        environment:
-            VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-            VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-            VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+
+      - ansible.builtin.fail:
+            msg: "Failed to write the password to Vault"
 
       - name: Database | Postgres | First Run | Start Container
         community.docker.docker_container:

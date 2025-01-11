@@ -5,7 +5,6 @@
   gather_facts: false
   no_log: "{{ cs_no_log }}"
   tags: always
-  strategy: free # noqa: run-once[play]
   serial: 1
   tasks:
       - name: Access Key | Create directory # noqa: run-once[task]

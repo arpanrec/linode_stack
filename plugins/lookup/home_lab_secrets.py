@@ -2,12 +2,13 @@
 """
 
 from __future__ import absolute_import, division, print_function
+
+import json
 from typing import Any, Dict, List, Optional, Union
 
+from ansible.errors import AnsibleLookupError  # type: ignore
 from ansible.plugins.lookup import LookupBase  # type: ignore
 from ansible.utils.display import Display  # type: ignore
-from ansible.errors import AnsibleLookupError  # type: ignore
-import json
 
 __metaclass__ = type  # pylint: disable=invalid-name
 display = Display()
@@ -27,7 +28,7 @@ class LookupModule(LookupBase):
         List[str]: A list containing the single term provided.
     """
 
-    __secret_file = "/run/media/arpan/Vault/Project-Files/blr-home/secret.json"
+    __secret_file = "foo.secret.json"
 
     def run(
         self, terms: List[str], variables: Optional[Dict[str, Any]] = None, **kwargs: Optional[Dict[str, Any]]
