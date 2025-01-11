@@ -86,13 +86,13 @@ def run_module() -> None:
     path_list = path.split("/")
     if action == "get":
         for key in path_list:
-            all_secrets = all_secrets.get(key, {})
+            all_secrets = all_secrets[key]
         module.exit_json(changed=False, secret=all_secrets)
     elif action == "update":
         if value is None:
             module.fail_json(msg="Value is required for update action")
         for key in path_list[:-1]:
-            all_secrets = all_secrets[key]
+            all_secrets = all_secrets.get(key, {})
         all_secrets[path_list[-1]] = value
         with open(__secret_file, "w", encoding="utf-8") as f:
             json.dump(all_secrets, f, indent=4)
