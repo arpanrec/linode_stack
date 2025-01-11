@@ -26,19 +26,18 @@ version_added: "1.0.0"
 description: Ansible Module for managing Secret Squirrel secrets.
 
 options:
-    path:
-        description: Rest Api endpoint
-        required: false
+    key:
+        description: Key of the secret. Must not start or end with / and cannot be empty.
+        required: true
         type: str
-        default: "https://api.github.com"
     action:
         description: Action to be performed
         required: false
         type: str
-        default: "get"
+        default: "read"
         choices:
-            - get
-            - update
+            - read
+            - write
             - delete
     value:
         description: Value of the secret
@@ -51,7 +50,7 @@ author:
 EXAMPLES = r"""
 - name: Create or Update a repository secret
   home_lab_secrets:
-      path: "/secret/project/key"
+      key: "/secret/project/key"
       action: "update"
       value: "my_secret_value"
 """
@@ -72,31 +71,49 @@ def run_module() -> None:
     __secret_dir = "foo.secret"
     __data_file = "data.json"
     module_args = {
-        "path": {"type": "str", "required": True},
-        "action": {"type": "str", "required": False, "default": "get", "choices": ["get", "update", "delete"]},
+        "key": {"type": "str", "required": True},
+        "action": {"type": "str", "required": False, "default": "get", "choices": ["read", "write", "delete"]},
         "value": {"required": False, "type": "dict"},
     }
 
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
-    path = module.params["path"]
+    key = module.params["key"]
     action = module.params.get("action", "get")
     value = module.params.get("value", None)
 
-    if action == "get":
-        data_file_path = os.path.join(__secret_dir, path, __data_file)
+    if key.startswith("/"):
+        module.fail_json(msg="Key cannot start with /")
+    if key.endswith("/"):
+        module.fail_json(msg="Key cannot end with /")
+    if key == "":
+        module.fail_json(msg="Key cannot be empty")
+
+    if action == "read":
+        if value is not None:
+            module.fail_json(msg="Value is not required for get action")
+        data_file_path = os.path.join(__secret_dir, key, __data_file)
         with open(data_file_path, "r", encoding="utf-8") as data_file:
             data: Dict[str, Any] = json.load(data_file)
         module.exit_json(changed=False, secret=data)
-    elif action == "update":
+    elif action == "write":
         if value is None:
             module.fail_json(msg="Value is required for update action")
-        data_file_dir = os.path.join(__secret_dir, path)
+        data_file_dir = os.path.join(__secret_dir, key)
         if not os.path.exists(data_file_dir):
             os.makedirs(data_file_dir)
         data_file_path = os.path.join(data_file_dir, __data_file)
         with open(data_file_path, "w", encoding="utf-8") as data_file:
             json.dump(value, data_file, indent=4, sort_keys=True)
         module.exit_json(changed=True, secret=value)
+    elif action == "delete":
+        if value is not None:
+            module.fail_json(msg="Value is not required for delete action")
+        data_file_dir = os.path.join(__secret_dir, key)
+        if os.path.exists(data_file_dir):
+            os.remove(data_file_dir)
+        module.exit_json(changed=True, secret=None)
+    else:
+        module.fail_json(msg="Invalid action, must be one of read, write, delete")
 
 
 def main() -> None:

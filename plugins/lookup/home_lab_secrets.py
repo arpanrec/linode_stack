@@ -39,9 +39,16 @@ class LookupModule(LookupBase):
         if len(terms) != 1:
             raise AnsibleLookupError("vaultops_secrets lookup expects a single argument")
 
-        path: str = terms[0]
+        key: str = terms[0]
 
-        data_file_path = os.path.join(self.__secret_dir, path, self.__data_file)
+        if key.startswith("/"):
+            raise AnsibleLookupError("Vault key should not start with /")
+        if key.endswith("/"):
+            raise AnsibleLookupError("Vault key should not end with /")
+        if len(key) == 0:
+            raise AnsibleLookupError("Vault key should not be empty")
+
+        data_file_path = os.path.join(self.__secret_dir, key, self.__data_file)
         with open(data_file_path, "r", encoding="utf-8") as data_file:
             data: Dict[str, Any] = json.load(data_file)
 
