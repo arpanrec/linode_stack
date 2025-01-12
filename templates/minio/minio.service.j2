@@ -7,12 +7,12 @@ Requires=network-online.target
 AssertFileIsExecutable=/usr/local/bin/minio
 
 [Service]
-WorkingDirectory={{ cs_mini0_mini0_working_dir }}
-User={{ cs_mini0_mini0_user_name }}
-Group={{ cs_mini0_mini0_group_name }}
+WorkingDirectory={{ cs_minio_minio_working_dir }}
+User={{ cs_minio_minio_user_name }}
+Group={{ cs_minio_minio_group_name }}
 ProtectProc=invisible
-EnvironmentFile=-{{ cs_mini0_mini0_env_file }}
-ExecStartPre=/bin/bash -c "if [ -z "${MINIO_VOLUMES}" ]; then echo Variable MINIO_VOLUMES not set in {{ cs_mini0_mini0_env_file }}; exit 1; fi"
+EnvironmentFile=-{{ cs_minio_minio_env_file }}
+ExecStartPre=/bin/bash -c "if [ -z "${MINIO_VOLUMES}" ]; then echo Variable MINIO_VOLUMES not set in {{ cs_minio_minio_env_file }}; exit 1; fi"
 ExecStart=/usr/local/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
 Restart=always
 LimitNOFILE=65536

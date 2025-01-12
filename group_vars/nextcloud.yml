@@ -16,7 +16,6 @@ cs_nc_db_cert_dir: "{{ cs_nc_cert_dir }}/db_certs"
 cs_nc_db_cert_pem_file: "{{ cs_nc_db_cert_dir }}/db_cert.pem"
 cs_nc_db_privkey_pem_file: "{{ cs_nc_db_cert_dir }}/db_privkey.pem"
 cs_nc_db_chain_pem_file: "{{ cs_nc_db_cert_dir }}/db_chain.pem"
-cs_nc_db_cert_csr_file: "{{ cs_nc_db_cert_dir }}/db_cert.csr"
 
 cs_nc_cron_system_timer_name: nextcloud-cron
 

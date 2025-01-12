@@ -2,28 +2,15 @@
 - name: Nginx Proxy Manager | Gather Facts
   ansible.builtin.setup:
 
-- name: Nginx Proxy Manager | Get Config details
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "{{ cs_nginx_proxy_cluster }}/{{ inventory_hostname }}/nginx_proxy_manager"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "secret"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-  register: __vault_details
-
 - name: Nginx Proxy Manager | Set Facts
   ansible.builtin.set_fact:
-      cs_nginx_proxy_hosts: "{{ __vault_details.secret.proxy_hosts }}"
-      cs_npm_admin_user: "{{ __vault_details.secret.admin_user }}"
-      cs_npm_admin_port: "{{ __vault_details.secret.admin_port }}"
-      cs_npm_admin_password: "{{ __vault_details.secret.admin_password }}"
+      cs_nginx_proxy_hosts: "{{ __vault_details.proxy_hosts }}"
+      cs_npm_admin_user: "{{ __vault_details.admin_user }}"
+      cs_npm_admin_port: "{{ __vault_details.admin_port }}"
+      cs_npm_admin_password: "{{ __vault_details.admin_password }}"
+  vars:
+      __vault_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nginx_proxy_cluster + '/' + inventory_hostname
+          + '/nginx_proxy_manager') }}"
 
 - name: Nginx Proxy Manager | Set Facts
   ansible.builtin.set_fact:
