@@ -1,6 +1,11 @@
-# [2.6.0](https://github.com/arpanrec/home-lab/compare/2.5.0...2.6.0) (2025-01-11)
+# [3.0.0](https://github.com/arpanrec/home-lab/compare/2.6.0...3.0.0) (2025-01-12)
 
 
 ### Features
 
-* simplify subject_alt_name generation in TLS configuration ([c38bea8](https://github.com/arpanrec/home-lab/commit/c38bea81a636c627f05f9048e8d283a5cce58a95))
+* Remove/vault ([#68](https://github.com/arpanrec/home-lab/issues/68)) ([98d03a4](https://github.com/arpanrec/home-lab/commit/98d03a49544ea77737304499c2507282daf05206))
+
+
+### BREAKING CHANGES
+
+* Secret in a normal directory
