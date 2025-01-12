@@ -1,6 +1,6 @@
-# [3.1.0](https://github.com/arpanrec/home-lab/compare/3.0.0...3.1.0) (2025-01-12)
+## [3.1.1](https://github.com/arpanrec/home-lab/compare/3.1.0...3.1.1) (2025-01-12)
 
 
-### Features
+### Bug Fixes
 
-* refactor MinIO configuration to use S3 naming conventions and update related variables ([176b6fe](https://github.com/arpanrec/home-lab/commit/176b6fe52e748235b427ea807e690bf5a9d85e5e))
+* update Redis, database, and Elasticsearch host variables to use 'host' instead of 'fqdn' ([4474a59](https://github.com/arpanrec/home-lab/commit/4474a59bb9215adafcb82196ec4162953c799784))
