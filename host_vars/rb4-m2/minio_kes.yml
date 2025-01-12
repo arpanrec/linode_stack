@@ -1,0 +1,3 @@
+---
+cs_minio_kes_external_disk_id: "p2-2tb-rb4-m2"
+cs_minio_kes_data_dir: "/mnt/{{ cs_minio_kes_external_disk_id }}/minio_kes_data"

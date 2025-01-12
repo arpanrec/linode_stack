@@ -1,0 +1,42 @@
+---
+all:
+    vars:
+        ansible_host: "{{ lookup('home_lab_secrets', 'secret/' + cs_cluster_name + '/' + inventory_hostname
+            + '/ansible_vars').ansible_host }}"
+    children:
+        patchservers:
+            hosts:
+                rb4-m1:
+                rb4-m2:
+        postgres:
+            hosts:
+                rb4-m1:
+        elasticsearch:
+            hosts:
+                rb4-m2:
+        redis:
+            hosts:
+                rb4-m2:
+        nextcloud:
+            hosts:
+                rb4-m2:
+        jellyfin:
+            hosts:
+                s1-home:
+        nginx_proxy_manager:
+            hosts:
+                rb5-m3:
+        minio_kes:
+            hosts:
+                rb4-m2:
+        minio_minio:
+            hosts:
+                rb4-m2:
+    hosts:
+        rb4-m1:
+        rb4-m2:
+        rb5-m3:
+        s1-home:
+        localhost:
+            ansible_connection: local
+            ansible_host: localhost

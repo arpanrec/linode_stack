@@ -1,24 +1,11 @@
 ---
-- name: Nextcloud | Users | Get Config details
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "{{ cs_nc_cluster_name }}/{{ inventory_hostname }}/nextcloud"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "secret"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-  register: __nextcloud_app_details
-
 - name: Nextcloud | Users | Set config facts
   ansible.builtin.set_fact:
-      cs_nc_admin_user: "{{ __nextcloud_app_details.secret.admin_user }}"
-      cs_nc_users_dict: "{{ __nextcloud_app_details.secret.users_dict }}"
+      cs_nc_admin_user: "{{ __nextcloud_app_details.admin_user }}"
+      cs_nc_users_dict: "{{ __nextcloud_app_details.users_dict }}"
+  vars:
+      __nextcloud_app_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+          + '/nextcloud') }}"
 
 - name: Nextcloud | Users | Test
   ansible.builtin.import_tasks:

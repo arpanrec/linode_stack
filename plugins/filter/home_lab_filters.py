@@ -11,6 +11,9 @@ import hashlib
 import os
 from typing import Any, Dict, List, Union
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+
 # pylint: disable=C0103,invalid-name
 __metaclass__ = type
 
@@ -40,6 +43,47 @@ def generate_qbittorrent_hash(password: str) -> str:
     qbittorrent_hash = f"@ByteArray({encoded_salt}:{encoded_hash})"
 
     return qbittorrent_hash
+
+
+def openssh_pub_key_from_encrypted_pem_priv_key(root_ca_key_pem: str, password: str) -> str:
+    """
+    Get the public key of an RSA private key.
+    """
+
+    try:
+        rsa_root_ca_key = serialization.load_pem_private_key(
+            data=root_ca_key_pem.encode("utf-8"),
+            password=password.encode("utf-8"),
+            backend=default_backend(),
+        )
+    except ValueError as e:
+        raise ValueError("Invalid password") from e
+
+    try:
+        rsa_root_ca_openssh_pub_key_bytes: bytes = rsa_root_ca_key.public_key().public_bytes(
+            encoding=serialization.Encoding.OpenSSH, format=serialization.PublicFormat.OpenSSH
+        )
+    except AttributeError as e:
+        raise ValueError("Invalid private key") from e
+    return rsa_root_ca_openssh_pub_key_bytes.decode("utf-8")
+
+
+def unencrypted_openssh_priv_key_from_encrypted_pem_priv_key(root_ca_key_pem: str, password: str) -> str:
+    """
+    Get the unencrypted openssh private key of an RSA private key.
+    """
+    rsa_root_ca_key = serialization.load_pem_private_key(
+        data=root_ca_key_pem.encode("utf-8"),
+        password=password.encode("utf-8"),
+        backend=default_backend(),
+    )
+    rsa_root_ca_openssh_no_pass_key_bytes: bytes = rsa_root_ca_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.OpenSSH,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    return rsa_root_ca_openssh_no_pass_key_bytes.decode("utf-8")
 
 
 def get_part_uuids_from_ansible_devices(
@@ -79,4 +123,6 @@ class FilterModule:
         return {
             "get_part_uuids_from_ansible_devices": get_part_uuids_from_ansible_devices,
             "generate_qbittorrent_hash": generate_qbittorrent_hash,
+            "openssh_pub_key_from_encrypted_pem_priv_key": openssh_pub_key_from_encrypted_pem_priv_key,
+            "unencrypted_openssh_priv_key_from_encrypted_pem_priv_key": unencrypted_openssh_priv_key_from_encrypted_pem_priv_key,  # pylint: disable=C0301
         }
