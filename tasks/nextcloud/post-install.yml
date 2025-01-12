@@ -29,25 +29,10 @@
   vars:
       nc_current_status: "{{ nc_status.stdout | from_json }}"
 
-- name: Nextcloud | Post Install | Get Config details
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "{{ cs_nc_cluster_name }}/{{ inventory_hostname }}/nextcloud"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "secret"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-  register: __nextcloud_app_details
-
 - name: Nextcloud | Post Install | Set config facts
   ansible.builtin.set_fact:
-      cs_nc_port: "{{ __nextcloud_app_details.secret.port }}"
+      cs_nc_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+          + '/nextcloud').port }}"
 
 - name: Nextcloud | Post Install | Enable UFW port
   community.general.ufw:

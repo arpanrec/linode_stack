@@ -1,3 +1,0 @@
----
-cs_mini0_external_disk_id: "p2-2tb-rb4-m2"
-cs_mini0_mini0_data_dir: "/mnt/{{ cs_mini0_external_disk_id }}/mini0_data"

@@ -3,50 +3,29 @@
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Database | Elasticsearch | Get config from Vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "{{ cs_elasticsearch_cluster_name }}/{{ inventory_hostname }}/elasticsearch"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "secret"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-  register: __elasticsearch_config
-
 - name: Database | Elasticsearch | Set config facts
   ansible.builtin.set_fact:
-      cs_elasticsearch_servlet_port: "{{ __elasticsearch_config.secret.servlet_port }}"
-      cs_elasticsearch_transport_port: "{{ __elasticsearch_config.secret.transport_port }}"
+      cs_elasticsearch_servlet_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_elasticsearch_cluster_name + '/'
+          + inventory_hostname + '/elasticsearch').servlet_port }}"
+      cs_elasticsearch_transport_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_elasticsearch_cluster_name + '/'
+          + inventory_hostname + '/elasticsearch').transport_port }}"
       cs_elasticsearch_root_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
 
 - name: Database | Elasticsearch | Write the Password to Vault
   become: false
-  delegate_facts: true
   delegate_to: localhost
-  community.hashi_vault.vault_kv2_write:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "elasticsearch/clusters/{{ cs_elasticsearch_cluster_name }}/servers/{{ inventory_hostname }}/config"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "managed-secrets"
-      data:
+  home_lab_secrets:
+      key: "managed-secrets/elasticsearch/clusters/{{ cs_elasticsearch_cluster_name }}/servers/{{
+          inventory_hostname }}/config"
+      action: write
+      value:
           servlet_port: "{{ cs_elasticsearch_servlet_port }}"
           transport_port: "{{ cs_elasticsearch_transport_port }}"
           root_password: "{{ cs_elasticsearch_root_password }}"
           ipv4s: "{{ ansible_all_ipv4_addresses }}"
           hostname: "{{ ansible_hostname }}"
           fqdn: "{{ ansible_fqdn }}"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
 - name: Database | Elasticsearch | Stop old container
   community.docker.docker_container:
