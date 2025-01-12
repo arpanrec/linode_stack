@@ -132,7 +132,7 @@
 - name: MinIO | Install | Write server certificate chain
   ansible.builtin.copy:
       content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_minio_kes_cert_ca }}"
+      dest: "{{ cs_minio_minio_ca_file }}"
       mode: "0640"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
