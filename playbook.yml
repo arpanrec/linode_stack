@@ -38,31 +38,31 @@
         ansible.builtin.import_tasks:
             file: tasks/patch/system.yml
 
-- name: Mini0 KES
-  hosts: mini0_kes
+- name: MinIO KES
+  hosts: minio_kes
   become: false
   gather_facts: false
-  tags: never,mini0,mini0_kes
+  tags: never,minio,minio_kes
   no_log: "{{ cs_no_log | default('true') }}"
   tasks:
-      - name: Mini0 | KES
+      - name: MinIO KES
         become: true
         become_user: root
         ansible.builtin.import_tasks:
-            file: tasks/mini0-kes.yml
+            file: tasks/minio_kes.yml
 
-- name: Mini0
-  hosts: mini0_mini0
+- name: Minio
+  hosts: minio_minio
   become: false
   gather_facts: false
-  tags: never,mini0,mini0_mini0
+  tags: never,minio,minio_minio
   no_log: "{{ cs_no_log | default('true') }}"
   tasks:
-      - name: Mini0 | Mini0
+      - name: Minio | Minio
         become: true
         become_user: root
         ansible.builtin.import_tasks:
-            file: tasks/mini0.yml
+            file: tasks/minio_minio.yml
 
 - name: Postgres
   hosts: postgres
