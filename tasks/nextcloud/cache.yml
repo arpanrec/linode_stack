@@ -16,7 +16,7 @@
   ansible.builtin.set_fact:
       cs_nc_redis_port: "{{ __nextcloud_redis_details.tls_port }}"
       cs_nc_redis_password: "{{ __nextcloud_redis_details.admin_password }}"
-      cs_nc_redis_host: "{{ __nextcloud_redis_details.fqdn }}"
+      cs_nc_redis_host: "{{ __nextcloud_redis_details.host }}"
   vars:
       __nextcloud_redis_details: "{{ lookup('home_lab_secrets', 'managed-secrets/redis/clusters/'
           + cs_nc_redis_cluster_name + '/servers/' + cs_nc_redis_cluster_node + '/config') }}"

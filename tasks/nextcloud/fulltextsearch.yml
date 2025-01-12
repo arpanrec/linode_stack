@@ -37,7 +37,7 @@
   ansible.builtin.set_fact:
       cs_nc_fts_elasticsearch_servlet_port: "{{ __nextcloud_fts_details.servlet_port }}"
       cs_nc_fts_elasticsearch_password: "{{ __nextcloud_fts_details.root_password }}"
-      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.fqdn }}"
+      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.host }}"
   vars:
       __nextcloud_fts_details: "{{ lookup('home_lab_secrets', 'managed-secrets/elasticsearch/clusters/' +
           cs_nc_elasticsearch_cluster_name + '/servers/' + cs_nc_elasticsearch_cluster_node + '/config') }}"
