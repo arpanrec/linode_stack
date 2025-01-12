@@ -12,3 +12,8 @@ cs_jellyfin_cluster: blr-home
 cs_jellyfin_version: 10.10.3
 cs_jellyfin_qbittorrent_nox_version: 5.0.3-1
 cs_jellyfin_qbittorrent_nox_container_name: "qbittorrent-nox"
+
+cs_jellyfin_data_dir: /var/lib/jellyfin
+cs_jellyfin_config_dir: /etc/jellyfin
+cs_jellyfin_log_dir: /var/log/jellyfin
+cs_jellyfin_cache_dir: /var/cache/jellyfin
