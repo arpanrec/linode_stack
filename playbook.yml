@@ -1,31 +1,36 @@
 ---
-- name: Add Host Keys
+- name: Access Key
   hosts: all
-  gather_facts: false
   become: false
-  timeout: 100
+  gather_facts: false
+  no_log: "{{ cs_no_log }}"
   tags: always
-  any_errors_fatal: true
-  no_log: "{{ cs_no_log | default('true') }}"
   serial: 1
   tasks:
-      - name: Add Host Keys | Add keys to known_hosts file /tmp/vault_vm_server_ssh_known_hosts
-        become: false
-        ansible.builtin.known_hosts:
-            name: "{{ ansible_host }}"
-            key: "{{ ansible_host }} {{ item }}"
-            path: "{{ vault_vm_server_ssh_user_known_hosts_file }}"
-            state: present
+      - name: Access Key | Create directory # noqa: run-once[task]
         delegate_to: localhost
-        loop: "{{ host_keys }}"
-        throttle: 1
-        when: ansible_host != 'localhost'
+        become: false
+        run_once: true
+        ansible.builtin.file:
+            path: "{{ ansible_ssh_private_key_file | dirname }}"
+            state: directory
+            mode: "0700"
+
+      - name: Access Key | Write SSH Private Key # noqa: run-once[task]
+        delegate_to: localhost
+        become: false
+        run_once: true
+        ansible.builtin.copy:
+            content: "{{ root_ca_key_pem
+                | unencrypted_openssh_priv_key_from_encrypted_pem_priv_key(password=root_ca_key_password) }}"
+            mode: "0600"
+            dest: "{{ ansible_ssh_private_key_file }}"
 
 - name: Patch
   hosts: patchservers
   become: true
   become_user: root
-  gather_facts: true
+  gather_facts: false
   no_log: "{{ cs_no_log | default('true') }}"
   tags: never,patch
   tasks:
@@ -33,95 +38,31 @@
         ansible.builtin.import_tasks:
             file: tasks/patch/system.yml
 
-- name: Vaultops | Prepare
-  hosts: localhost
-  gather_facts: false
-  become: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tags: vault,vault_system_install,vault_dr,never
-  tasks:
-      - name: Vaultops | Prepare | Download Vault binary
-        ansible.builtin.get_url:
-            dest: "{{ vaultops_tmp_dir_path }}/vault_{{ vault_rv_version }}_linux_{{ item.key }}.zip"
-            mode: "0o644"
-            checksum: sha256:{{ item.value['sha256sum'][vault_rv_version] }}
-            url: "https://releases.hashicorp.com/vault/{{ vault_rv_version }}/\
-                vault_{{ vault_rv_version }}_linux_{{ item.value['vault_arch'] }}.zip"
-        loop: "{{ pv_vault_info_map | dict2items }}"
-
-- name: Vaultops | Vault
-  hosts: vault_vm_servers
-  gather_facts: false
-  become: false
-  timeout: 100
-  any_errors_fatal: true
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: Vaultops | Vault | Install | System
-        become: true
-        tags: vault,vault_system_install,vault_dr,never
-        ansible.builtin.import_tasks:
-            file: tasks/vaultops/install.yml
-
-- name: Vaultops | Vault Virtual Node Server
-  hosts: vault_nodes_servers
-  gather_facts: false
-  become: false
-  timeout: 100
-  any_errors_fatal: true
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: Vaultops | Vault Virtual Node Server | Install
-        become: true
-        tags: vault,vault_node_install,vault_dr,never
-        ansible.builtin.import_tasks:
-            file: tasks/vaultops/install_node.yml
-
-      - name: Vaultops | Vault Virtual Node Server | DR
-        become: true
-        tags: vault_dr,never
-        ansible.builtin.import_tasks:
-            file: tasks/vaultops/dr.yml
-
-- name: Vaultops | Downstream
-  hosts: localhost
-  gather_facts: false
-  become: false
-  timeout: 100
-  any_errors_fatal: true
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: Vaultops | Downstream | github.com
-        become: true
-        tags: downstream,never,downstream_github
-        ansible.builtin.import_tasks:
-            file: tasks/vaultops/github.yml
-
-- name: Mini0 KES
-  hosts: mini0_kes
+- name: MinIO KES
+  hosts: minio_kes
   become: false
   gather_facts: false
-  tags: never,mini0,mini0_kes
+  tags: never,minio,minio_kes
   no_log: "{{ cs_no_log | default('true') }}"
   tasks:
-      - name: Mini0 | KES
+      - name: MinIO KES
         become: true
         become_user: root
         ansible.builtin.import_tasks:
-            file: tasks/mini0-kes.yml
+            file: tasks/minio_kes.yml
 
-- name: Mini0
-  hosts: mini0_mini0
+- name: Minio
+  hosts: minio_minio
   become: false
   gather_facts: false
-  tags: never,mini0,mini0_mini0
+  tags: never,minio,minio_minio
   no_log: "{{ cs_no_log | default('true') }}"
   tasks:
-      - name: Mini0 | Mini0
+      - name: Minio | Minio
         become: true
         become_user: root
         ansible.builtin.import_tasks:
-            file: tasks/mini0.yml
+            file: tasks/minio_minio.yml
 
 - name: Postgres
   hosts: postgres

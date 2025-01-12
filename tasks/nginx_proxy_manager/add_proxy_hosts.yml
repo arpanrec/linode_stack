@@ -1,23 +1,33 @@
 ---
-- name: "Nginx Proxy Manager | Add Proxy Hosts | Get Server Certificates from Vault
-      | {{ cs_nginx_proxy_host.domains[0] }}"
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_write:
-      timeout: 60
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: pki/issue/server_certificate
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      data:
-          common_name: "{{ cs_nginx_proxy_host.domains[0] }}"
-          alt_names: "{{ cs_nginx_proxy_host.domains | join(',') }}"
-  register: __cs_nginx_proxy_manager_server_certificates
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Create private key | {{ cs_nginx_proxy_host.domains[0] }}"
+  community.crypto.openssl_privatekey_pipe:
+      type: RSA
+      size: 4096
+  register: __nginx_proxy_manager_private_key
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Create CSR | {{ cs_nginx_proxy_host.domains[0] }}"
+  community.crypto.openssl_csr_pipe:
+      privatekey_content: "{{ __nginx_proxy_manager_private_key.privatekey }}"
+      common_name: "{{ cs_nginx_proxy_host.domains[0] }}"
+      basic_constraints: CA:FALSE
+      basic_constraints_critical: true
+      key_usage:
+          - digitalSignature
+          - keyEncipherment
+      extended_key_usage:
+          - serverAuth
+      subject_alt_name: "{{ cs_nginx_proxy_host.domains | map('regex_replace', '^(.*)$', 'DNS:\\1') | list }}"
+      subject_alt_name_critical: true
+  register: __nginx_proxy_manager_csr
+
+- name: "Nginx Proxy Manager | Add Proxy Hosts | Create Certificate | {{ cs_nginx_proxy_host.domains[0] }}"
+  community.crypto.x509_certificate_pipe:
+      csr_content: "{{ __nginx_proxy_manager_csr.csr }}"
+      ownca_content: "{{ root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
+      provider: ownca
+  register: __nginx_proxy_manager_certificate
 
 - name: "Nginx Proxy Manager | Add Proxy Hosts | Validate Certificates | {{ cs_nginx_proxy_host.domains[0] }}"
   ansible.builtin.uri:
@@ -31,15 +41,15 @@
           - 200
       body:
           certificate_key:
-              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.private_key }}"
+              content: "{{ __nginx_proxy_manager_private_key.privatekey }}"
               mime_type: "text/plain"
               filename: certificate_key.pem
           certificate:
-              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.certificate }}"
+              content: "{{ __nginx_proxy_manager_certificate.certificate }}"
               mime_type: "text/plain"
               filename: certificate.pem
           intermediate_certificate:
-              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.ca_chain | join('\n') }}"
+              content: "{{ root_ca_cert_pem }}"
               mime_type: "text/plain"
               filename: intermediate_certificate.pem
   register: _response_server_certificates_validate
@@ -77,15 +87,15 @@
           - 200
       body:
           certificate_key:
-              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.private_key }}"
+              content: "{{ __nginx_proxy_manager_private_key.privatekey }}"
               mime_type: "text/plain"
               filename: certificate_key.pem
           certificate:
-              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.certificate }}"
+              content: "{{ __nginx_proxy_manager_certificate.certificate }}"
               mime_type: "text/plain"
               filename: certificate.pem
           intermediate_certificate:
-              content: "{{ __cs_nginx_proxy_manager_server_certificates.data.data.ca_chain | join('\n') }}"
+              content: "{{ root_ca_cert_pem }}"
               mime_type: "text/plain"
               filename: intermediate_certificate.pem
 
