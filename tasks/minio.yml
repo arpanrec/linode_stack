@@ -1,36 +1,23 @@
 ---
-- name: Minio | Install | Include common crypt mount
-  ansible.builtin.include_tasks:
-      file: tasks/common/crypt_mount.yml
-  vars:
-      cs_crypt_mount_vault_id: "{{ cs_minio_external_disk_id }}"
-      cs_crypt_machine_cluster: "{{ cs_minio_minio_cluster_name }}"
+# - name: Minio | Install | Include common crypt mount
+#   ansible.builtin.include_tasks:
+#       file: tasks/common/crypt_mount.yml
+#   vars:
+#       cs_crypt_mount_vault_id: "{{ cs_minio_external_disk_id }}"
+#       cs_crypt_machine_cluster: "{{ cs_minio_minio_cluster_name }}"
 
 - name: Minio | Install | Gather Facts
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Minio | Get Config details
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "{{ cs_minio_minio_cluster_name }}/{{ inventory_hostname }}/minio"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "secret"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-  register: __minio_details
-
 - name: Minio | Set config facts
   ansible.builtin.set_fact:
-      cs_minio_minio_port: "{{ __minio_details.secret.port }}"
-      cs_minio_minio_console_port: "{{ __minio_details.secret.console_port }}"
-      cs_minio_minio_region: "{{ __minio_details.secret.region }}"
+      cs_minio_minio_port: "{{ __minio_details.port }}"
+      cs_minio_minio_console_port: "{{ __minio_details.console_port }}"
+      cs_minio_minio_region: "{{ __minio_details.region }}"
+  vars:
+      __minio_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_minio_minio_cluster_name + '/'
+          + inventory_hostname + '/minio') }}"
 
 - name: Minio | Assert | Set cs_minio_minio_kes_cluster_name and cs_minio_minio_kes_cluster_node_name
   ansible.builtin.set_fact:
@@ -39,27 +26,15 @@
       cs_minio_minio_kes_cluster_node_name: "{{ cs_minio_minio_kes_cluster_node_name | d(inventory_hostname)
           | mandatory }}"
 
-- name: Minio | Get KES Admin Key Id from Vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_kv2_get:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      engine_mount_point: "managed-secrets"
-      path: "minio-kes/clusters/{{ cs_minio_kes_cluster_name }}/servers/{{ cs_minio_minio_kes_cluster_node_name }}\
-          /config"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-  register: __minio_server_kes_secret_dict
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
+- name: Minio | Set __minio_server_kes_secret_dict
+  ansible.builtin.set_fact:
+      __minio_server_kes_secret_dict: "{{ lookup('home_lab_secrets', 'managed-secrets/minio-kes/clusters/'
+          + cs_minio_kes_cluster_name + '/servers/' + cs_minio_minio_kes_cluster_node_name + '/config') }}"
 
 - name: Minio | Set cs_minio_minio_kes_endpoint
   ansible.builtin.set_fact:
-      cs_minio_minio_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.secret.fqdn }}:\
-          {{ __minio_server_kes_secret_dict.secret.port }}"
+      cs_minio_minio_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.fqdn }}:\
+          {{ __minio_server_kes_secret_dict.port }}"
 
 - name: Minio | Install | Create group
   ansible.builtin.group:
@@ -114,41 +89,53 @@
       - "{{ cs_minio_minio_certs_dir }}"
       - "{{ cs_minio_minio_kes_cert_dir }}"
 
-- name: Minio | Install | Get Minio Server Certificates from Vault
-  become: false
-  delegate_facts: true
-  delegate_to: localhost
-  community.hashi_vault.vault_write:
-      timeout: 60
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: pki/issue/server_certificate
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      data:
-          common_name: "{{ inventory_hostname }}"
-          alt_names: "{{ ansible_fqdn }},{{ ansible_hostname }}"
-          ip_sans: "{{ ansible_all_ipv4_addresses | join(',') }}"
-  register: minio_server_tmp_certificate
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
-
-- name: Minio | Install | Write Server Certificates
-  ansible.builtin.copy:
-      content: "{{ item.content }}"
-      dest: "{{ item.dest }}"
+- name: Minio | Install | Write server private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_minio_minio_private_key }}"
+      type: RSA
+      size: 4096
+      mode: "0600"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
-      mode: "0644"
-  loop:
-      - content: "{{ minio_server_tmp_certificate.data.data.certificate }}\n\
-            {{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}\n"
-        dest: "{{ cs_minio_minio_cert_file }}"
-      - content: "{{ minio_server_tmp_certificate.data.data.private_key }}\n"
-        dest: "{{ cs_minio_minio_private_key }}"
-      - content: "{{ minio_server_tmp_certificate.data.data.ca_chain | join('\n') }}\n"
-        dest: "{{ cs_minio_minio_ca_file }}"
+
+- name: Minio | Install | Write server CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_minio_minio_private_key }}.csr"
+      privatekey_path: "{{ cs_minio_minio_private_key }}"
+      common_name: "{{ inventory_hostname }}"
+      basic_constraints: CA:FALSE
+      basic_constraints_critical: true
+      key_usage:
+          - digitalSignature
+          - keyEncipherment
+      extended_key_usage:
+          - serverAuth
+      subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
+      subject_alt_name_critical: true
+      mode: "0600"
+      owner: "{{ cs_minio_minio_user_name }}"
+      group: "{{ cs_minio_minio_group_name }}"
+
+- name: Minio | Install | Write server Certificate
+  community.crypto.x509_certificate:
+      path: "{{ cs_minio_minio_cert_file }}"
+      csr_path: "{{ cs_minio_minio_private_key }}.csr"
+      ownca_content: "{{ root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
+      provider: ownca
+      mode: "0600"
+      owner: "{{ cs_minio_minio_user_name }}"
+      group: "{{ cs_minio_minio_group_name }}"
+
+- name: Minio | Install | Write server certificate chain
+  ansible.builtin.copy:
+      content: "{{ root_ca_cert_pem }}"
+      dest: "{{ cs_minio_kes_cert_ca }}"
+      mode: "0600"
+      owner: "{{ cs_minio_minio_user_name }}"
+      group: "{{ cs_minio_minio_group_name }}"
 
 - name: Minio | Install | Write KES Client Admin Certificates
   ansible.builtin.copy:
@@ -158,11 +145,11 @@
       group: "{{ cs_minio_minio_group_name }}"
       mode: "0777"
   loop:
-      - content: "{{ __minio_server_kes_secret_dict.secret.admin_cert }}\n"
+      - content: "{{ __minio_server_kes_secret_dict.admin_cert }}\n"
         dest: "{{ cs_minio_minio_kes_admin_cert }}"
-      - content: "{{ __minio_server_kes_secret_dict.secret.admin_key }}\n"
+      - content: "{{ __minio_server_kes_secret_dict.admin_key }}\n"
         dest: "{{ cs_minio_minio_kes_admin_key }}"
-      - content: "{{ __minio_server_kes_secret_dict.secret.admin_ca }}\n"
+      - content: "{{ __minio_server_kes_secret_dict.admin_ca }}\n"
         dest: "{{ cs_minio_minio_kes_ca_cert }}"
 
 - name: Minio | Install | Create User and Password
@@ -173,15 +160,11 @@
 
 - name: Minio | Install | Write the Password to Vault
   become: false
-  delegate_facts: true
   delegate_to: localhost
-  community.hashi_vault.vault_kv2_write:
-      url: "https://{{ vault_ha_client.vault_ha_hostname }}:{{ vault_ha_client.vault_ha_port }}"
-      path: "minio/clusters/{{ cs_minio_minio_cluster_name }}/servers/{{ inventory_hostname }}/config"
-      token: "{{ vault_ha_client.token }}"
-      validate_certs: true
-      engine_mount_point: "managed-secrets"
-      data:
+  home_lab_secrets:
+      key: "managed-secrets/minio/clusters/{{ cs_minio_minio_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      action: "write"
+      value:
           root_user: "{{ minio_server_root_user }}"
           root_password: "{{ minio_server_root_password }}"
           ipv4s: "{{ ansible_all_ipv4_addresses }}"
@@ -193,10 +176,6 @@
           kes:
               cluster_name: "{{ cs_minio_minio_kes_cluster_name }}"
               cluster_node_name: "{{ cs_minio_minio_kes_cluster_node_name }}"
-  environment:
-      VAULT_CACERT: "{{ vault_ha_client.vault_root_ca_cert_file }}"
-      VAULT_CLIENT_CERT: "{{ vault_ha_client.vault_client_cert_file }}"
-      VAULT_CLIENT_KEY: "{{ vault_ha_client.vault_client_key_file }}"
 
 - name: Minio | Install | Create Env File
   ansible.builtin.copy:
@@ -253,6 +232,7 @@
       status_code: 200
       timeout: 3
       method: GET
+      validate_certs: false
   register: minio_server_health_check
   until: minio_server_health_check.status == 200
   retries: 10

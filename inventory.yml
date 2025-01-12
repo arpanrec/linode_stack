@@ -29,6 +29,9 @@ all:
         minio_kes:
             hosts:
                 rb4-m2:
+        minio_minio:
+            hosts:
+                rb4-m2:
     hosts:
         rb4-m1:
         rb4-m2:
