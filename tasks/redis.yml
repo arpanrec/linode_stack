@@ -21,6 +21,7 @@
           tls_port: "{{ cs_redis_tls_port }}"
           admin_password: "{{ cs_redis_admin_password }}"
           ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          host: "{{ ansible_host }}"
           hostname: "{{ ansible_hostname }}"
           fqdn: "{{ ansible_fqdn }}"
 
