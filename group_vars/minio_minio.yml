@@ -1,8 +1,8 @@
 ---
-cs_minio_minio_group_name: mini0
+cs_minio_minio_group_name: minio
 cs_minio_minio_user_name: "{{ cs_minio_minio_group_name }}"
 
-cs_minio_minio_working_dir: "/app/mini0"
+cs_minio_minio_working_dir: "/app/minio"
 
 cs_minio_minio_certs_dir: "{{ cs_minio_minio_working_dir }}/certs"
 
@@ -14,9 +14,7 @@ cs_minio_minio_kes_admin_cert: "{{ cs_minio_minio_kes_cert_dir }}/kes-admin-cert
 cs_minio_minio_kes_admin_key: "{{ cs_minio_minio_kes_cert_dir }}/kes-admin-key.pem"
 cs_minio_minio_kes_ca_cert: "{{ cs_minio_minio_kes_cert_dir }}/kes-ca-cert.pem"
 
-cs_minio_minio_container_name: mini0
 cs_minio_minio_cluster_name: blr-home
-cs_minio_minio_image: docker.io/minio/minio
 cs_minio_minio_version: RELEASE.2024-11-07T00-52-20Z
 cs_minio_minio_default_kms_key_id: my-minio-key
 

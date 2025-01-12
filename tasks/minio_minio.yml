@@ -1,16 +1,16 @@
 ---
-# - name: Minio | Install | Include common crypt mount
+# - name: MinIO | Install | Include common crypt mount
 #   ansible.builtin.include_tasks:
 #       file: tasks/common/crypt_mount.yml
 #   vars:
 #       cs_crypt_mount_vault_id: "{{ cs_minio_external_disk_id }}"
 #       cs_crypt_machine_cluster: "{{ cs_minio_minio_cluster_name }}"
 
-- name: Minio | Install | Gather Facts
+- name: MinIO | Install | Gather Facts
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Minio | Set config facts
+- name: MinIO | Set config facts
   ansible.builtin.set_fact:
       cs_minio_minio_port: "{{ __minio_details.port }}"
       cs_minio_minio_console_port: "{{ __minio_details.console_port }}"
@@ -19,31 +19,31 @@
       __minio_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_minio_minio_cluster_name + '/'
           + inventory_hostname + '/minio') }}"
 
-- name: Minio | Assert | Set cs_minio_minio_kes_cluster_name and cs_minio_minio_kes_cluster_node_name
+- name: MinIO | Assert | Set cs_minio_minio_kes_cluster_name and cs_minio_minio_kes_cluster_node_name
   ansible.builtin.set_fact:
       cs_minio_minio_kes_cluster_name: "{{ cs_minio_minio_kes_cluster_name | d(cs_minio_minio_cluster_name)
           | mandatory }}"
       cs_minio_minio_kes_cluster_node_name: "{{ cs_minio_minio_kes_cluster_node_name | d(inventory_hostname)
           | mandatory }}"
 
-- name: Minio | Set __minio_server_kes_secret_dict
+- name: MinIO | Set __minio_server_kes_secret_dict
   ansible.builtin.set_fact:
       __minio_server_kes_secret_dict: "{{ lookup('home_lab_secrets', 'managed-secrets/minio-kes/clusters/'
           + cs_minio_kes_cluster_name + '/servers/' + cs_minio_minio_kes_cluster_node_name + '/config') }}"
 
-- name: Minio | Set cs_minio_minio_kes_endpoint
+- name: MinIO | Set cs_minio_minio_kes_endpoint
   ansible.builtin.set_fact:
       cs_minio_minio_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.fqdn }}:\
           {{ __minio_server_kes_secret_dict.port }}"
 
-- name: Minio | Install | Create group
+- name: MinIO | Install | Create group
   ansible.builtin.group:
       name: "{{ cs_minio_minio_group_name }}"
       state: present
       system: true
   register: minio_server_tmp_group_creation
 
-- name: Minio | Install | Create User
+- name: MinIO | Install | Create User
   ansible.builtin.user:
       name: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
@@ -53,7 +53,7 @@
       shell: /bin/false
   register: minio_server_tmp_user_creation
 
-- name: Minio | Install | Download binary
+- name: MinIO | Install | Download binary
   ansible.builtin.get_url:
       dest: "/usr/local/bin/minio"
       mode: "0755"
@@ -64,41 +64,41 @@
           {{ cs_minio_minio_bin_info_map[ansible_architecture]['cs_minio_minio_arch'] }}/archive/minio.\
           {{ cs_minio_minio_version }}"
 
-- name: Minio | Install | Create Directories
+- name: MinIO | Install | Create Directories
   ansible.builtin.file:
       path: "{{ item }}"
       state: directory
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
-      mode: "0777"
+      mode: "0750"
   loop:
       - "{{ cs_minio_minio_certs_dir }}"
       - "{{ cs_minio_minio_certs_dir }}/CAs"
       - "{{ cs_minio_minio_data_dir }}"
       - "{{ cs_minio_minio_kes_cert_dir }}"
 
-- name: Minio | Install | Fix Permissions of data directory
+- name: MinIO | Install | Fix Permissions of data directory
   ansible.builtin.shell:
       cmd: |+
           chown -R {{ cs_minio_minio_user_name }}:{{ cs_minio_minio_group_name }} {{ item }};
-          find {{ item }} -type d -exec chmod 0777 {} \;
-          find {{ item }} -type f -exec chmod 0777 {} \;
+          find {{ item }} -type d -exec chmod 0750 {} \;
+          find {{ item }} -type f -exec chmod 0640 {} \;
   changed_when: true
   with_items:
       - "{{ cs_minio_minio_data_dir }}"
       - "{{ cs_minio_minio_certs_dir }}"
       - "{{ cs_minio_minio_kes_cert_dir }}"
 
-- name: Minio | Install | Write server private key
+- name: MinIO | Install | Write server private key
   community.crypto.openssl_privatekey:
       path: "{{ cs_minio_minio_private_key }}"
       type: RSA
       size: 4096
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
 
-- name: Minio | Install | Write server CSR
+- name: MinIO | Install | Write server CSR
   community.crypto.openssl_csr:
       path: "{{ cs_minio_minio_private_key }}.csr"
       privatekey_path: "{{ cs_minio_minio_private_key }}"
@@ -113,11 +113,11 @@
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
           + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
       subject_alt_name_critical: true
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
 
-- name: Minio | Install | Write server Certificate
+- name: MinIO | Install | Write server Certificate
   community.crypto.x509_certificate:
       path: "{{ cs_minio_minio_cert_file }}"
       csr_path: "{{ cs_minio_minio_private_key }}.csr"
@@ -125,25 +125,25 @@
       ownca_privatekey_content: "{{ root_ca_key_pem }}"
       ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
       provider: ownca
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
 
-- name: Minio | Install | Write server certificate chain
+- name: MinIO | Install | Write server certificate chain
   ansible.builtin.copy:
       content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_minio_kes_cert_ca }}"
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
 
-- name: Minio | Install | Write KES Client Admin Certificates
+- name: MinIO | Install | Write KES Client Admin Certificates
   ansible.builtin.copy:
       content: "{{ item.content }}"
       dest: "{{ item.dest }}"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
-      mode: "0777"
+      mode: "0640"
   loop:
       - content: "{{ __minio_server_kes_secret_dict.admin_cert }}\n"
         dest: "{{ cs_minio_minio_kes_admin_cert }}"
@@ -152,13 +152,13 @@
       - content: "{{ __minio_server_kes_secret_dict.admin_ca }}\n"
         dest: "{{ cs_minio_minio_kes_ca_cert }}"
 
-- name: Minio | Install | Create User and Password
+- name: MinIO | Install | Create User and Password
   ansible.builtin.set_fact:
       minio_server_root_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
       minio_server_root_user: "{{ lookup('community.general.random_string', special=false, length=12) }}"
 
-- name: Minio | Install | Write the Password to Vault
+- name: MinIO | Install | Write the Password to Vault
   become: false
   delegate_to: localhost
   home_lab_secrets:
@@ -177,7 +177,7 @@
               cluster_name: "{{ cs_minio_minio_kes_cluster_name }}"
               cluster_node_name: "{{ cs_minio_minio_kes_cluster_node_name }}"
 
-- name: Minio | Install | Create Env File
+- name: MinIO | Install | Create Env File
   ansible.builtin.copy:
       content: |+
           MINIO_KMS_KES_ENDPOINT={{ cs_minio_minio_kes_endpoint }}
@@ -194,9 +194,9 @@
       dest: "{{ cs_minio_minio_env_file }}"
       owner: "{{ cs_minio_minio_user_name }}"
       group: "{{ cs_minio_minio_group_name }}"
-      mode: "0777"
+      mode: "0640"
 
-- name: Minio | Install | Enable UFW
+- name: MinIO | Install | Enable UFW
   community.general.ufw:
       rule: allow
       port: "{{ item.port }}"
@@ -209,7 +209,7 @@
       - port: "{{ cs_minio_minio_console_port }}"
         comment: "Console"
 
-- name: Minio | Install | Create Systemd Service
+- name: MinIO | Install | Create Systemd Service
   ansible.builtin.template:
       src: "templates/minio/{{ cs_minio_minio_systemd_service }}.j2"
       dest: "/etc/systemd/system/{{ cs_minio_minio_systemd_service }}"
@@ -217,7 +217,7 @@
       group: root
       mode: "0644"
 
-- name: Minio | Install | Start Systemd Service
+- name: MinIO | Install | Start Systemd Service
   ansible.builtin.systemd_service:
       name: "{{ cs_minio_minio_systemd_service }}"
       state: restarted
@@ -226,7 +226,7 @@
       enabled: true
       force: true
 
-- name: Minio | Install | Wait for Minio to start
+- name: MinIO | Install | Wait for Minio to start
   ansible.builtin.uri:
       url: "https://{{ ansible_all_ipv4_addresses[0] }}:{{ cs_minio_minio_port }}/minio/health/live"
       status_code: 200

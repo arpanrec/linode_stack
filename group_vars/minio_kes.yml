@@ -17,7 +17,7 @@ cs_minio_kes_bin_info_map:
 cs_minio_kes_group_name: kes
 cs_minio_kes_user_name: "{{ cs_minio_kes_group_name }}"
 
-cs_minio_kes_working_dir: "/app/mini0_kes"
+cs_minio_kes_working_dir: "/app/minio_kes"
 cs_minio_kes_config_file: "{{ cs_minio_kes_working_dir }}/config.yaml"
 cs_minio_kes_systemd_service_name: kes.service
 cs_minio_kes_cert_dir: "{{ cs_minio_kes_working_dir }}/certs"

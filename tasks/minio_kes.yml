@@ -74,7 +74,7 @@
       path: "{{ cs_minio_kes_cert_key_file }}"
       type: RSA
       size: 4096
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
 
@@ -93,7 +93,7 @@
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
           + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
       subject_alt_name_critical: true
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
 
@@ -105,7 +105,7 @@
       ownca_privatekey_content: "{{ root_ca_key_pem }}"
       ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
       provider: ownca
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
 
@@ -113,7 +113,7 @@
   ansible.builtin.copy:
       content: "{{ root_ca_cert_pem }}"
       dest: "{{ cs_minio_kes_cert_ca }}"
-      mode: "0600"
+      mode: "0640"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
 
@@ -229,7 +229,7 @@
       dest: "{{ cs_minio_kes_config_file }}"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
-      mode: "0777"
+      mode: "0640"
 
 - name: MinIO KES | Install | Create Systemd Service
   ansible.builtin.template:
@@ -293,7 +293,7 @@
   retries: 10
   delay: 2
 
-- name: Database | Install | Test | Remove temporary certificates
+- name: MinIO KES | Install | Test | Remove temporary certificates
   ansible.builtin.file:
       path: "{{ item.path }}"
       state: absent
