@@ -9,7 +9,7 @@
       cs_npm_admin_port: "{{ __vault_details.admin_port }}"
       cs_npm_admin_password: "{{ __vault_details.admin_password }}"
   vars:
-      __vault_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nginx_proxy_cluster + '/' + inventory_hostname
+      __vault_details: "{{ lookup('lab_secrets', 'secret/' + cs_nginx_proxy_cluster + '/' + inventory_hostname
           + '/nginx_proxy_manager') }}"
 
 - name: Nginx Proxy Manager | Set Facts

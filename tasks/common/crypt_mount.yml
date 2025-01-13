@@ -18,7 +18,7 @@
       cs_crypt_mount_crypt_open_name: "{{ cs_crypt_mount_vault_id }}"
       cs_crypt_mount_disk_mount_path: "/mnt/{{ cs_crypt_mount_vault_id }}"
   vars:
-      __vault_external_disk_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_crypt_machine_cluster + '/'
+      __vault_external_disk_details: "{{ lookup('lab_secrets', 'secret/' + cs_crypt_machine_cluster + '/'
           + inventory_hostname + '/disks/' + cs_crypt_mount_vault_id) }}"
 
 - name: Crypt Device | Mount | Information

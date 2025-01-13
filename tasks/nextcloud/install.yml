@@ -120,7 +120,7 @@
       cs_nc_db_host: "{{ __nextcloud_db_details.host }}"
       cs_nc_db_port: "{{ __nextcloud_db_details.server_port }}"
   vars:
-      __nextcloud_db_details: "{{ lookup('home_lab_secrets', 'managed-secrets/postgresql/clusters/'
+      __nextcloud_db_details: "{{ lookup('lab_secrets', 'managed-secrets/postgresql/clusters/'
           + cs_nc_db_cluster_name + '/servers/' + cs_nc_db_cluster_node + '/db/' + cs_nc_db_database) }}"
 
 - name: Nextcloud | Install | Write pgsql client private key
@@ -202,7 +202,7 @@
       cs_nc_admin_user: "{{ __nextcloud_app_details.admin_user }}"
       cs_nc_admin_password: "{{ __nextcloud_app_details.admin_password }}"
   vars:
-      __nextcloud_app_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+      __nextcloud_app_details: "{{ lookup('lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
           + '/nextcloud') }}"
 
 - name: Nextcloud | Install | Install Nextcloud for the first time
@@ -398,7 +398,7 @@
       cs_nc_mail_smtphost: "{{ __nextcloud_server_bot_email.smtphost }}"
       cs_nc_mail_smtppassword: "{{ __nextcloud_server_bot_email.smtppassword }}"
   vars:
-      __nextcloud_server_bot_email: "{{ lookup('home_lab_secrets', 'secret/bot_email') }}"
+      __nextcloud_server_bot_email: "{{ lookup('lab_secrets', 'secret/bot_email') }}"
 
 - name: Nextcloud | Install | Set email config
   become: true

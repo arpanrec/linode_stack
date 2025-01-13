@@ -24,7 +24,7 @@
       cs_nc_admin_user: "{{ __nextcloud_app_details.admin_user }}"
       cs_nc_admin_password: "{{ __nextcloud_app_details.admin_password }}"
   vars:
-      __nextcloud_app_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+      __nextcloud_app_details: "{{ lookup('lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
           + '/nextcloud') }}"
 
 - name: Nextcloud | Admin | Create Admin User if not exists
@@ -62,7 +62,7 @@
       cs_nc_mail_from_address: "{{ __nextcloud_server_bot_email.from_address }}"
       cs_nc_mail_domain: "{{ __nextcloud_server_bot_email.domain }}"
   vars:
-      __nextcloud_server_bot_email: "{{ lookup('home_lab_secrets', 'secret/bot_email') }}"
+      __nextcloud_server_bot_email: "{{ lookup('lab_secrets', 'secret/bot_email') }}"
 
 - name: Nextcloud | Admin | Set admin user properties
   become: true

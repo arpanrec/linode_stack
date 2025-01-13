@@ -5,9 +5,9 @@
 
 - name: Database | Elasticsearch | Set config facts
   ansible.builtin.set_fact:
-      cs_elasticsearch_servlet_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_elasticsearch_cluster_name + '/'
+      cs_elasticsearch_servlet_port: "{{ lookup('lab_secrets', 'secret/' + cs_elasticsearch_cluster_name + '/'
           + inventory_hostname + '/elasticsearch').servlet_port }}"
-      cs_elasticsearch_transport_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_elasticsearch_cluster_name + '/'
+      cs_elasticsearch_transport_port: "{{ lookup('lab_secrets', 'secret/' + cs_elasticsearch_cluster_name + '/'
           + inventory_hostname + '/elasticsearch').transport_port }}"
       cs_elasticsearch_root_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
@@ -15,7 +15,7 @@
 - name: Database | Elasticsearch | Write the Password to Vault
   become: false
   delegate_to: localhost
-  home_lab_secrets:
+  secrets_action:
       key: "managed-secrets/elasticsearch/clusters/{{ cs_elasticsearch_cluster_name }}/servers/{{
           inventory_hostname }}/config"
       action: write
