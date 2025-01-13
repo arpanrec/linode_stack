@@ -266,10 +266,11 @@
 
 - name: Database | Postgres | Create User and Password
   ansible.builtin.set_fact:
-      cs_postgres_maintenance_password: "{{ lookup('lab_secrets', 'managed-secrets/postgresql/clusters/'
-          + cs_postgres_cluster_name + '/servers/' + inventory_hostname + '/config').maintenance_password }}"
-      cs_postgres_maintenance_user: "{{ lookup('lab_secrets', 'managed-secrets/postgresql/clusters/'
-          + cs_postgres_cluster_name + '/servers/' + inventory_hostname + '/config').maintenance_user }}"
+      cs_postgres_maintenance_password: "{{ __pg_secret.maintenance_password }}"
+      cs_postgres_maintenance_user: "{{ __pg_secret.maintenance_user }}"
+  vars:
+      __pg_secret: "{{ lookup('lab_secrets', 'managed-secrets/postgresql/clusters/'
+          + cs_postgres_cluster_name + '/servers/' + inventory_hostname + '/config') }}"
 
 - name: Database | Postgres | Start Container
   community.docker.docker_container:
