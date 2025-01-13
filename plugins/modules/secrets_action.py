@@ -65,9 +65,6 @@ def run_module() -> None:
     """
     Ansible main module
     """
-    # define available arguments/parameters a user can pass to the module
-    __secret_dir = "foo.secret"
-    __data_file = "data.json"
     module_args = {
         "key": {"type": "str", "required": True},
         "action": {"type": "str", "required": False, "default": "get", "choices": ["read", "write", "delete"]},
