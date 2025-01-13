@@ -117,7 +117,7 @@
   ansible.builtin.set_fact:
       cs_nc_db_user: "{{ __nextcloud_db_details.user }}"
       cs_nc_db_password: "{{ __nextcloud_db_details.password }}"
-      cs_nc_db_host: "{{ __nextcloud_db_details.fqdn }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.host }}"
       cs_nc_db_port: "{{ __nextcloud_db_details.server_port }}"
   vars:
       __nextcloud_db_details: "{{ lookup('home_lab_secrets', 'managed-secrets/postgresql/clusters/'
