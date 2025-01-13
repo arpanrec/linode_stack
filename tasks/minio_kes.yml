@@ -1,13 +1,18 @@
 ---
-- name: MinIO | KES | Include common crypt mount
-  ansible.builtin.include_tasks:
-      file: tasks/common/crypt_mount.yml
-  vars:
-      cs_crypt_mount_vault_id: "{{ cs_minio_kes_external_disk_id }}"
-      cs_crypt_machine_cluster: "{{ cs_minio_kes_cluster_name }}"
+# - name: MinIO | KES | Include common crypt mount
+#   ansible.builtin.include_tasks:
+#       file: tasks/common/crypt_mount.yml
+#   vars:
+#       cs_crypt_mount_vault_id: "{{ cs_minio_kes_external_disk_id }}"
+#       cs_crypt_machine_cluster: "{{ cs_minio_kes_cluster_name }}"
 
 - name: MinIO | KES | Gather Facts
   ansible.builtin.setup:
+
+- name: MinIO | KES | Remove existing container
+  community.general.docker_container:
+      name: "{{ cs_minio_kes_container_name }}"
+      state: absent
 
 - name: MinIO | KES | Create group
   ansible.builtin.group:
@@ -37,39 +42,8 @@
       - "{{ cs_minio_kes_working_dir }}"
       - "{{ cs_minio_kes_cert_dir }}"
       - "{{ cs_minio_kes_data_dir }}"
-      - "{{ cs_minio_kes_cert_file | dirname }}"
-      - "{{ cs_minio_kes_cert_key_file | dirname }}"
-      - "{{ cs_minio_kes_cert_id_file | dirname }}"
-      - "{{ cs_minio_kes_config_file | dirname }}"
 
-- name: MinIO | KES | Create group
-  ansible.builtin.group:
-      name: "{{ cs_minio_kes_group_name }}"
-      state: present
-      system: true
-  register: minio_kes_tmp_group_creation
-
-- name: MinIO | KES | Create User
-  ansible.builtin.user:
-      name: "{{ cs_minio_kes_user_name }}"
-      group: "{{ cs_minio_kes_group_name }}"
-      state: present
-      create_home: false
-      system: true
-      shell: /bin/false
-  register: minio_kes_tmp_user_creation
-
-- name: MinIO | KES | Download binary
-  ansible.builtin.get_url:
-      dest: "/usr/local/bin/kes"
-      mode: "0755"
-      owner: root
-      group: root
-      checksum: "sha256:{{ cs_minio_kes_bin_info_map[ansible_architecture]['sha256sum'][cs_minio_kes_version] }}"
-      url: "https://github.com/minio/kes/releases/download/{{ cs_minio_kes_version }}/kes-linux\
-          -{{ cs_minio_kes_bin_info_map[ansible_architecture]['cs_minio_kes_arch'] }}"
-
-- name: MinIO | KES | Write server private key
+- name: MinIO | KES | Create server private key
   community.crypto.openssl_privatekey:
       path: "{{ cs_minio_kes_cert_key_file }}"
       type: RSA
@@ -78,7 +52,7 @@
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
 
-- name: MinIO | KES | Write server CSR
+- name: MinIO | KES | Create server CSR
   community.crypto.openssl_csr:
       path: "{{ cs_minio_kes_cert_key_file }}.csr"
       privatekey_path: "{{ cs_minio_kes_cert_key_file }}"
@@ -97,7 +71,7 @@
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
 
-- name: MinIO | KES | Write server Certificate
+- name: MinIO | KES | Create server Certificate
   community.crypto.x509_certificate:
       path: "{{ cs_minio_kes_cert_file }}"
       csr_path: "{{ cs_minio_kes_cert_key_file }}.csr"
@@ -139,7 +113,7 @@
       subject_alt_name_critical: true
   register: __minio_kes_tmp_admin_client_cert_csr
 
-- name: MinIO | KES | Admin Client Certificate | Write server Certificate
+- name: MinIO | KES | Admin Client Certificate | Get Certificate
   community.crypto.x509_certificate_pipe:
       csr_content: "{{ __minio_kes_tmp_admin_client_cert_csr.csr }}"
       ownca_content: "{{ root_ca_cert_pem }}"
@@ -148,28 +122,51 @@
       provider: ownca
   register: __minio_kes_tmp_admin_client_cert
 
-- name: MinIO | KES | Create a tmp file for Admin Client Certificate
+- name: MinIO | KES | Admin Client Certificate | Create a tmp file for Admin Client Certificate
   ansible.builtin.tempfile:
       state: file
   register: kes_tmp_admin_client_cert_tmp_file
 
-- name: MinIO | KES | Write Admin Client Certificate
+- name: MinIO | KES | Admin Client Certificate | Write Admin Client Certificate
   ansible.builtin.copy:
-      content: "{{ __minio_kes_tmp_admin_client_cert.certificate }}\n{{ root_ca_cert_pem }}"
+      content: "{{ __minio_kes_tmp_admin_client_cert.certificate }}"
       dest: "{{ kes_tmp_admin_client_cert_tmp_file.path }}"
       owner: "{{ cs_minio_kes_user_name }}"
       group: "{{ cs_minio_kes_group_name }}"
       mode: "0600"
 
-- name: MinIO | KES | Get Admin Key Id
-  ansible.builtin.command:
-      cmd: "/usr/local/bin/kes identity of {{ kes_tmp_admin_client_cert_tmp_file.path }}"
-  register: minio_kes_tmp_admin_key_id
-  changed_when: false
+- name: MinIO | KES | Admin Client Certificate | Get Key ID
+  become: true
+  community.docker.docker_container:
+      name: "get-kes-admin-key-id-tmp"
+      recreate: true
+      image: "docker.io/minio/kes:{{ cs_minio_kes_version }}"
+      user: "{{ minio_kes_tmp_user_creation.uid }}:{{ minio_kes_tmp_group_creation.gid }}"
+      auto_remove: false
+      restart: false
+      entrypoint: ""
+      working_dir: /
+      detach: false
+      volumes:
+          - "{{ kes_tmp_admin_client_cert_tmp_file.path }}:{{ kes_tmp_admin_client_cert_tmp_file.path }}"
+      command:
+          - "/bin/bash"
+          - "-c"
+          - "/kes identity of '{{ kes_tmp_admin_client_cert_tmp_file.path }}'"
+      env:
+          TZ: Asia/Kolkata
+          PUID: "{{ minio_kes_tmp_user_creation.uid }}"
+          PGID: "{{ minio_kes_tmp_group_creation.gid }}"
+  register: minio_kes_tmp_admin_client_cert_key_id
 
-- name: MinIO | KES | Remove Temp File
+- name: MinIO | KES | Admin Client Certificate | Remove Temp File
   ansible.builtin.file:
       path: "{{ kes_tmp_admin_client_cert_tmp_file.path }}"
+      state: absent
+
+- name: MinIO | KES | Admin Client Certificate | Temp container
+  community.general.docker_container:
+      name: "get-kes-admin-key-id-tmp"
       state: absent
 
 - name: MinIO | KES | Write KES Details Vault
@@ -222,7 +219,7 @@
                       - /v1/log/error
           keystore:
               fs:
-                  path: "cs_minio_kes_data_dir"
+                  path: "{{ cs_minio_kes_data_dir }}"
 
 - name: MinIO | KES | Write Config
   ansible.builtin.copy:
@@ -232,13 +229,26 @@
       group: "{{ cs_minio_kes_group_name }}"
       mode: "0640"
 
-- name: MinIO | KES | Create Systemd Service
-  ansible.builtin.template:
-      src: "templates/minio-kes/{{ cs_minio_kes_systemd_service_name }}.j2"
-      dest: "/etc/systemd/system/{{ cs_minio_kes_systemd_service_name }}"
-      owner: root
-      group: root
-      mode: "0644"
+- name: MinIO | KES | Start Container
+  community.docker.docker_container:
+      name: "{{ cs_minio_kes_container_name }}"
+      image: "docker.io/minio/kes:{{ cs_minio_kes_version }}"
+      user: "{{ cs_minio_kes_user_name.uid }}:{{ cs_minio_kes_group_name.gid }}"
+      auto_remove: false
+      detach: true
+      restart_policy: unless-stopped
+      hostname: "{{ ansible_hostname }}"
+      networks:
+          - name: "{{ pv_cs_minio_docker_network_name }}"
+      volumes:
+          - "{{ pv_cs_minio_kes_working_dir }}:{{ pv_cs_minio_kes_working_dir }}"
+      command:
+          - server
+          - --config={{ cs_minio_kes_config_file }}
+      env:
+          TZ: Asia/Kolkata
+          PUID: "{{ cs_minio_kes_user_name.uid }}"
+          PGID: "{{ cs_minio_kes_group_name.gid }}"
 
 - name: MinIO | KES | Enable UFW
   community.general.ufw:
@@ -247,15 +257,6 @@
       proto: tcp
       state: enabled
       comment: "Allow KES port, Managed by Ansible home-lab playbook."
-
-- name: MinIO | KES | Start Systemd Service
-  ansible.builtin.systemd_service:
-      name: "{{ cs_minio_kes_systemd_service_name }}"
-      state: restarted
-      daemon_reload: true
-      daemon_reexec: true
-      enabled: true
-      force: true
 
 - name: MinIO | KES | Test | Create a temp file for client certificate
   ansible.builtin.tempfile:
