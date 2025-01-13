@@ -30,7 +30,7 @@ class LookupModule(LookupBase):
         List[str]: A list containing the single term provided.
     """
 
-    __secret_dir = "foo.secret"
+    __data_dir = "/home/arpan/google-drive/home_lab_secrets"
     __data_file = "data.json"
 
     def run(
@@ -49,7 +49,7 @@ class LookupModule(LookupBase):
         if len(key) == 0:
             raise AnsibleLookupError("Vault key should not be empty")
 
-        data_file_path = os.path.join(self.__secret_dir, key, self.__data_file)
+        data_file_path = os.path.join(self.__data_dir, key, self.__data_file)
         with open(data_file_path, "r", encoding="utf-8") as data_file:
             data: Dict[str, Any] = json.load(data_file)
 

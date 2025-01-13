@@ -69,7 +69,7 @@ def run_module() -> None:
     Ansible main module
     """
     # define available arguments/parameters a user can pass to the module
-    __secret_dir = "foo.secret"
+    __data_dir = "/home/arpan/google-drive/home_lab_secrets"
     __data_file = "data.json"
     module_args = {
         "key": {"type": "str", "required": True},
@@ -92,14 +92,14 @@ def run_module() -> None:
     if action == "read":
         if value is not None:
             module.fail_json(msg="Value is not required for get action")
-        data_file_path = os.path.join(__secret_dir, key, __data_file)
+        data_file_path = os.path.join(__data_dir, key, __data_file)
         with open(data_file_path, "r", encoding="utf-8") as data_file:
             data: Dict[str, Any] = json.load(data_file)
         module.exit_json(changed=False, secret=data)
     elif action == "write":
         if value is None:
             module.fail_json(msg="Value is required for update action")
-        data_file_dir = os.path.join(__secret_dir, key)
+        data_file_dir = os.path.join(__data_dir, key)
         if not os.path.exists(data_file_dir):
             os.makedirs(data_file_dir)
         data_file_path = os.path.join(data_file_dir, __data_file)
@@ -109,7 +109,7 @@ def run_module() -> None:
     elif action == "delete":
         if value is not None:
             module.fail_json(msg="Value is not required for delete action")
-        data_file_dir = os.path.join(__secret_dir, key)
+        data_file_dir = os.path.join(__data_dir, key)
         if os.path.exists(data_file_dir):
             os.remove(data_file_dir)
         module.exit_json(changed=True, secret=None)
