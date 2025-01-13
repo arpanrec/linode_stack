@@ -36,6 +36,11 @@
       cs_minio_s3_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.host }}:\
           {{ __minio_server_kes_secret_dict.port }}"
 
+- name: MinIO | S3 | Remove existing container
+  community.general.docker_container:
+      name: "{{ cs_minio_s3_container_name }}"
+      state: absent
+
 - name: MinIO | S3 | Create group
   ansible.builtin.group:
       name: "{{ cs_minio_s3_group_name }}"
@@ -52,17 +57,6 @@
       system: true
       shell: /bin/false
   register: minio_server_tmp_user_creation
-
-- name: MinIO | S3 | Download binary
-  ansible.builtin.get_url:
-      dest: "/usr/local/bin/minio"
-      mode: "0755"
-      owner: root
-      group: root
-      checksum: "sha256:{{ cs_minio_s3_bin_info_map[ansible_architecture]['sha256sum'][cs_minio_s3_version] }}"
-      url: "https://dl.min.io/server/minio/release/linux-\
-          {{ cs_minio_s3_bin_info_map[ansible_architecture]['cs_minio_s3_arch'] }}/archive/minio.\
-          {{ cs_minio_s3_version }}"
 
 - name: MinIO | S3 | Create Directories
   ansible.builtin.file:
@@ -162,7 +156,7 @@
   become: false
   delegate_to: localhost
   secrets_action:
-      key: "managed-secrets/minio/clusters/{{ cs_minio_s3_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      key: "managed-secrets/minio-s3/clusters/{{ cs_minio_s3_cluster_name }}/servers/{{ inventory_hostname }}/config"
       action: write
       value:
           root_user: "{{ minio_server_root_user }}"
@@ -190,12 +184,34 @@
           MINIO_ROOT_PASSWORD={{ minio_server_root_password }}
           MINIO_REGION=us-east-1
           MINIO_VOLUMES={{ cs_minio_s3_data_dir }}
-          MINIO_OPTS="--address ':{{ cs_minio_s3_port }}' --console-address ':{{
-            cs_minio_s3_console_port }}' --certs-dir {{ cs_minio_s3_certs_dir }}"
       dest: "{{ cs_minio_s3_env_file }}"
       owner: "{{ cs_minio_s3_user_name }}"
       group: "{{ cs_minio_s3_group_name }}"
       mode: "0640"
+
+- name: MinIO | S3 | Start container
+  community.general.docker_container:
+      name: "{{ cs_minio_s3_container_name }}"
+      image: "docker.io/minio/minio:{{ cs_minio_s3_version }}"
+      hostname: "{{ ansible_hostname }}"
+      state: started
+      detach: true
+      auto_remove: false
+      restart_policy: unless-stopped
+      env_file: "{{ cs_minio_s3_env_file }}"
+      volumes:
+          - "{{ cs_minio_s3_data_dir }}:{{ cs_minio_s3_data_dir }}"
+          - "{{ cs_minio_s3_certs_dir }}:{{ cs_minio_s3_certs_dir }}"
+      ports:
+          - "{{ cs_minio_s3_port }}:{{ cs_minio_s3_port }}"
+          - "{{ cs_minio_s3_console_port }}:{{ cs_minio_s3_console_port }}"
+      user: "{{ minio_server_tmp_user_creation.uid }}:{{ minio_server_tmp_group_creation.gid }}"
+      env:
+          TZ: Asia/Kolkata
+          PUID: "{{ minio_server_tmp_user_creation.uid }}"
+          PGID: "{{ minio_server_tmp_group_creation.gid }}"
+      command: server --address ':{{ cs_minio_s3_port }}' --console-address
+          ':{{ cs_minio_s3_console_port }}' --certs-dir {{ cs_minio_s3_certs_dir }}
 
 - name: MinIO | S3 | Enable UFW
   community.general.ufw:
@@ -209,23 +225,6 @@
         comment: "S3"
       - port: "{{ cs_minio_s3_console_port }}"
         comment: "Console"
-
-- name: MinIO | S3 | Create Systemd Service
-  ansible.builtin.template:
-      src: "templates/minio/{{ cs_minio_s3_systemd_service }}.j2"
-      dest: "/etc/systemd/system/{{ cs_minio_s3_systemd_service }}"
-      owner: root
-      group: root
-      mode: "0644"
-
-- name: MinIO | S3 | Start Systemd Service
-  ansible.builtin.systemd_service:
-      name: "{{ cs_minio_s3_systemd_service }}"
-      state: restarted
-      daemon_reload: true
-      daemon_reexec: true
-      enabled: true
-      force: true
 
 - name: MinIO | S3 | Wait for Minio to start
   ansible.builtin.uri:

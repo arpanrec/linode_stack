@@ -215,7 +215,6 @@
       - name: Nginx Proxy Manager
         ansible.builtin.import_tasks:
             file: tasks/nginx_proxy_manager/main.yml
-
 # - name: Collabora
 #   hosts: rb4-m2
 #   become: false
