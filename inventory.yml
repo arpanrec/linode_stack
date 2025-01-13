@@ -1,7 +1,7 @@
 ---
 all:
     vars:
-        ansible_host: "{{ lookup('home_lab_secrets', 'secret/' + cs_cluster_name + '/' + inventory_hostname).host }}"
+        ansible_host: "{{ lookup('lab_secrets', 'secret/' + cs_cluster_name + '/' + inventory_hostname).host }}"
     children:
         patchservers:
             hosts:

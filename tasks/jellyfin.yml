@@ -17,7 +17,7 @@
       cs_jellyfin_qbittorrent_nox_password: "{{ __jellyfin_vault_details.qbittorrent_password }}"
       cs_jellyfin_qbittorrent_nox_username: "{{ __jellyfin_vault_details.qbittorrent_username }}"
   vars:
-      __jellyfin_vault_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_jellyfin_cluster
+      __jellyfin_vault_details: "{{ lookup('lab_secrets', 'secret/' + cs_jellyfin_cluster
           + '/' + inventory_hostname + '/jellyfin') }}"
 
 - name: Jellyfin | Create Group
@@ -657,7 +657,7 @@
         option: "AutoDeleteAddedTorrentFile"
         value: "Never"
   vars:
-      __qbittorrent_server_bot_email: "{{ lookup('home_lab_secrets', 'secret/bot_email') }}"
+      __qbittorrent_server_bot_email: "{{ lookup('lab_secrets', 'secret/bot_email') }}"
 
 - name: Jellyfin | QBittorrent Nox | Start Container
   ansible.builtin.command:

@@ -18,7 +18,7 @@
       cs_nc_redis_password: "{{ __nextcloud_redis_details.admin_password }}"
       cs_nc_redis_host: "{{ __nextcloud_redis_details.host }}"
   vars:
-      __nextcloud_redis_details: "{{ lookup('home_lab_secrets', 'managed-secrets/redis/clusters/'
+      __nextcloud_redis_details: "{{ lookup('lab_secrets', 'managed-secrets/redis/clusters/'
           + cs_nc_redis_cluster_name + '/servers/' + cs_nc_redis_cluster_node + '/config') }}"
 
 - name: Nextcloud | Cache | Redis | Write client private key

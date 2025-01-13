@@ -16,7 +16,7 @@
       cs_minio_s3_console_port: "{{ __minio_details.console_port }}"
       cs_minio_s3_region: "{{ __minio_details.region }}"
   vars:
-      __minio_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_minio_s3_cluster_name + '/'
+      __minio_details: "{{ lookup('lab_secrets', 'secret/' + cs_minio_s3_cluster_name + '/'
           + inventory_hostname + '/minio') }}"
 
 - name: MinIO | S3 | Assert | Set cs_minio_s3_kes_cluster_name and cs_minio_s3_kes_cluster_node_name
@@ -28,7 +28,7 @@
 
 - name: MinIO | S3 | Set __minio_server_kes_secret_dict
   ansible.builtin.set_fact:
-      __minio_server_kes_secret_dict: "{{ lookup('home_lab_secrets', 'managed-secrets/minio-kes/clusters/'
+      __minio_server_kes_secret_dict: "{{ lookup('lab_secrets', 'managed-secrets/minio-kes/clusters/'
           + cs_minio_kes_cluster_name + '/servers/' + cs_minio_s3_kes_cluster_node_name + '/config') }}"
 
 - name: MinIO | S3 | Set cs_minio_s3_kes_endpoint
@@ -161,7 +161,7 @@
 - name: MinIO | S3 | Write the Password to Vault
   become: false
   delegate_to: localhost
-  home_lab_secrets:
+  secrets_action:
       key: "managed-secrets/minio/clusters/{{ cs_minio_s3_cluster_name }}/servers/{{ inventory_hostname }}/config"
       action: write
       value:

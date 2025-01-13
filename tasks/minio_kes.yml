@@ -175,7 +175,7 @@
 - name: MinIO | KES | Write KES Details Vault
   become: false
   delegate_to: localhost
-  home_lab_secrets:
+  secrets_action:
       key: "managed-secrets/minio-kes/clusters/{{ cs_minio_kes_cluster_name }}/servers/{{ inventory_hostname }}/config"
       action: write
       value:

@@ -6,11 +6,8 @@ Ansible Module for managing secrets.
 # MIT (see LICENSE or https://en.wikipedia.org/wiki/MIT_License)
 from __future__ import absolute_import, division, print_function
 
-import json
-import os
-from typing import Any, Dict
-
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
+from home_lab_secrets import secret_actions
 
 # pylint: disable=C0103
 __metaclass__ = type
@@ -18,7 +15,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: home_lab_secrets
+module: secrets_action
 
 short_description: ""
 
@@ -50,7 +47,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create or Update a repository secret
-  home_lab_secrets:
+  secrets_action:
       key: "/secret/project/key"
       action: "update"
       value: "my_secret_value"
@@ -82,39 +79,11 @@ def run_module() -> None:
     action = module.params.get("action", "get")
     value = module.params.get("value", None)
 
-    if key.startswith("/"):
-        module.fail_json(msg="Key cannot start with /")
-    if key.endswith("/"):
-        module.fail_json(msg="Key cannot end with /")
-    if key == "":
-        module.fail_json(msg="Key cannot be empty")
-
-    if action == "read":
-        if value is not None:
-            module.fail_json(msg="Value is not required for get action")
-        data_file_path = os.path.join(__secret_dir, key, __data_file)
-        with open(data_file_path, "r", encoding="utf-8") as data_file:
-            data: Dict[str, Any] = json.load(data_file)
-        module.exit_json(changed=False, secret=data)
-    elif action == "write":
-        if value is None:
-            module.fail_json(msg="Value is required for update action")
-        data_file_dir = os.path.join(__secret_dir, key)
-        if not os.path.exists(data_file_dir):
-            os.makedirs(data_file_dir)
-        data_file_path = os.path.join(data_file_dir, __data_file)
-        with open(data_file_path, "w", encoding="utf-8") as data_file:
-            json.dump(value, data_file, indent=4, sort_keys=True)
-        module.exit_json(changed=True, secret=value)
-    elif action == "delete":
-        if value is not None:
-            module.fail_json(msg="Value is not required for delete action")
-        data_file_dir = os.path.join(__secret_dir, key)
-        if os.path.exists(data_file_dir):
-            os.remove(data_file_dir)
-        module.exit_json(changed=True, secret=None)
-    else:
-        module.fail_json(msg="Invalid action, must be one of read, write, delete")
+    try:
+        data = secret_actions(key, action, value)
+        module.exit_json(changed=data["changed"], secret=data["secret"])
+    except ValueError as e:
+        module.fail_json(msg=f"Error retrieving secret: {e}", changed=False)
 
 
 def main() -> None:

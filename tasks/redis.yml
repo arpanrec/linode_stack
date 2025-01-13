@@ -4,7 +4,7 @@
 
 - name: Database | Redis | Set config facts
   ansible.builtin.set_fact:
-      cs_redis_tls_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_redis_cluster_name + '/'
+      cs_redis_tls_port: "{{ lookup('lab_secrets', 'secret/' + cs_redis_cluster_name + '/'
           + inventory_hostname + '/redis').tls_port }}"
       cs_redis_admin_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
@@ -14,7 +14,7 @@
 - name: Database | Redis | Create Database users and passwords in Vault
   become: false
   delegate_to: localhost
-  home_lab_secrets:
+  secrets_action:
       key: "managed-secrets/redis/clusters/{{ cs_redis_cluster_name }}/servers/{{ inventory_hostname }}/config"
       action: write
       value:
