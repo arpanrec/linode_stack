@@ -1,10 +1,10 @@
 ---
-# - name: MinIO | KES | Include common crypt mount
-#   ansible.builtin.include_tasks:
-#       file: tasks/common/crypt_mount.yml
-#   vars:
-#       cs_crypt_mount_vault_id: "{{ cs_minio_kes_external_disk_id }}"
-#       cs_crypt_machine_cluster: "{{ cs_minio_kes_cluster_name }}"
+- name: MinIO | KES | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_minio_kes_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_minio_kes_cluster_name }}"
 
 - name: MinIO | KES | Gather Facts
   ansible.builtin.setup:
@@ -197,7 +197,7 @@
               auth: "on"
               ca: "{{ cs_minio_kes_cert_ca }}"
           admin:
-              identity: "{{ minio_kes_tmp_admin_key_id.stdout }}"
+              identity: "{{ minio_kes_tmp_admin_client_cert_key_id.container.Output }}"
           log:
               error: "on"
               audit: "on"
@@ -233,22 +233,23 @@
   community.docker.docker_container:
       name: "{{ cs_minio_kes_container_name }}"
       image: "docker.io/minio/kes:{{ cs_minio_kes_version }}"
-      user: "{{ cs_minio_kes_user_name.uid }}:{{ cs_minio_kes_group_name.gid }}"
+      user: "{{ minio_kes_tmp_user_creation.uid }}:{{ minio_kes_tmp_group_creation.gid }}"
       auto_remove: false
       detach: true
       restart_policy: unless-stopped
+      ports:
+          - "{{ cs_minio_kes_port }}:{{ cs_minio_kes_port }}"
       hostname: "{{ ansible_hostname }}"
-      networks:
-          - name: "{{ pv_cs_minio_docker_network_name }}"
       volumes:
-          - "{{ pv_cs_minio_kes_working_dir }}:{{ pv_cs_minio_kes_working_dir }}"
+          - "{{ cs_minio_kes_working_dir }}:{{ cs_minio_kes_working_dir }}"
+          - "{{ cs_minio_kes_data_dir }}:{{ cs_minio_kes_data_dir }}:rw"
       command:
           - server
           - --config={{ cs_minio_kes_config_file }}
       env:
           TZ: Asia/Kolkata
-          PUID: "{{ cs_minio_kes_user_name.uid }}"
-          PGID: "{{ cs_minio_kes_group_name.gid }}"
+          PUID: "{{ minio_kes_tmp_user_creation.uid }}"
+          PGID: "{{ minio_kes_tmp_group_creation.gid }}"
 
 - name: MinIO | KES | Enable UFW
   community.general.ufw:

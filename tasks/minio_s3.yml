@@ -156,7 +156,7 @@
   become: false
   delegate_to: localhost
   secrets_action:
-      key: "managed-secrets/minio/clusters/{{ cs_minio_s3_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      key: "managed-secrets/minio-s3/clusters/{{ cs_minio_s3_cluster_name }}/servers/{{ inventory_hostname }}/config"
       action: write
       value:
           root_user: "{{ minio_server_root_user }}"
@@ -193,6 +193,7 @@
   community.general.docker_container:
       name: "{{ cs_minio_s3_container_name }}"
       image: "docker.io/minio/minio:{{ cs_minio_s3_version }}"
+      hostname: "{{ ansible_hostname }}"
       state: started
       detach: true
       auto_remove: false
