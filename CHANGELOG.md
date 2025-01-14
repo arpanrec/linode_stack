@@ -1,6 +1,6 @@
-## [3.3.4](https://github.com/arpanrec/home-lab/compare/3.3.3...3.3.4) (2025-01-14)
+## [3.3.5](https://github.com/arpanrec/home-lab/compare/3.3.4...3.3.5) (2025-01-14)
 
 
 ### Bug Fixes
 
-* reorganize Elasticsearch configuration and update variable names for clarity ([e6d869d](https://github.com/arpanrec/home-lab/commit/e6d869d8b5e305d6c23dd0243a6c84ba70b35861))
+* add logging configuration for Jellyfin container ([1b7bcc5](https://github.com/arpanrec/home-lab/commit/1b7bcc53b111f456559fd3ccc295dec423eaae8e))
