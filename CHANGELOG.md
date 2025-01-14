@@ -1,6 +1,6 @@
-## [3.3.3](https://github.com/arpanrec/home-lab/compare/3.3.2...3.3.3) (2025-01-14)
+## [3.3.4](https://github.com/arpanrec/home-lab/compare/3.3.3...3.3.4) (2025-01-14)
 
 
 ### Bug Fixes
 
-* move imaginary Docker container configuration to a separate file and restore Redis timeout setting ([2263be9](https://github.com/arpanrec/home-lab/commit/2263be9d7cce6971788210f8d4a64ee608c705a2))
+* reorganize Elasticsearch configuration and update variable names for clarity ([e6d869d](https://github.com/arpanrec/home-lab/commit/e6d869d8b5e305d6c23dd0243a6c84ba70b35861))
