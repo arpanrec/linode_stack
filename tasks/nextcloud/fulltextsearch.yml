@@ -54,7 +54,7 @@
 
 - name: Nextcloud | Full Text Search | Elasticsearch | Wait for service to start
   ansible.builtin.uri:
-      url: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{ ansible_all_ipv4_addresses[0] }}:{{
+      url: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@127.0.0.1:{{
           cs_nc_fts_elasticsearch_servlet_port }}"
       method: GET
       status_code: [200]
@@ -99,15 +99,6 @@
       src: templates/nc/{{ cs_nc_fts_elasticsearch_systemd }}.service.j2
       mode: "0644"
 
-- name: Nextcloud | Full Text Search | Set db fact
-  ansible.builtin.set_fact:
-      cs_nc_fts_elasticsearch_servlet_port: "{{ __nextcloud_fts_details.servlet_port }}"
-      cs_nc_fts_elasticsearch_password: "{{ __nextcloud_fts_details.root_password }}"
-      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.host }}"
-  vars:
-      __nextcloud_fts_details: "{{ lookup('lab_secrets', 'managed-secrets/elasticsearch/clusters/' +
-          cs_nc_elasticsearch_cluster_name + '/servers/' + cs_nc_elasticsearch_cluster_node + '/config') }}"
-
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
       content: "{{ cs_nc_app_config_fulltextsearch | to_nice_json }}"
@@ -123,8 +114,8 @@
                   types: ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
-                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{
-                      cs_nc_fts_elasticsearch_host }}:{{ cs_nc_fts_elasticsearch_servlet_port }}"
+                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@127.0.0.1:{{
+                      cs_nc_fts_elasticsearch_servlet_port }}"
                   elastic_index: "{{ cs_nc_fts_elasticsearch_index_name }}"
                   elastic_type: "file"
                   analyzer_tokenizer: "standard"
