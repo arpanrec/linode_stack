@@ -29,7 +29,6 @@ cs_nc_logtimezone: Asia/Kolkata
 cs_nc_default_phone_region: IN
 cs_nc_fail2ban_log_file: "{{ cs_nc_data_dir }}/fail2ban.log"
 cs_nc_php_version: 8.3
-cs_nc_redis_timeout: 0.5
 
 cs_nc_files_scanner_systemd_timer_name: nextcloud-scanfiles
 
@@ -38,14 +37,5 @@ cs_nc_email_regex: (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~
 cs_nc_db_docker_image: docker.io/library/postgres
 
 cs_nc_db_database: nextcloud
-
-cs_nc_imaginary_docker_container_name: nextcloud-imaginary
-cs_nc_imaginary_docker_image: docker.io/nextcloud/aio-imaginary
-cs_nc_imaginary_docker_image_tag: latest
-cs_nc_imaginary_certs_dir: "{{ cs_nc_cert_dir }}/imaginary"
-cs_nc_imaginary_privkey_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.key"
-cs_nc_imaginary_cert_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.crt"
-cs_nc_imaginary_fullchain_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.fullchain.pem"
-cs_nc_imaginary_port: 9000
 
 cs_nc_protocol: https

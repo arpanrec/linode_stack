@@ -14,3 +14,4 @@ cs_nc_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
 cs_nc_redis_privkey_file: "{{ cs_nc_redis_cert_dir }}/redis.key"
 cs_nc_redis_cert_file: "{{ cs_nc_redis_cert_dir }}/redis.crt"
 cs_nc_redis_ca_file: "{{ cs_nc_redis_cert_dir }}/redis.ca"
+cs_nc_redis_timeout: 0.5
