@@ -15,9 +15,9 @@
       state: directory
       mode: "0755"
   with_items:
-      - "{{ cs_nc_cache_redis_dir }}"
-      - "{{ cs_nc_cache_redis_data_dir }}"
-      - "{{ cs_nc_cache_redis_certs_dir }}"
+      - "{{ cs_nc_cache_redis_server_dir }}"
+      - "{{ cs_nc_cache_redis_server_data_dir }}"
+      - "{{ cs_nc_cache_redis_server_certs_dir }}"
 
 - name: Nextcloud | Cache | Redis | Stop old container
   community.docker.docker_container:
@@ -27,7 +27,7 @@
 
 - name: Nextcloud | Cache | Redis | Write private key
   community.crypto.openssl_privatekey:
-      path: "{{ cs_nc_cache_redis_certs_privkey_file }}"
+      path: "{{ cs_nc_cache_redis_server_certs_privkey_file }}"
       passphrase: "{{ cs_redis_tls_privkey_pass }}"
       type: RSA
       size: 4096
@@ -36,8 +36,8 @@
 
 - name: Nextcloud | Cache | Redis | Write CSR
   community.crypto.openssl_csr:
-      path: "{{ cs_nc_cache_redis_certs_privkey_file }}.csr"
-      privatekey_path: "{{ cs_nc_cache_redis_certs_privkey_file }}"
+      path: "{{ cs_nc_cache_redis_server_certs_privkey_file }}.csr"
+      privatekey_path: "{{ cs_nc_cache_redis_server_certs_privkey_file }}"
       privatekey_passphrase: "{{ cs_redis_tls_privkey_pass }}"
       common_name: "{{ ansible_hostname }}"
       basic_constraints: CA:FALSE
@@ -53,8 +53,8 @@
 
 - name: Nextcloud | Cache | Redis | Write Certificate
   community.crypto.x509_certificate:
-      path: "{{ cs_nc_cache_redis_certs_cert_file }}"
-      csr_path: "{{ cs_nc_cache_redis_certs_privkey_file }}.csr"
+      path: "{{ cs_nc_cache_redis_server_certs_cert_file }}"
+      csr_path: "{{ cs_nc_cache_redis_server_certs_privkey_file }}.csr"
       ownca_content: "{{ root_ca_cert_pem }}"
       ownca_privatekey_content: "{{ root_ca_key_pem }}"
       ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
@@ -65,25 +65,25 @@
 - name: Nextcloud | Cache | Redis | Write CA certificate
   ansible.builtin.copy:
       content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_nc_cache_redis_certs_chain_file }}"
+      dest: "{{ cs_nc_cache_redis_server_certs_chain_file }}"
       mode: "0644"
 
 - name: Nextcloud | Cache | Redis | Start container
   community.docker.docker_container:
       name: "{{ cs_nc_cache_redis_container_name }}"
-      image: "{{ cs_nc_cache_redis_docker_image }}:{{ cs_nc_cache_redis_docker_image_tag }}"
+      image: "{{ cs_nc_cache_redis_docker_image }}:{{ cs_nc_cache_redis_docker_tag }}"
       state: started
       restart_policy: unless-stopped
       volumes:
-          - "{{ cs_nc_cache_redis_data_dir }}:/data:rw"
-          - "{{ cs_nc_cache_redis_certs_privkey_file }}:/server.key:ro"
-          - "{{ cs_nc_cache_redis_certs_cert_file }}:/server.crt:ro"
-          - "{{ cs_nc_cache_redis_certs_chain_file }}:/ca.crt:ro"
+          - "{{ cs_nc_cache_redis_server_data_dir }}:/data:rw"
+          - "{{ cs_nc_cache_redis_server_certs_privkey_file }}:/server.key:ro"
+          - "{{ cs_nc_cache_redis_server_certs_cert_file }}:/server.crt:ro"
+          - "{{ cs_nc_cache_redis_server_certs_chain_file }}:/ca.crt:ro"
       ports:
-          - "127.0.0.1:{{ cs_nc_cache_redis_port }}:{{ cs_nc_cache_redis_port }}"
+          - "127.0.0.1:{{ cs_nc_cache_redis_server_port }}:{{ cs_nc_cache_redis_server_port }}"
       command: redis-server --save 20 1 --loglevel warning
           --requirepass "{{ cs_redis_admin_password }}" --port 0
-          --tls-port "{{ cs_nc_cache_redis_port }}" --tls-cert-file /server.crt --tls-auth-clients yes
+          --tls-port "{{ cs_nc_cache_redis_server_port }}" --tls-cert-file /server.crt --tls-auth-clients yes
           --tls-key-file /server.key --tls-ca-cert-file /ca.crt --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
 
 - name: Nextcloud | Cache | Redis | Test | Install Redis Tools
@@ -100,14 +100,14 @@
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
   with_items:
-      - "{{ cs_nc_redis_cert_dir }}"
-      - "{{ cs_nc_redis_privkey_file | dirname }}"
-      - "{{ cs_nc_redis_cert_file | dirname }}"
-      - "{{ cs_nc_redis_ca_file | dirname }}"
+      - "{{ cs_nc_cache_redis_cert_dir }}"
+      - "{{ cs_nc_cache_redis_privkey_file | dirname }}"
+      - "{{ cs_nc_cache_redis_cert_file | dirname }}"
+      - "{{ cs_nc_cache_redis_ca_file | dirname }}"
 
 - name: Nextcloud | Cache | Redis | Write client private key
   community.crypto.openssl_privatekey:
-      path: "{{ cs_nc_redis_privkey_file }}"
+      path: "{{ cs_nc_cache_redis_privkey_file }}"
       type: RSA
       size: 4096
       mode: "0600"
@@ -116,8 +116,8 @@
 
 - name: Nextcloud | Cache | Redis | Write client CSR
   community.crypto.openssl_csr:
-      path: "{{ cs_nc_redis_privkey_file }}.csr"
-      privatekey_path: "{{ cs_nc_redis_privkey_file }}"
+      path: "{{ cs_nc_cache_redis_privkey_file }}.csr"
+      privatekey_path: "{{ cs_nc_cache_redis_privkey_file }}"
       common_name: "{{ ansible_hostname }}"
       basic_constraints: CA:FALSE
       basic_constraints_critical: true
@@ -132,8 +132,8 @@
 
 - name: Nextcloud | Cache | Redis | Write client Certificate
   community.crypto.x509_certificate:
-      path: "{{ cs_nc_redis_cert_file }}"
-      csr_path: "{{ cs_nc_redis_privkey_file }}.csr"
+      path: "{{ cs_nc_cache_redis_cert_file }}"
+      csr_path: "{{ cs_nc_cache_redis_privkey_file }}.csr"
       ownca_content: "{{ root_ca_cert_pem }}"
       ownca_privatekey_content: "{{ root_ca_key_pem }}"
       ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
@@ -145,7 +145,7 @@
 - name: Nextcloud | Cache | Redis | Write client chain certificate
   ansible.builtin.copy:
       content: "{{ root_ca_cert_pem }}"
-      dest: "{{ cs_nc_redis_ca_file }}"
+      dest: "{{ cs_nc_cache_redis_ca_file }}"
       mode: "0600"
       owner: "{{ cs_nc_run_user }}"
       group: "{{ cs_nc_run_group }}"
@@ -153,9 +153,9 @@
 
 - name: Nextcloud | Cache | Redis | Test | Wait for service to start
   ansible.builtin.command:
-      cmd: "redis-cli -a {{ cs_redis_admin_password }} -p {{ cs_nc_cache_redis_port }} --no-auth-warning
-          --tls --cert {{ cs_nc_redis_cert_file }} --key {{ cs_nc_redis_privkey_file }}
-          --cacert {{ cs_nc_redis_ca_file }} ping"
+      cmd: "redis-cli -a {{ cs_redis_admin_password }} -p {{ cs_nc_cache_redis_server_port }} --no-auth-warning
+          --tls --cert {{ cs_nc_cache_redis_cert_file }} --key {{ cs_nc_cache_redis_privkey_file }}
+          --cacert {{ cs_nc_cache_redis_ca_file }} ping"
   changed_when: false
   timeout: 3
   register: redis_ping
@@ -173,13 +173,13 @@
           system:
               redis:
                   host: "127.0.0.1"
-                  port: "{{ cs_nc_cache_redis_port }}"
-                  timeout: "{{ cs_nc_redis_timeout }}"
+                  port: "{{ cs_nc_cache_redis_server_port }}"
+                  timeout: "{{ cs_nc_cache_redis_timeout }}"
                   password: "{{ cs_redis_admin_password }}"
                   ssl_context:
-                      local_cert: "{{ cs_nc_redis_cert_file }}"
-                      local_pk: "{{ cs_nc_redis_privkey_file }}"
-                      cafile: "{{ cs_nc_redis_ca_file }}"
+                      local_cert: "{{ cs_nc_cache_redis_cert_file }}"
+                      local_pk: "{{ cs_nc_cache_redis_privkey_file }}"
+                      cafile: "{{ cs_nc_cache_redis_ca_file }}"
                       verify_peer_name: false
               memcache.local: "\\OC\\Memcache\\APCu"
               memcache.distributed: "\\OC\\Memcache\\Redis"
