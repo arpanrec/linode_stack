@@ -39,11 +39,6 @@ cs_nc_db_docker_image: docker.io/library/postgres
 
 cs_nc_db_database: nextcloud
 
-cs_nc_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
-cs_nc_redis_privkey_file: "{{ cs_nc_redis_cert_dir }}/redis.key"
-cs_nc_redis_cert_file: "{{ cs_nc_redis_cert_dir }}/redis.crt"
-cs_nc_redis_ca_file: "{{ cs_nc_redis_cert_dir }}/redis.ca"
-
 cs_nc_imaginary_docker_container_name: imaginary
 cs_nc_imaginary_docker_image: docker.io/nextcloud/aio-imaginary
 cs_nc_imaginary_docker_image_tag: latest

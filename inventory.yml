@@ -13,9 +13,6 @@ all:
         elasticsearch:
             hosts:
                 rb4-m2:
-        redis:
-            hosts:
-                rb4-m2:
         nextcloud:
             hosts:
                 rb4-m2:

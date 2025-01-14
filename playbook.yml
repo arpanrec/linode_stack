@@ -76,18 +76,6 @@
         ansible.builtin.import_tasks:
             file: tasks/postgres.yml
 
-- name: Redis
-  hosts: redis
-  become: true
-  become_user: root
-  gather_facts: false
-  no_log: "{{ cs_no_log | default('true') }}"
-  tags: never,redis
-  tasks:
-      - name: Redis
-        ansible.builtin.import_tasks:
-            file: tasks/redis.yml
-
 - name: Elasticsearch
   hosts: elasticsearch
   become: true

@@ -1,4 +1,97 @@
 ---
+- name: Nextcloud | Cache | Redis | Gather Facts
+  ansible.builtin.setup:
+
+- name: Nextcloud | Cache | Redis | Set config facts
+  ansible.builtin.set_fact:
+      cs_redis_admin_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+      cs_redis_tls_privkey_pass: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+
+- name: Nextcloud | Cache | Redis | Create data directory
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+  with_items:
+      - "{{ cs_nc_cache_redis_dir }}"
+      - "{{ cs_nc_cache_redis_data_dir }}"
+      - "{{ cs_nc_cache_redis_certs_dir }}"
+
+- name: Nextcloud | Cache | Redis | Stop old container
+  community.docker.docker_container:
+      name: "{{ cs_nc_cache_redis_container_name }}"
+      state: absent
+      force_kill: true
+
+- name: Nextcloud | Cache | Redis | Write private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_nc_cache_redis_certs_privkey_file }}"
+      passphrase: "{{ cs_redis_tls_privkey_pass }}"
+      type: RSA
+      size: 4096
+      backup: false
+      mode: "0o644"
+
+- name: Nextcloud | Cache | Redis | Write CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_nc_cache_redis_certs_privkey_file }}.csr"
+      privatekey_path: "{{ cs_nc_cache_redis_certs_privkey_file }}"
+      privatekey_passphrase: "{{ cs_redis_tls_privkey_pass }}"
+      common_name: "{{ ansible_hostname }}"
+      basic_constraints: CA:FALSE
+      basic_constraints_critical: true
+      key_usage:
+          - digitalSignature
+          - keyEncipherment
+      extended_key_usage:
+          - serverAuth
+      subject_alt_name_critical: true
+      backup: false
+      mode: "0o644"
+
+- name: Nextcloud | Cache | Redis | Write Certificate
+  community.crypto.x509_certificate:
+      path: "{{ cs_nc_cache_redis_certs_cert_file }}"
+      csr_path: "{{ cs_nc_cache_redis_certs_privkey_file }}.csr"
+      ownca_content: "{{ root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
+      provider: ownca
+      backup: false
+      mode: "0o644"
+
+- name: Nextcloud | Cache | Redis | Write CA certificate
+  ansible.builtin.copy:
+      content: "{{ root_ca_cert_pem }}"
+      dest: "{{ cs_nc_cache_redis_certs_chain_file }}"
+      mode: "0644"
+
+- name: Nextcloud | Cache | Redis | Start container
+  community.docker.docker_container:
+      name: "{{ cs_nc_cache_redis_container_name }}"
+      image: "{{ cs_nc_cache_redis_docker_image }}:{{ cs_nc_cache_redis_docker_image_tag }}"
+      state: started
+      restart_policy: unless-stopped
+      volumes:
+          - "{{ cs_nc_cache_redis_data_dir }}:/data:rw"
+          - "{{ cs_nc_cache_redis_certs_privkey_file }}:/server.key:ro"
+          - "{{ cs_nc_cache_redis_certs_cert_file }}:/server.crt:ro"
+          - "{{ cs_nc_cache_redis_certs_chain_file }}:/ca.crt:ro"
+      ports:
+          - "127.0.0.1:{{ cs_nc_cache_redis_port }}:{{ cs_nc_cache_redis_port }}"
+      command: redis-server --save 20 1 --loglevel warning
+          --requirepass "{{ cs_redis_admin_password }}" --port 0
+          --tls-port "{{ cs_nc_cache_redis_port }}" --tls-cert-file /server.crt --tls-auth-clients yes
+          --tls-key-file /server.key --tls-ca-cert-file /ca.crt --tls-key-file-pass {{ cs_redis_tls_privkey_pass }}
+
+- name: Nextcloud | Cache | Redis | Test | Install Redis Tools
+  ansible.builtin.apt:
+      name: redis-tools
+      state: present
+      install_recommends: true
+
 - name: Nextcloud | Cache | Redis | Create Client Certificate Directories
   ansible.builtin.file:
       path: "{{ item }}"
@@ -11,15 +104,6 @@
       - "{{ cs_nc_redis_privkey_file | dirname }}"
       - "{{ cs_nc_redis_cert_file | dirname }}"
       - "{{ cs_nc_redis_ca_file | dirname }}"
-
-- name: Nextcloud | Cache | Redis | Set db fact
-  ansible.builtin.set_fact:
-      cs_nc_redis_port: "{{ __nextcloud_redis_details.tls_port }}"
-      cs_nc_redis_password: "{{ __nextcloud_redis_details.admin_password }}"
-      cs_nc_redis_host: "{{ __nextcloud_redis_details.host }}"
-  vars:
-      __nextcloud_redis_details: "{{ lookup('lab_secrets', 'managed-secrets/redis/clusters/'
-          + cs_nc_redis_cluster_name + '/servers/' + cs_nc_redis_cluster_node + '/config') }}"
 
 - name: Nextcloud | Cache | Redis | Write client private key
   community.crypto.openssl_privatekey:
@@ -34,7 +118,7 @@
   community.crypto.openssl_csr:
       path: "{{ cs_nc_redis_privkey_file }}.csr"
       privatekey_path: "{{ cs_nc_redis_privkey_file }}"
-      common_name: "{{ cs_nc_redis_host }}"
+      common_name: "{{ ansible_hostname }}"
       basic_constraints: CA:FALSE
       basic_constraints_critical: true
       key_usage:
@@ -67,6 +151,18 @@
       group: "{{ cs_nc_run_group }}"
       remote_src: false
 
+- name: Nextcloud | Cache | Redis | Test | Wait for service to start
+  ansible.builtin.command:
+      cmd: "redis-cli -a {{ cs_redis_admin_password }} -p {{ cs_nc_cache_redis_port }} --no-auth-warning
+          --tls --cert {{ cs_nc_redis_cert_file }} --key {{ cs_nc_redis_privkey_file }}
+          --cacert {{ cs_nc_redis_ca_file }} ping"
+  changed_when: false
+  timeout: 3
+  register: redis_ping
+  retries: 30
+  delay: 5
+  until: redis_ping.stdout is defined and redis_ping.stdout == "PONG"
+
 - name: Nextcloud | Cache | Write temp config
   ansible.builtin.copy:
       content: "{{ cs_nc_redis_cache_config | to_json }}"
@@ -76,10 +172,10 @@
       cs_nc_redis_cache_config:
           system:
               redis:
-                  host: "{{ cs_nc_redis_host }}"
-                  port: "{{ cs_nc_redis_port }}"
+                  host: "127.0.0.1"
+                  port: "{{ cs_nc_cache_redis_port }}"
                   timeout: "{{ cs_nc_redis_timeout }}"
-                  password: "{{ cs_nc_redis_password }}"
+                  password: "{{ cs_redis_admin_password }}"
                   ssl_context:
                       local_cert: "{{ cs_nc_redis_cert_file }}"
                       local_pk: "{{ cs_nc_redis_privkey_file }}"
