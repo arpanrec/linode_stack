@@ -48,9 +48,4 @@ cs_nc_imaginary_cert_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.crt"
 cs_nc_imaginary_fullchain_file: "{{ cs_nc_imaginary_certs_dir }}/imaginary.fullchain.pem"
 cs_nc_imaginary_port: 9000
 
-cs_nc_fts_elasticsearch_password: "{{ cs_elasticsearch_root_password }}"
-cs_nc_fts_elasticsearch_servlet_port: "{{ cs_elasticsearch_servlet_port }}"
-cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
-cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
-
 cs_nc_protocol: https

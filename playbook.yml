@@ -76,18 +76,6 @@
         ansible.builtin.import_tasks:
             file: tasks/postgres.yml
 
-- name: Elasticsearch
-  hosts: elasticsearch
-  become: true
-  become_user: root
-  gather_facts: false
-  tags: never,elasticsearch
-  no_log: "{{ cs_no_log | default('true') }}"
-  tasks:
-      - name: Elasticsearch
-        ansible.builtin.import_tasks:
-            file: tasks/elasticsearch.yml
-
 - name: Nextcloud
   hosts: nextcloud
   become: false

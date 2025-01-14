@@ -10,9 +10,6 @@ all:
         postgres:
             hosts:
                 rb4-m1:
-        elasticsearch:
-            hosts:
-                rb4-m2:
         nextcloud:
             hosts:
                 rb4-m2:

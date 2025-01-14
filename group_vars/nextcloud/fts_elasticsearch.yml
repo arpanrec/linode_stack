@@ -1,0 +1,13 @@
+---
+cs_nc_fts_elasticsearch_password: "{{ cs_nc_fts_elasticsearch_password }}"
+cs_nc_fts_elasticsearch_servlet_port: 9524
+cs_nc_fts_elasticsearch_index_name: nextcloud-fulltextsearch
+cs_nc_fts_elasticsearch_systemd: nextcloud-fulltext-elasticsearch-worker
+
+cs_nc_fts_elasticsearch_docker_container_name: nextcloud-elasticsearch
+cs_elasticsearch_docker_image: docker.io/nextcloud/aio-fulltextsearch
+cs_elasticsearch_docker_image_tag: latest
+cs_elasticsearch_run_user_id: 1000
+cs_elasticsearch_run_group_id: 0
+cs_elasticsearch_dir: /app/nextcloud/fts-elasticsearch
+cs_elasticsearch_data_dir: "{{ cs_elasticsearch_dir }}/data"
