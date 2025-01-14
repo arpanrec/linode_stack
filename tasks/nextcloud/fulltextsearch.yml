@@ -1,21 +1,21 @@
 ---
-- name: Database | Elasticsearch | Gather Facts
+- name: Nextcloud | Full Text Search | Elasticsearch | Gather Facts
   ansible.builtin.setup:
       gather_subset: all
 
-- name: Database | Elasticsearch | Set config facts
+- name: Nextcloud | Full Text Search | Elasticsearch | Set config facts
   ansible.builtin.set_fact:
       cs_elasticsearch_transport_port: 9877
       cs_nc_fts_elasticsearch_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
           chars=['ascii_letters', 'digits']) }}"
 
-- name: Database | Elasticsearch | Stop old container
+- name: Nextcloud | Full Text Search | Elasticsearch | Stop old container
   community.docker.docker_container:
       name: "{{ cs_nc_fts_elasticsearch_docker_container_name }}"
       state: absent
       force_kill: true
 
-- name: Database | Elasticsearch | Create Data Directory
+- name: Nextcloud | Full Text Search | Elasticsearch | Create Data Directory
   ansible.builtin.file:
       path: "{{ cs_elasticsearch_data_dir }}"
       state: directory
@@ -23,7 +23,7 @@
       owner: "{{ cs_elasticsearch_run_user_id }}"
       group: "{{ cs_elasticsearch_run_group_id }}"
 
-- name: Database | Elasticsearch | Start Container
+- name: Nextcloud | Full Text Search | Elasticsearch | Start Container
   community.docker.docker_container:
       name: "{{ cs_nc_fts_elasticsearch_docker_container_name }}"
       image: "{{ cs_elasticsearch_docker_image }}:{{ cs_elasticsearch_docker_image_tag }}"
@@ -52,7 +52,7 @@
       ulimits:
           - "memlock:-1:-1"
 
-- name: Database | Elasticsearch | Wait for service to start
+- name: Nextcloud | Full Text Search | Elasticsearch | Wait for service to start
   ansible.builtin.uri:
       url: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{ ansible_all_ipv4_addresses[0] }}:{{
           cs_nc_fts_elasticsearch_servlet_port }}"
