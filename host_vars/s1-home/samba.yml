@@ -1,0 +1,3 @@
+---
+cs_samba_drive_id: "p1-5tb-rb4-m1"
+cs_samba_share_docs: /mnt/{{ cs_samba_drive_id }}/media

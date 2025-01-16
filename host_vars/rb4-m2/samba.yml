@@ -1,3 +1,0 @@
----
-cs_samba_drive_id: "p2-2tb-rb4-m2"
-cs_samba_share_docs: /mnt/{{ cs_samba_drive_id }}/samba_sharedocs

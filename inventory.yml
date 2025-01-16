@@ -16,6 +16,9 @@ all:
         jellyfin:
             hosts:
                 s1-home:
+        samba:
+            hosts:
+                s1-home:
         nginx_proxy_manager:
             hosts:
                 rb5-m3:
