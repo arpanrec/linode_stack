@@ -1,0 +1,5 @@
+---
+cs_nc_imaginary_docker_container_name: nextcloud-imaginary
+cs_nc_imaginary_docker_image: docker.io/nextcloud/aio-imaginary
+cs_nc_imaginary_docker_image_tag: latest
+cs_nc_imaginary_port: 9000

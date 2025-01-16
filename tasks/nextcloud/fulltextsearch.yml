@@ -1,4 +1,69 @@
 ---
+- name: Nextcloud | Full Text Search | Elasticsearch | Gather Facts
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: Nextcloud | Full Text Search | Elasticsearch | Set config facts
+  ansible.builtin.set_fact:
+      cs_nc_fts_elasticsearch_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+
+- name: Nextcloud | Full Text Search | Elasticsearch | Stop old container
+  community.docker.docker_container:
+      name: "{{ cs_nc_fts_elasticsearch_docker_container_name }}"
+      state: absent
+      force_kill: true
+
+- name: Nextcloud | Full Text Search | Elasticsearch | Create Data Directory
+  ansible.builtin.file:
+      path: "{{ cs_nc_fts_elasticsearch_data_dir }}"
+      state: directory
+      mode: "0777"
+      owner: "{{ cs_nc_fts_elasticsearch_run_user_id }}"
+      group: "{{ cs_nc_fts_elasticsearch_run_group_id }}"
+
+- name: Nextcloud | Full Text Search | Elasticsearch | Start Container
+  community.docker.docker_container:
+      name: "{{ cs_nc_fts_elasticsearch_docker_container_name }}"
+      image: "{{ cs_nc_fts_elasticsearch_docker_image }}:{{ cs_nc_fts_elasticsearch_docker_image_tag }}"
+      user: "{{ cs_nc_fts_elasticsearch_run_user_id }}:{{ cs_nc_fts_elasticsearch_run_group_id }}"
+      volumes:
+          - "{{ cs_nc_fts_elasticsearch_data_dir }}:/usr/share/elasticsearch/data:rw"
+      ports:
+          - "127.0.0.1:{{ cs_nc_fts_elasticsearch_servlet_port }}:{{ cs_nc_fts_elasticsearch_servlet_port }}"
+          - "127.0.0.1:{{ cs_nc_fts_elasticsearch_transport_port }}:{{ cs_nc_fts_elasticsearch_transport_port }}"
+      state: started
+      restart_policy: unless-stopped
+      env:
+          TZ: Asia/Kolkata
+          "discovery.type": "single-node"
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          "node.name": "es01"
+          "cluster.name": docker-cluster
+          "bootstrap.memory_lock": "true"
+          "http.port": "{{ cs_nc_fts_elasticsearch_servlet_port | string }}"
+          "xpack.license.self_generated.type": basic
+          "xpack.security.enabled": "false"
+          "transport.port": "{{ cs_nc_fts_elasticsearch_transport_port | string }}"
+          "logger.org.elasticsearch.discovery": WARN
+          ELASTIC_CONTAINER: "true"
+          FULLTEXTSEARCH_PASSWORD: "{{ cs_nc_fts_elasticsearch_password }}"
+      ulimits:
+          - "memlock:-1:-1"
+
+- name: Nextcloud | Full Text Search | Elasticsearch | Wait for service to start
+  ansible.builtin.uri:
+      url: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@127.0.0.1:{{
+          cs_nc_fts_elasticsearch_servlet_port }}"
+      method: GET
+      status_code: [200]
+      timeout: 3
+      return_content: true
+  register: cs_nc_fulltextsearch_status
+  until: cs_nc_fulltextsearch_status.status == 200
+  retries: 30
+  delay: 3
+
 - name: Nextcloud | Full Text Search | List all apps
   become: true
   become_user: "{{ cs_nc_run_user }}"
@@ -33,15 +98,6 @@
       src: templates/nc/{{ cs_nc_fts_elasticsearch_systemd }}.service.j2
       mode: "0644"
 
-- name: Nextcloud | Full Text Search | Set db fact
-  ansible.builtin.set_fact:
-      cs_nc_fts_elasticsearch_servlet_port: "{{ __nextcloud_fts_details.servlet_port }}"
-      cs_nc_fts_elasticsearch_password: "{{ __nextcloud_fts_details.root_password }}"
-      cs_nc_fts_elasticsearch_host: "{{ __nextcloud_fts_details.fqdn }}"
-  vars:
-      __nextcloud_fts_details: "{{ lookup('home_lab_secrets', 'managed-secrets/elasticsearch/clusters/' +
-          cs_nc_elasticsearch_cluster_name + '/servers/' + cs_nc_elasticsearch_cluster_node + '/config') }}"
-
 - name: Nextcloud | Full Text Search | Write Apps Config
   ansible.builtin.copy:
       content: "{{ cs_nc_app_config_fulltextsearch | to_nice_json }}"
@@ -57,8 +113,8 @@
                   types: ""
               fulltextsearch_elasticsearch:
                   enabled: "yes"
-                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@{{
-                      cs_nc_fts_elasticsearch_host }}:{{ cs_nc_fts_elasticsearch_servlet_port }}"
+                  elastic_host: "http://elastic:{{ cs_nc_fts_elasticsearch_password }}@127.0.0.1:{{
+                      cs_nc_fts_elasticsearch_servlet_port }}"
                   elastic_index: "{{ cs_nc_fts_elasticsearch_index_name }}"
                   elastic_type: "file"
                   analyzer_tokenizer: "standard"

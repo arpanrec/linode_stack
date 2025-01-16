@@ -1,0 +1,18 @@
+---
+cs_nc_cache_redis_server_dir: "{{ cs_nc_root_dir }}/redis"
+cs_nc_cache_redis_server_data_dir: "{{ cs_nc_cache_redis_server_dir }}/data"
+cs_nc_cache_redis_server_certs_dir: "{{ cs_nc_cache_redis_server_dir }}/certs"
+cs_nc_cache_redis_server_certs_privkey_file: "{{ cs_nc_cache_redis_server_certs_dir }}/privkey.pem"
+cs_nc_cache_redis_server_certs_cert_file: "{{ cs_nc_cache_redis_server_certs_dir }}/cert.pem"
+cs_nc_cache_redis_server_certs_chain_file: "{{ cs_nc_cache_redis_server_certs_dir }}/chain.pem"
+cs_nc_cache_redis_server_port: 56379
+
+cs_nc_cache_redis_docker_image: "docker.io/library/redis"
+cs_nc_cache_redis_docker_tag: "7.4.2"
+cs_nc_cache_redis_container_name: nextcloud-redis
+
+cs_nc_cache_redis_cert_dir: "{{ cs_nc_cert_dir }}/redis"
+cs_nc_cache_redis_privkey_file: "{{ cs_nc_cache_redis_cert_dir }}/redis.key"
+cs_nc_cache_redis_cert_file: "{{ cs_nc_cache_redis_cert_dir }}/redis.crt"
+cs_nc_cache_redis_ca_file: "{{ cs_nc_cache_redis_cert_dir }}/redis.ca"
+cs_nc_cache_redis_timeout: 0.5

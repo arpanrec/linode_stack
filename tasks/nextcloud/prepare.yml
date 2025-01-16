@@ -1,7 +1,7 @@
 ---
 - name: Nextcloud | Prepare | Set config facts
   ansible.builtin.set_fact:
-      cs_nc_port: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+      cs_nc_port: "{{ lookup('lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
           + '/nextcloud').port }}"
 
 - name: Nextcloud | Prepare | Install Packages

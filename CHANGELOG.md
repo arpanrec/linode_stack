@@ -1,11 +1,6 @@
-# [3.0.0](https://github.com/arpanrec/home-lab/compare/2.6.0...3.0.0) (2025-01-12)
+## [3.3.5](https://github.com/arpanrec/home-lab/compare/3.3.4...3.3.5) (2025-01-14)
 
 
-### Features
+### Bug Fixes
 
-* Remove/vault ([#68](https://github.com/arpanrec/home-lab/issues/68)) ([98d03a4](https://github.com/arpanrec/home-lab/commit/98d03a49544ea77737304499c2507282daf05206))
-
-
-### BREAKING CHANGES
-
-* Secret in a normal directory
+* add logging configuration for Jellyfin container ([1b7bcc5](https://github.com/arpanrec/home-lab/commit/1b7bcc53b111f456559fd3ccc295dec423eaae8e))

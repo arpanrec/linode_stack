@@ -18,11 +18,15 @@ line-length = 120
 
 [tool.poetry]
 name = "home-lab"
-version = "3.0.0"
+version = "3.3.5"
 description = ""
 authors = ["arpan <arpan.rec@gmail.com>"]
 readme = "README.md"
-package-mode = false
+package-mode = true
+packages = [
+    { include = "home_lab_secrets", from = "pylib" },
+]
+# scripts = { "vaultops" = "vaultops.__main__:main" }
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -34,10 +38,10 @@ black = "24.10.0"
 pylint = "3.3.3"
 mypy = "1.14.1"
 ansible-lint = { version = "24.12.2", markers = "platform_system != 'Windows'" }
-poetry-plugin-export = "1.8.0"
+poetry-plugin-export = "1.9.0"
 pyright = "1.1.391"
 isort = "5.13.2"
-bandit = "1.8.0"
+bandit = "1.8.2"
 
 [build-system]
 requires = ["poetry-core"]

@@ -4,7 +4,7 @@
       cs_nc_admin_user: "{{ __nextcloud_app_details.admin_user }}"
       cs_nc_users_dict: "{{ __nextcloud_app_details.users_dict }}"
   vars:
-      __nextcloud_app_details: "{{ lookup('home_lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
+      __nextcloud_app_details: "{{ lookup('lab_secrets', 'secret/' + cs_nc_cluster_name + '/' + inventory_hostname
           + '/nextcloud') }}"
 
 - name: Nextcloud | Users | Test

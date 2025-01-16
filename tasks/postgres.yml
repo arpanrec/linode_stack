@@ -8,7 +8,7 @@
       cs_postgres_maintenance_db: "{{ __postgresql_config.maintenance_db }}"
       cs_postgres_apps_dict: "{{ __postgresql_config.apps_dict }}"
   vars:
-      __postgresql_config: "{{ lookup('home_lab_secrets', 'secret/' + cs_postgres_cluster_name + '/'
+      __postgresql_config: "{{ lookup('lab_secrets', 'secret/' + cs_postgres_cluster_name + '/'
           + inventory_hostname + '/postgresql') }}"
 
 - name: Database | Postgres | Enable Docker
@@ -134,7 +134,7 @@
       - name: Database | Postgres | First Run | Write the Password to Vault
         become: false
         delegate_to: localhost
-        home_lab_secrets:
+        secrets_action:
             key: "managed-secrets/postgresql/clusters/\
                 {{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
             action: write
@@ -144,6 +144,7 @@
                 maintenance_db: "{{ cs_postgres_maintenance_db }}"
                 ipv4s: "{{ ansible_all_ipv4_addresses }}"
                 hostname: "{{ ansible_hostname }}"
+                host: "{{ ansible_host }}"
                 fqdn: "{{ ansible_fqdn }}"
                 server_port: "{{ cs_postgres_port }}"
                 server_version: "{{ cs_postgres_version }}"
@@ -265,10 +266,11 @@
 
 - name: Database | Postgres | Create User and Password
   ansible.builtin.set_fact:
-      cs_postgres_maintenance_password: "{{ lookup('home_lab_secrets', 'managed-secrets/postgresql/clusters/'
-          + cs_postgres_cluster_name + '/servers/' + inventory_hostname + '/config').maintenance_password }}"
-      cs_postgres_maintenance_user: "{{ lookup('home_lab_secrets', 'managed-secrets/postgresql/clusters/'
-          + cs_postgres_cluster_name + '/servers/' + inventory_hostname + '/config').maintenance_user }}"
+      cs_postgres_maintenance_password: "{{ __pg_secret.maintenance_password }}"
+      cs_postgres_maintenance_user: "{{ __pg_secret.maintenance_user }}"
+  vars:
+      __pg_secret: "{{ lookup('lab_secrets', 'managed-secrets/postgresql/clusters/'
+          + cs_postgres_cluster_name + '/servers/' + inventory_hostname + '/config') }}"
 
 - name: Database | Postgres | Start Container
   community.docker.docker_container:
@@ -381,7 +383,7 @@
 - name: Database | Postgres | Create Database users and passwords in Vault
   become: false
   delegate_to: localhost
-  home_lab_secrets:
+  secrets_action:
       key: "managed-secrets/postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/db/{{
           item.item.key }}"
       action: write
@@ -390,6 +392,7 @@
           password: "{{ item.ansible_facts.password }}"
           maintenance_db: "{{ cs_postgres_maintenance_db }}"
           ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          host: "{{ ansible_host }}"
           hostname: "{{ ansible_hostname }}"
           fqdn: "{{ ansible_fqdn }}"
           server_port: "{{ cs_postgres_port }}"
@@ -400,7 +403,7 @@
       in case some some connection properties changes
   become: false
   delegate_to: localhost
-  home_lab_secrets:
+  secrets_action:
       key: "managed-secrets/postgresql/clusters/{{ cs_postgres_cluster_name }}/servers/{{ inventory_hostname }}/config"
       action: write
       value:
@@ -408,6 +411,7 @@
           maintenance_password: "{{ cs_postgres_maintenance_password }}"
           maintenance_db: "{{ cs_postgres_maintenance_db }}"
           ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          host: "{{ ansible_host }}"
           hostname: "{{ ansible_hostname }}"
           fqdn: "{{ ansible_fqdn }}"
           server_port: "{{ cs_postgres_port }}"

@@ -1,8 +1,7 @@
 ---
 all:
     vars:
-        ansible_host: "{{ lookup('home_lab_secrets', 'secret/' + cs_cluster_name + '/' + inventory_hostname
-            + '/ansible_vars').ansible_host }}"
+        ansible_host: "{{ lookup('lab_secrets', 'secret/' + cs_cluster_name + '/' + inventory_hostname).host }}"
     children:
         patchservers:
             hosts:
@@ -11,12 +10,6 @@ all:
         postgres:
             hosts:
                 rb4-m1:
-        elasticsearch:
-            hosts:
-                rb4-m2:
-        redis:
-            hosts:
-                rb4-m2:
         nextcloud:
             hosts:
                 rb4-m2:
@@ -29,7 +22,7 @@ all:
         minio_kes:
             hosts:
                 rb4-m2:
-        minio_minio:
+        minio_s3:
             hosts:
                 rb4-m2:
     hosts:

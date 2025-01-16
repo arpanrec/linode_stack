@@ -1,0 +1,22 @@
+---
+cs_minio_s3_group_name: minio
+cs_minio_s3_user_name: "{{ cs_minio_s3_group_name }}"
+
+cs_minio_s3_working_dir: "/app/minio_s3"
+
+cs_minio_s3_certs_dir: "{{ cs_minio_s3_working_dir }}/certs"
+
+cs_minio_s3_private_key: "{{ cs_minio_s3_certs_dir }}/private.key"
+cs_minio_s3_cert_file: "{{ cs_minio_s3_certs_dir }}/public.crt"
+cs_minio_s3_ca_file: "{{ cs_minio_s3_certs_dir }}/CAs/server-ca.crt"
+cs_minio_s3_kes_cert_dir: "{{ cs_minio_s3_certs_dir }}/kes"
+cs_minio_s3_kes_admin_cert: "{{ cs_minio_s3_kes_cert_dir }}/kes-admin-cert.pem"
+cs_minio_s3_kes_admin_key: "{{ cs_minio_s3_kes_cert_dir }}/kes-admin-key.pem"
+cs_minio_s3_kes_ca_cert: "{{ cs_minio_s3_kes_cert_dir }}/kes-ca-cert.pem"
+
+cs_minio_s3_cluster_name: blr-home
+cs_minio_s3_version: RELEASE.2024-11-07T00-52-20Z
+cs_minio_s3_default_kms_key_id: my-minio-key
+
+cs_minio_s3_container_name: minio-s3
+cs_minio_s3_env_file: "{{ cs_minio_s3_working_dir }}/.env"

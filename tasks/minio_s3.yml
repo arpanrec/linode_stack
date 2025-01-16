@@ -1,0 +1,239 @@
+---
+- name: MinIO | S3 | Include common crypt mount
+  ansible.builtin.include_tasks:
+      file: tasks/common/crypt_mount.yml
+  vars:
+      cs_crypt_mount_vault_id: "{{ cs_minio_s3_external_disk_id }}"
+      cs_crypt_machine_cluster: "{{ cs_minio_s3_cluster_name }}"
+
+- name: MinIO | S3 | Gather Facts
+  ansible.builtin.setup:
+      gather_subset: all
+
+- name: MinIO | S3 | Set config facts
+  ansible.builtin.set_fact:
+      cs_minio_s3_port: "{{ __minio_details.port }}"
+      cs_minio_s3_console_port: "{{ __minio_details.console_port }}"
+      cs_minio_s3_region: "{{ __minio_details.region }}"
+  vars:
+      __minio_details: "{{ lookup('lab_secrets', 'secret/' + cs_minio_s3_cluster_name + '/'
+          + inventory_hostname + '/minio') }}"
+
+- name: MinIO | S3 | Assert | Set cs_minio_s3_kes_cluster_name and cs_minio_s3_kes_cluster_node_name
+  ansible.builtin.set_fact:
+      cs_minio_s3_kes_cluster_name: "{{ cs_minio_s3_kes_cluster_name | d(cs_minio_s3_cluster_name)
+          | mandatory }}"
+      cs_minio_s3_kes_cluster_node_name: "{{ cs_minio_s3_kes_cluster_node_name | d(inventory_hostname)
+          | mandatory }}"
+
+- name: MinIO | S3 | Set __minio_server_kes_secret_dict
+  ansible.builtin.set_fact:
+      __minio_server_kes_secret_dict: "{{ lookup('lab_secrets', 'managed-secrets/minio-kes/clusters/'
+          + cs_minio_kes_cluster_name + '/servers/' + cs_minio_s3_kes_cluster_node_name + '/config') }}"
+
+- name: MinIO | S3 | Set cs_minio_s3_kes_endpoint
+  ansible.builtin.set_fact:
+      cs_minio_s3_kes_endpoint: "https://{{ __minio_server_kes_secret_dict.host }}:\
+          {{ __minio_server_kes_secret_dict.port }}"
+
+- name: MinIO | S3 | Remove existing container
+  community.general.docker_container:
+      name: "{{ cs_minio_s3_container_name }}"
+      state: absent
+
+- name: MinIO | S3 | Create group
+  ansible.builtin.group:
+      name: "{{ cs_minio_s3_group_name }}"
+      state: present
+      system: true
+  register: minio_server_tmp_group_creation
+
+- name: MinIO | S3 | Create User
+  ansible.builtin.user:
+      name: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+      state: present
+      create_home: false
+      system: true
+      shell: /bin/false
+  register: minio_server_tmp_user_creation
+
+- name: MinIO | S3 | Create Directories
+  ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+      mode: "0750"
+  loop:
+      - "{{ cs_minio_s3_certs_dir }}"
+      - "{{ cs_minio_s3_certs_dir }}/CAs"
+      - "{{ cs_minio_s3_data_dir }}"
+      - "{{ cs_minio_s3_kes_cert_dir }}"
+
+- name: MinIO | S3 | Fix Permissions of data directory
+  ansible.builtin.shell:
+      cmd: |+
+          chown -R {{ cs_minio_s3_user_name }}:{{ cs_minio_s3_group_name }} {{ item }};
+          find {{ item }} -type d -exec chmod 0750 {} \;
+          find {{ item }} -type f -exec chmod 0640 {} \;
+  changed_when: true
+  with_items:
+      - "{{ cs_minio_s3_data_dir }}"
+      - "{{ cs_minio_s3_certs_dir }}"
+      - "{{ cs_minio_s3_kes_cert_dir }}"
+
+- name: MinIO | S3 | Write server private key
+  community.crypto.openssl_privatekey:
+      path: "{{ cs_minio_s3_private_key }}"
+      type: RSA
+      size: 4096
+      mode: "0640"
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+
+- name: MinIO | S3 | Write server CSR
+  community.crypto.openssl_csr:
+      path: "{{ cs_minio_s3_private_key }}.csr"
+      privatekey_path: "{{ cs_minio_s3_private_key }}"
+      common_name: "{{ inventory_hostname }}"
+      basic_constraints: CA:FALSE
+      basic_constraints_critical: true
+      key_usage:
+          - digitalSignature
+          - keyEncipherment
+      extended_key_usage:
+          - serverAuth
+      subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
+      subject_alt_name_critical: true
+      mode: "0640"
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+
+- name: MinIO | S3 | Write server Certificate
+  community.crypto.x509_certificate:
+      path: "{{ cs_minio_s3_cert_file }}"
+      csr_path: "{{ cs_minio_s3_private_key }}.csr"
+      ownca_content: "{{ root_ca_cert_pem }}"
+      ownca_privatekey_content: "{{ root_ca_key_pem }}"
+      ownca_privatekey_passphrase: "{{ root_ca_key_password }}"
+      provider: ownca
+      mode: "0640"
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+
+- name: MinIO | S3 | Write server certificate chain
+  ansible.builtin.copy:
+      content: "{{ root_ca_cert_pem }}"
+      dest: "{{ cs_minio_s3_ca_file }}"
+      mode: "0640"
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+
+- name: MinIO | S3 | Write KES Client Admin Certificates
+  ansible.builtin.copy:
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+      mode: "0640"
+  loop:
+      - content: "{{ __minio_server_kes_secret_dict.admin_cert }}\n"
+        dest: "{{ cs_minio_s3_kes_admin_cert }}"
+      - content: "{{ __minio_server_kes_secret_dict.admin_key }}\n"
+        dest: "{{ cs_minio_s3_kes_admin_key }}"
+      - content: "{{ __minio_server_kes_secret_dict.admin_ca }}\n"
+        dest: "{{ cs_minio_s3_kes_ca_cert }}"
+
+- name: MinIO | S3 | Create User and Password
+  ansible.builtin.set_fact:
+      minio_server_root_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=40,
+          chars=['ascii_letters', 'digits']) }}"
+      minio_server_root_user: "{{ lookup('community.general.random_string', special=false, length=12) }}"
+
+- name: MinIO | S3 | Write the Password to Vault
+  become: false
+  delegate_to: localhost
+  secrets_action:
+      key: "managed-secrets/minio-s3/clusters/{{ cs_minio_s3_cluster_name }}/servers/{{ inventory_hostname }}/config"
+      action: write
+      value:
+          root_user: "{{ minio_server_root_user }}"
+          root_password: "{{ minio_server_root_password }}"
+          ipv4s: "{{ ansible_all_ipv4_addresses }}"
+          host: "{{ ansible_host }}"
+          hostname: "{{ ansible_hostname }}"
+          fqdn: "{{ ansible_fqdn }}"
+          server_port: "{{ cs_minio_s3_port }}"
+          console_port: "{{ cs_minio_s3_console_port }}"
+          server_version: "{{ cs_minio_s3_version }}"
+          kes:
+              cluster_name: "{{ cs_minio_s3_kes_cluster_name }}"
+              cluster_node_name: "{{ cs_minio_s3_kes_cluster_node_name }}"
+
+- name: MinIO | S3 | Create Env File
+  ansible.builtin.copy:
+      content: |+
+          MINIO_KMS_KES_ENDPOINT={{ cs_minio_s3_kes_endpoint }}
+          MINIO_KMS_KES_KEY_FILE={{ cs_minio_s3_kes_admin_key }}
+          MINIO_KMS_KES_CERT_FILE={{ cs_minio_s3_kes_admin_cert }}
+          MINIO_KMS_KES_CAPATH={{ cs_minio_s3_kes_ca_cert }}
+          MINIO_KMS_KES_KEY_NAME=default
+          MINIO_ROOT_USER={{ minio_server_root_user }}
+          MINIO_ROOT_PASSWORD={{ minio_server_root_password }}
+          MINIO_REGION=us-east-1
+          MINIO_VOLUMES={{ cs_minio_s3_data_dir }}
+      dest: "{{ cs_minio_s3_env_file }}"
+      owner: "{{ cs_minio_s3_user_name }}"
+      group: "{{ cs_minio_s3_group_name }}"
+      mode: "0640"
+
+- name: MinIO | S3 | Start container
+  community.general.docker_container:
+      name: "{{ cs_minio_s3_container_name }}"
+      image: "docker.io/minio/minio:{{ cs_minio_s3_version }}"
+      hostname: "{{ ansible_hostname }}"
+      state: started
+      detach: true
+      auto_remove: false
+      restart_policy: unless-stopped
+      env_file: "{{ cs_minio_s3_env_file }}"
+      volumes:
+          - "{{ cs_minio_s3_data_dir }}:{{ cs_minio_s3_data_dir }}"
+          - "{{ cs_minio_s3_certs_dir }}:{{ cs_minio_s3_certs_dir }}"
+      ports:
+          - "{{ cs_minio_s3_port }}:{{ cs_minio_s3_port }}"
+          - "{{ cs_minio_s3_console_port }}:{{ cs_minio_s3_console_port }}"
+      user: "{{ minio_server_tmp_user_creation.uid }}:{{ minio_server_tmp_group_creation.gid }}"
+      env:
+          TZ: Asia/Kolkata
+          PUID: "{{ minio_server_tmp_user_creation.uid }}"
+          PGID: "{{ minio_server_tmp_group_creation.gid }}"
+      command: server --address ':{{ cs_minio_s3_port }}' --console-address
+          ':{{ cs_minio_s3_console_port }}' --certs-dir {{ cs_minio_s3_certs_dir }}
+
+- name: MinIO | S3 | Enable UFW
+  community.general.ufw:
+      rule: allow
+      port: "{{ item.port }}"
+      proto: tcp
+      state: enabled
+      comment: "Allow Minio {{ item.comment }} port, Managed by Ansible home-lab playbook."
+  loop:
+      - port: "{{ cs_minio_s3_port }}"
+        comment: "S3"
+      - port: "{{ cs_minio_s3_console_port }}"
+        comment: "Console"
+
+- name: MinIO | S3 | Wait for Minio to start
+  ansible.builtin.uri:
+      url: "https://{{ ansible_all_ipv4_addresses[0] }}:{{ cs_minio_s3_port }}/minio/health/live"
+      status_code: 200
+      timeout: 3
+      method: GET
+      validate_certs: false
+  register: minio_server_health_check
+  until: minio_server_health_check.status == 200
+  retries: 10
+  delay: 1

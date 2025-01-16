@@ -28,11 +28,11 @@
   ansible.builtin.set_fact:
       cs_nc_db_user: "{{ __nextcloud_db_details.user }}"
       cs_nc_db_password: "{{ __nextcloud_db_details.password }}"
-      cs_nc_db_host: "{{ __nextcloud_db_details.fqdn }}"
+      cs_nc_db_host: "{{ __nextcloud_db_details.host }}"
       cs_nc_db_port: "{{ __nextcloud_db_details.server_port }}"
       cs_nc_db_version: "{{ __nextcloud_db_details.server_version }}"
   vars:
-      __nextcloud_db_details: "{{ lookup('home_lab_secrets', 'managed-secrets/postgresql/clusters/'
+      __nextcloud_db_details: "{{ lookup('lab_secrets', 'managed-secrets/postgresql/clusters/'
           + cs_nc_db_cluster_name + '/servers/' + cs_nc_db_cluster_node + '/db/' + cs_nc_db_database) }}"
 
 - name: Nextcloud | Data Dump | Create Environment File
