@@ -65,7 +65,7 @@
       extended_key_usage:
           - serverAuth
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
-          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
       subject_alt_name_critical: true
       mode: "0640"
       owner: "{{ cs_minio_kes_user_name }}"
@@ -109,7 +109,7 @@
       extended_key_usage:
           - clientAuth
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
-          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
       subject_alt_name_critical: true
   register: __minio_kes_tmp_admin_client_cert_csr
 

@@ -220,8 +220,7 @@
       extended_key_usage:
           - serverAuth
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
-          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname,
-          'DNS:nextcloud' + 'DNS:nextcloud.' + ansible_domain] }}"
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
       subject_alt_name_critical: true
       backup: false
       mode: "0600"

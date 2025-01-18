@@ -105,7 +105,7 @@
       extended_key_usage:
           - serverAuth
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
-          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
       subject_alt_name_critical: true
       mode: "0640"
       owner: "{{ cs_minio_s3_user_name }}"

@@ -49,11 +49,18 @@
       group: "{{ cs_jellyfin_group_name }}"
       mode: "0750"
   with_items:
-      - "{{ cs_jellyfin_media_dir }}"
       - "{{ cs_jellyfin_container_root }}/{{ cs_jellyfin_config_dir }}"
       - "{{ cs_jellyfin_container_root }}/{{ cs_jellyfin_data_dir }}"
       - "{{ cs_jellyfin_container_root }}/{{ cs_jellyfin_log_dir }}"
       - "{{ cs_jellyfin_container_root }}/{{ cs_jellyfin_cache_dir }}"
+
+- name: Jellyfin | Create Jellyfin media directory
+  ansible.builtin.file:
+      path: "{{ cs_jellyfin_media_dir }}"
+      state: directory
+      owner: "{{ cs_jellyfin_user_name }}"
+      group: "{{ cs_jellyfin_group_name }}"
+      mode: "0777"
 
 - name: Jellyfin | Create Env File
   community.general.ini_file:
@@ -99,16 +106,20 @@
       - group
       - passwd
 
-- name: Jellyfin | Container | Fix Permissions
+- name: Jellyfin | Container | Fix Permissions of container root
   ansible.builtin.shell:
       cmd: |+
-          find {{ item }} -type d -exec chmod 0750 {} \;
-          find {{ item }} -type f -exec chmod 0640 {} \;
-          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
+          find {{ cs_jellyfin_container_root }} -type d -exec chmod 0750 {} \;
+          find {{ cs_jellyfin_container_root }} -type f -exec chmod 0640 {} \;
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ cs_jellyfin_container_root }};
   changed_when: true
-  with_items:
-      - "{{ cs_jellyfin_media_dir }}"
-      - "{{ cs_jellyfin_container_root }}"
+
+- name: Jellyfin | Container | Fix Permissions of media dir
+  ansible.builtin.shell:
+      cmd: |+
+          chmod 777 -R {{ cs_jellyfin_media_dir }};
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ cs_jellyfin_media_dir }};
+  changed_when: true
 
 - name: Jellyfin | Container | Start Container
   become: true
@@ -308,8 +319,7 @@
       extended_key_usage:
           - serverAuth
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
-          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname,
-          'DNS:jellyfin' + 'DNS:jellyfin.' + ansible_domain] }}"
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
       subject_alt_name_critical: true
       mode: "0600"
 
@@ -514,7 +524,7 @@
       extended_key_usage:
           - serverAuth
       subject_alt_name: "{{ ansible_all_ipv4_addresses | map('regex_replace', '^(.*)$', 'IP:\\1') | list
-          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn, 'DNS:' + inventory_hostname] }}"
+          + ['DNS:' + ansible_hostname, 'DNS:' + ansible_fqdn] }}"
       subject_alt_name_critical: true
       mode: "0600"
       owner: "{{ cs_jellyfin_user_name }}"
