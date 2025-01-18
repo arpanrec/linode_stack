@@ -54,13 +54,13 @@
       - "{{ cs_jellyfin_container_root }}/{{ cs_jellyfin_log_dir }}"
       - "{{ cs_jellyfin_container_root }}/{{ cs_jellyfin_cache_dir }}"
 
-- name: Jellyfin | Create Jellyfin media directory
+- name: Jellyfin | Create media directories
   ansible.builtin.file:
       path: "{{ cs_jellyfin_media_dir }}"
       state: directory
       owner: "{{ cs_jellyfin_user_name }}"
       group: "{{ cs_jellyfin_group_name }}"
-      mode: "0777"
+      mode: "0750"
 
 - name: Jellyfin | Create Env File
   community.general.ini_file:
@@ -106,20 +106,25 @@
       - group
       - passwd
 
-- name: Jellyfin | Container | Fix Permissions of container root
+- name: Jellyfin | Container | Fix Permissions on jellyfin directories
   ansible.builtin.shell:
       cmd: |+
-          find {{ cs_jellyfin_container_root }} -type d -exec chmod 0750 {} \;
-          find {{ cs_jellyfin_container_root }} -type f -exec chmod 0640 {} \;
-          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ cs_jellyfin_container_root }};
+          find {{ item }} -type d -exec chmod 0750 {} \;
+          find {{ item }} -type f -exec chmod 0640 {} \;
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
   changed_when: true
+  with_items:
+      - "{{ cs_jellyfin_container_root }}"
 
-- name: Jellyfin | Container | Fix Permissions of media dir
+- name: Jellyfin | Container | Fix Permissions on media directories
   ansible.builtin.shell:
       cmd: |+
-          chmod 777 -R {{ cs_jellyfin_media_dir }};
-          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ cs_jellyfin_media_dir }};
+          find {{ item }} -type d -exec chmod 0750 {} \;
+          find {{ item }} -type f -exec chmod 0640 {} \;
+          chown -R {{ cs_jellyfin_user_name }}:{{ cs_jellyfin_group_name }} {{ item }};
   changed_when: true
+  with_items:
+      - "{{ cs_jellyfin_media_dir }}"
 
 - name: Jellyfin | Container | Start Container
   become: true
