@@ -1,6 +1,6 @@
-## [3.3.5](https://github.com/arpanrec/home-lab/compare/3.3.4...3.3.5) (2025-01-14)
+## [3.3.6](https://github.com/arpanrec/home-lab/compare/3.3.5...3.3.6) (2025-01-18)
 
 
 ### Bug Fixes
 
-* add logging configuration for Jellyfin container ([1b7bcc5](https://github.com/arpanrec/home-lab/commit/1b7bcc53b111f456559fd3ccc295dec423eaae8e))
+* simplify subject alternative names in various task files ([08687c8](https://github.com/arpanrec/home-lab/commit/08687c892223b2b622b956c8f2780cee0f571cb7))
